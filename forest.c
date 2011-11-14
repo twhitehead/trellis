@@ -5,6 +5,17 @@
 #define HEIGHT  4
 #define CLUSTER 65536
 
+// Z values
+//
+// Z values form a fractal, which each set of two bits giving a layer of 2x2 connected boxes connected in a Z
+// (upper left, upper right, lower left, lower right).  Each layer connects the 2x2 connected boxes from the lower
+// layer into a new set of 2x2 connected boxes.  The lowest layer is formed by the two least significant bits.
+//
+// The X & Y values contained in the Z values can easily be compared by masking.
+
+#define X_MASK 0x5555555555555555u
+#define Y_MASK 0xaaaaaaaaaaaaaaaau
+
 
 // Single upper case to distinguish types
 
@@ -40,6 +51,121 @@ struct _Groves {
 struct _Grove {
   UInt64 z[CLUSTER];
 };
+
+
+// Greatest Z value lesser than a given Z value falling into a target box.
+//
+// This routine works by treating the given Z value as an upper bound and reducing it to the point the desired
+// Z value (the greatest one falling into the target box and lesser than the given value) is identified.
+//
+// The given Z value is reduced by checking the largest 2x2 aligned box immediately proceeding it for overlap
+// with the target region.  If no overlap is found, the box is skipped by reducing the given Z value to the start
+// of the box and repeating the procedure.  If the given Z value reaches zero, then there is no lesser Z value.
+//
+// Once overlap is found, the overlapping box is broken down into 2x2 boxes.  Each 2x2 box without overlap is
+// skipped by reducing the given Z value start of it.  Once an overlapping box is found the procedure is repeated.
+//
+// The functional pseudo-code follows.
+//
+// z_left_out(z, step, box_ul_z,box_lr_z)
+//   // At first z point, done
+//   z == 0:
+//     fail("no more valid z points")
+//   // Not at first z point, determine step size
+//   otherwise:
+//     z_left_out_size(z, step, box_ul_z,box_lr_z)
+//
+// z_left_out_size(z, step, box_ul_z,box_lr_z)
+//   // On step size boundary, increase step size
+//   z % (step*4) == 0:
+//     z_left_out_size(z, step*4, box_ul_z,box_lr_z)
+//   // Not on step size boundary, check box to next boundary
+//   otherwise:
+//     z_left_out_step(z, step, box_ul_z,box_lr_z)
+//
+// z_left_out_step(z, step, box_ul_z,box_lr_z)
+//   let ul_z = z-step
+//       lr_z = z-1
+//   // Previous box overlap with target box, locate z point in it
+//   z_overlap(ul_z,lr_z, box_ul_z,box_lr_z):
+//     z_left_in_size(z, step, box_ul_z,box_lr_z)
+//   // Previous box doesn't overlap with target box, skip over it
+//   otherwise:
+//     z_left_out(ul_z, step, box_ul_z,box_lr_z)
+//
+// z_left_in_size(z, step, box_ul_z,box_lr_z)
+//   // Single point, done
+//   step == 1:
+//     z-1
+//   // Not single point, divide into sub boxes
+//   otherwise:
+//     z_left_in_step(z, step/4, box_ul_z,box_lr_z)
+//
+// z_left_in_step(z, step, box_ul_z,box_lr_z)
+//   let ul_z = z-step
+//       lr_z = z-1
+//   // Previous sub box overlaps with target box, locate z point in it
+//   z_overlap(ul_z,lr_z, box_ul_z,box_lr_z):
+//     z_left_in_size(z, step, box_ul_z,box_lr_z)
+//   otherwise:
+//   // Previous sub box doesn't overlap with target box, skip over it
+//     z_left_in_step(ul_z, step, box_ul_z,box_lr_z)
+//
+//  z_overlap(ul_z0,lr_z0, ul_z1,lr_z1)
+//    ( (ul_z0&X_MASK) <= (lr_z1&X_MASK) && (lr_z0&X_MASK) >= (ul_z1&X_MASK) &&
+//      (ul_z0&Y_MASK) <= (lr_z1&Y_MASK) && (lr_z0YX_MASK) >= (ul_z1YX_MASK) )
+//
+// Flattening the recursive calls with loops this becomes the following code.
+//
+void z_left_out(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z) {
+  // Scan backwards with progressively larger boxes for overlap with target box
+  while (1) {
+    // At first z point, done
+    if (z == 0) {
+      ...
+    }
+
+    // While on step size boundary, increase step size
+    while ((z & (step*4-1)) == 0)
+      step *= 4;
+
+    // If previous box overlaps with target box, locate z point in it
+    UInt64 ul_z = z-step;
+    UInt64 lr_z = z-1;
+
+    if ( (ul_z&X_MASK) <= (box_lr_z&X_MASK) && (lr_z&X_MASK) >= (box_ul_z&X_MASK) &&
+         (ul_z&Y_MASK) <= (box_lr_z&Y_MASK) && (lr_z&Y_MASK) >= (box_ul_z&Y_MASK) )
+      return z_left_in(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z);
+
+    // Previous box doesn't overlap with target box, skip over it
+    z = ul_z;
+  }
+}
+
+void z_left_in(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z) {
+  // Scan progressively smaller boxes in overlapping box for first point in target box
+  while (1) {
+    // At single point, done
+    if (step == 1) {
+      ... z-1 ...
+    }
+
+    // Decrease step size to divide into sub boxes
+    step /= 4;
+
+    // While previous sub box doesn't overlap with target box, skip over it
+    while (1) {
+      UInt64 ul_z = z-step;
+      UInt64 lr_z = z-1;
+
+      if ( (ul_z&X_MASK) <= (box_lr_z&X_MASK) && (lr_z&X_MASK) >= (box_ul_z&X_MASK) &&
+           (ul_z&Y_MASK) <= (box_lr_z&Y_MASK) && (lr_z&Y_MASK) >= (box_ul_z&Y_MASK) )
+        break;
+
+      z = ul_z;
+    }
+  }
+}
 
 
 // In-place pivot sort.
