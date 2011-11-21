@@ -48,8 +48,8 @@ struct _Forest {
 };
 
 struct _Groves {
-  UInt64 z_min[CLUSTER];
-  UInt64 z_max[CLUSTER];
+  UInt64 left_z[CLUSTER];
+  UInt64 right_z[CLUSTER];
   Level* level[CLUSTER];
 };
 
@@ -121,6 +121,144 @@ Level* forest_level(Forest* forest, UInt64 index, UInt depth) {
 Grove* forest_grove(Forest* forest, UInt64 index) {
   return forest_level(forest, index, DEPTH-1);
 }
+
+// For given index up to given depth, return the left Z bound
+//
+// forest_left_z(forest, index, depth)
+//   depth > DEPTH-1:
+//     z_left(groves(forest_level(forest, index, depth)))
+//   otherwise:
+//     z(grove(forest_level(forest, index, depth)))
+//
+// This becomes the following code
+//
+UInt64* forest_left_z(Forest *forest, UInt64 index, UInt depth) {
+  if (depth > DEPTH-1)
+    return forest_level(forest, index, depth)->groves->left_z;
+  else
+    return forest_level(forest, index, depth)->grove->z;
+}
+
+
+//---------------------------------------------------------------------------------------------------------------//
+// Tree with greatest index and Z value less than or equal to given index and Z value.
+//
+// This routine works by treating the given index and an upper bound and reducing it to the point the desired
+// index (the greatest one identifying a tree with a lesser or equal Z value to the given one) is identified.
+//
+// The given index is reduced by checking the Z range in the largest bit-aligned index-range immediately
+// proceeding it for overlap with the given Z value.  If no overlap is found, the index range is skipped by
+// reducing the given index to the start of it and repeating the procedure.  If the index reaches zero, then
+// there is no index with a less than or equal Z value.
+//
+// Once overlap is found, the overlapping region is broken down into sub regions.  Each sub region without
+// overlap is skipped by reducing the given index to the start of it.  Once an overlapping region is found, the
+// procedure is repeated.
+//
+// The functional pseudo-code follows.
+//
+// tree_left_out(index, step, z)
+//   // At first tree, done
+//   index == 0:
+//     error("no more valid trees")
+//   // Not at first tree, determine step size
+//   otherwise:
+//     tree_left_out_size(index, step, z)
+//
+// tree_left_out_size(index, step, z)
+//   // On step size boundary, increase step size
+//   index % (step*2) == 0:
+//     tree_left_out_size(index, step*2, z)
+//   // Not on step size boundary, check interval to next boundary
+//   otherwise:
+//     tree_left_out_step(index, step, z)
+//
+// tree_left_out_step(index, step, z)
+//   // Previous interval contains tree, locate tree in it
+//   tree[index-step] <= z:
+//     tree_left_in_size(index, step, z)
+//   // Previous interval doesn't contain tree, skip over it
+//   otherwise:
+//     tree_left_out(index-step, step, z)
+//
+// tree_left_in_size(index, step, z)
+//   // Single point, done
+//   step == 1:
+//     index-1
+//   // Not single point, divide into sub regions
+//   otherwise:
+//     tree_left_in_step(index, step/2, z)
+//
+// tree_left_in_step(index, step, z)
+//   // Previous sub region contains tree, locate z point in it
+//   tree[index-step] <= z:
+//     tree_left_in_size(index, step, z)
+//   // Previous sub region doesn't contain tree, skip over it
+//   otherwise:
+//     tree_left_in_step(index-step, step, z)
+//
+// Flattening the recursive calls with loops this becomes the following code.
+//
+void tree_left_out(Forest* forest, UInt64 index, UInt64 z) {
+  UInt64* z = forest_left_z(forest, index-1, DEPTH-1);
+  UInt64 step = 1;
+  UInt depth = DEPTH-1;
+
+  while (1) {
+    // If at first tree, done
+    if (index == 0) {
+      ...
+    }
+
+    // While on step size boundary, increase step size
+    while ((index & (step*2-1)) == 0)
+      step *= 2;
+
+    if (step >= CLUSTER) {
+      do {
+        index /= CLUSTER;
+        step /= CLUSTER;
+        depth -= 1;
+      } while (step >= CLUSTER);
+
+      z = forest_left_z(forest, index-1, depth);
+    }
+
+    // If previous interval contains tree, locate tree in it
+    if (z[(index-step)%CLUSTER] <= z)
+      return tree_left_in(forest, index, step, depth, z);
+
+    // Previous interval doesn't contain tree, skip over it
+    index -= step;
+  }
+}
+
+void tree_left_in(Forest* forest, UInt64 index, UInt64 step, UInt depth, UInt64 z) {
+  UInt64* z = forest_left_z(forest, index-1, DEPTH-1);
+
+  while (1) {
+    // If at single tree, done
+    if (step == 1) {
+      if (depth == DEPTH-1) {
+        ... index-1 ...
+      }
+
+      index *= CLUSTER;
+      step *= CLUSTER;
+      depth += 1;
+
+      z = forest_left_z(forest, index-1, depth);
+    }
+
+    // Decrease step size to divide into sub intervals
+    step /= 2;
+
+    // If previous sub interval doesn't contain tree, skip over it
+    if (z[(index-step)%CLUSTER > z)
+      index -= step;
+  }
+}
+
 
 
 //---------------------------------------------------------------------------------------------------------------//
