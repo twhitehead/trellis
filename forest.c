@@ -267,12 +267,13 @@ void tree_left_in(Forest* forest, UInt64 index, UInt64 step, UInt depth, UInt64 
 // This routine works by treating the given Z value as an upper bound and reducing it to the point the desired
 // Z value (the greatest one falling into the target box and lesser than the given value) is identified.
 //
-// The given Z value is reduced by checking the largest 2x2 aligned box immediately proceeding it for overlap
+// The given Z value is reduced by checking the largest 2x2-aligned box immediately proceeding it for overlap
 // with the target region.  If no overlap is found, the box is skipped by reducing the given Z value to the start
 // of the box and repeating the procedure.  If the given Z value reaches zero, then there is no lesser Z value.
 //
-// Once overlap is found, the overlapping box is broken down into 2x2 boxes.  Each 2x2 box without overlap is
-// skipped by reducing the given Z value start of it.  Once an overlapping box is found the procedure is repeated.
+// If overlap is found, the overlapping box is broken down into 2x2 boxes.  Each 2x2 box without overlap is
+// skipped by reducing the given Z value start of it.  Once an overlapping box is found, the procedure is
+// repeated.
 //
 // The functional pseudo-code follows.
 //
