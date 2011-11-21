@@ -2,7 +2,7 @@
 
 // Split of 64b address space into 16b components (can't be changed without changing grove walking code)
 
-#define HEIGHT  4
+#define DEPTH  4
 #define CLUSTER 65536
 
 // Z values
@@ -17,6 +17,7 @@
 #define Y_MASK 0xaaaaaaaaaaaaaaaau
 
 
+//---------------------------------------------------------------------------------------------------------------//
 // Single upper case to distinguish types
 
 typedef unsigned int UInt;
@@ -28,24 +29,28 @@ typedef int32_t Int32;
 typedef int64_t Int64;
 
 typedef struct _Forest Forest;
+typedef struct _Level Level;
 typedef struct _Groves Groves;
 typedef struct _Grove Grove;
 
 
+//---------------------------------------------------------------------------------------------------------------//
 // Basic forest structure
+
+union _Level {
+  Groves* groves;
+  Grove* grove;
+};
 
 struct _Forest {
   UInt64 size;
-  Groves* groves;
+  Level* level;
 };
 
 struct _Groves {
   UInt64 z_min[CLUSTER];
   UInt64 z_max[CLUSTER];
-  union {
-    Groves* groves[CLUSTER];
-    Grove* grove[CLUSTER];
-  };
+  Level* level[CLUSTER];
 };
 
 struct _Grove {
@@ -53,6 +58,72 @@ struct _Grove {
 };
 
 
+//---------------------------------------------------------------------------------------------------------------//
+// For given index up to given depth, reverse the entries.
+//
+// index_reverse(index, depth)
+//   index_reverse_shift(index, 0, depth)
+//
+// index_reverse_shift(index_forward, index_reverse, depth)
+//   depth > 0:
+//     index_reverse_shift(index_forward/CLUSTER, index_reverse*CLUSTER+index_forward%CLUSTER, depth-1)
+//   otherwise:
+//     index_reverse
+//
+// Flattening the recursive calls with loops this becomes the following code.
+//
+UInt64 index_reverse(UInt64 index, UInt depth) {
+  UInt64 index_forward = index;
+  UInt64 index_reverse = 0;
+
+  for(UInt depth_iterator = depth; depth_iterator>0; depth_iterator-=1) {
+    index_reverse = index_reverse*CLUSTER + index_forward%CLUSTER;
+    index_forward /= CLUSTER;
+  }
+
+  return index_reverse;
+}
+
+
+// For given index up to given depth, return the level.
+//
+// forest_level(forest, index, depth)
+//   forest_level_walk(level(forest), index_reverse(index, depth), depth)
+//
+// forest_level_walk(level, indexs, depth)
+//   depth > 0:
+//     forest_level_walk(level(groves(level))[indexs%CLUSTER], indexs/CLUSTER, depth-1)
+//   otherwise:
+//     level
+//
+// Flattening the recursive calls with loops this becomes the following code.
+//
+Level* forest_level(Forest* forest, UInt64 index, UInt depth) {
+  UInt64 index_reversed = index_reverse(index, depth);
+  Level* level = forest->level;
+
+  for(UInt depth_iterator = 0; depth_iterator<DEPTH; depth_iterator+=1) {
+    level = level->level[depth_iterator%CLUSTER];
+    depth_iterator /= CLUSTER;
+  }
+
+  return level;
+}
+
+
+// For given index, return the grove
+//
+// forest_grove(forest, index)
+//   grove(forest_level(forest, index, DEPTH-1))
+//
+// This becomes the following code.
+//
+Grove* forest_grove(Forest* forest, UInt64 index) {
+  return forest_level(forest, index, DEPTH-1);
+}
+
+
+//---------------------------------------------------------------------------------------------------------------//
 // Greatest Z value lesser than a given Z value falling into a target box.
 //
 // This routine works by treating the given Z value as an upper bound and reducing it to the point the desired
@@ -236,12 +307,7 @@ void z_left_in(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z) {
 //
 void sort(Forest* forest) {
   // Use centre element for initial pivot
-  sort_both(forest, 0,forest->size-1,
-            forest->groves
-            ->groves[forest->size/2/CLUSTER/CLUSTER/CLUSTER%CLUSTER]
-            ->groves[forest->size/2/CLUSTER/CLUSTER%CLUSTER]
-            ->grove[forest->size/2/CLUSTER%CLUSTER]
-            ->z[forest->size/2%CLUSTER]);
+  sort_both(forest, 0,forest->size-1, forest_z(forest, forest->size/2));
 }
 
 void sort_both(Forest* forest, UInt64 left_start,UInt64 right_start, UInt64 pivot_z) {
@@ -253,14 +319,8 @@ void sort_both(Forest* forest, UInt64 left_start,UInt64 right_start, UInt64 pivo
   UInt64 right_min_z = UINT64_MAX;
   UInt64 right_max_z = 0;
 
-  left_grove = forest->groves
-    ->groves[left_current/CLUSTER/CLUSTER/CLUSTER%CLUSTER]
-    ->groves[left_current/CLUSTER/CLUSTER%CLUSTER]
-    ->groves[left_current/CLUSTER%CLUSTER];
-  right_grove = forest->groves
-    ->groves[right_current/CLUSTER/CLUSTER/CLUSTER%CLUSTER]
-    ->groves[right_current/CLUSTER/CLUSTER%CLUSTER]
-    ->groves[right_current/CLUSTER%CLUSTER];
+  Grove* left_grove = forest_grove(forest, left_current);
+  Grove* right_grove = forest_grove(forest, right_current);
 
   // Sweep to centre splitting into left <= pivot and right > pivot by swaping left > pivot and right <= pivot
   while (1) {
@@ -280,10 +340,7 @@ void sort_both(Forest* forest, UInt64 left_start,UInt64 right_start, UInt64 pivo
         // Advance to next possible left element
         left_current += 1;
         if (left_current%CLUSTER == 0)
-          left_grove = forest->groves
-            ->groves[left_current/CLUSTER/CLUSTER/CLUSTER%CLUSTER]
-            ->groves[left_current/CLUSTER/CLUSTER%CLUSTER]
-            ->grove[left_current/CLUSTER%CLUSTER];
+          left_grove = forest_grove(forest, left_current);
       }
       // Element found, break
       else
@@ -303,10 +360,7 @@ void sort_both(Forest* forest, UInt64 left_start,UInt64 right_start, UInt64 pivo
         // Advance to next possible right element
         right_current -= 1;
         if (right_current%CLUSTER == CLUSTER-1)
-          right_grove = forest->groves
-            ->groves[right_current/CLUSTER/CLUSTER/CLUSTER%CLUSTER]
-            ->groves[right_current/CLUSTER/CLUSTER%CLUSTER]
-            ->grove[right_current/CLUSTER%CLUSTER];
+          right_grove = forest_grove(forest, right_current);
       }
       // Element found, break
       else
@@ -315,8 +369,8 @@ void sort_both(Forest* forest, UInt64 left_start,UInt64 right_start, UInt64 pivo
 
     // Not at centre, left > pivot and right <= pivot elements found, swap them
     if (left_current <= right_current) {
-      left_grove->z  = right_z;
-      right_grove->z = left_z;
+      left_grove->z[left_current%CLUSTER] = right_z;
+      right_grove->z[right_current%CLUSTER] = left_z;
     }
     // At centre, seperated into left <= pivot and right > pivot subsets, break
     else
@@ -331,6 +385,7 @@ void sort_both(Forest* forest, UInt64 left_start,UInt64 right_start, UInt64 pivo
 }
 
 
+//---------------------------------------------------------------------------------------------------------------//
 // Program entrance point
 
 int main() {
