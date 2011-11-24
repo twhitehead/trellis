@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-// Split of 64b address space into components (require CLUSTER=2^N for some N and CLUSTER^DEPTH = 2^64)
+// Split 64b Z space into components (require CLUSTER=2^N for some N and CLUSTER^DEPTH = 2^64)
 
 #define DEPTH  4
 #define CLUSTER 65536
