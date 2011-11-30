@@ -5,6 +5,10 @@
 #define DEPTH  4
 #define CLUSTER 65536
 
+// Buffer size for fatal errors
+
+#define ERRNO_BUFFER 1024
+
 // Z values
 //
 // Z values form a fractal, which each set of two bits giving a layer of 2x2 connected boxes connected in a Z
@@ -686,6 +690,90 @@ static void sort_both(Individuals* individuals, UInt64 left_start,UInt64 right_s
   if (right_min_z < right_max_z)
     sort_both(individuals, left_current,right_start,
               right_min_z/2+right_max_z/2 + (right_min_z%2+right_max_z%2)/2);
+}
+
+
+//---------------------------------------------------------------------------------------------------------------//
+// die_errno:  (int, char*, ...)     -> ()
+// vdie_errno: (int, char*, va_args) -> ()
+//
+// die_errno_explicit:  (int, int, char*, ...)     -> ()
+// vdie_errno_explicit: (int, int, char*, va_args) -> ()
+//
+// If given printf style formatted message, print it to stderr followed by a colon, then print a description of
+// the current value of errno to stderr followed by a newline, and finally exit with given error value.
+//
+// The second versions explicitly take an errno value, the first versions use the global errno value.
+//
+void die_errno(int value, char* format, ...) {
+  // Setup va_list for args and invoke that version
+  va_list args;
+
+  va_start(args, format);
+  vdie_errno(value, format, args);
+  va_end(args);
+}
+
+void vdie_errno(int value, char* format, va_list args) {
+  // Invoke explicit version with global errno value
+  vdie_errno_explicit(errno, value, format, args);
+}
+
+
+void die_errno_explicit(int errno_original, int value, char* format, ...) {
+  // Setup va_list for args and invoke that version
+  va_list args;
+
+  va_start(args, format);
+  vdie_errno_explicit(errno_original, value, format, args);
+  va_end(args);
+}
+
+void vdie_errno_explicit(int errno_original, int value, char* format, va_list args) {
+  // Output any given printf style formatted message to stderr
+  if (format) {
+    vfprintf(stderr, format, args);
+    fprintf(stderr, ": ");
+  }
+
+  // Output description of given errno to stderr
+  char buffer[ERRNO_BUFFER];
+
+  if (strerror_r(errno_original, buffer, sizeof(buffer)/sizeof(buffer[0])))
+    fprintf(stderr,"%s\n",buffer);
+  else
+    fprintf(stderr,"error %d (could not be described due to error %d)\n", errno_original, errno);
+
+  // Quit with given value
+  exit(value);
+}
+
+
+// die:  (char*, ...)     -> ()
+// vdie: (char*, va_args) -> ()
+//
+// If given printf style formatted message, print it to stderr followed by a newline, and then exit with given
+// error value.
+//
+void die(int value, char* format, ...) {
+  // Setup va_list for args and invoke that version
+  va_list args;
+
+  va_start(args, format);
+  vdie(value, format, args);
+  va_end(args);
+}
+
+
+void vdie(int value, char* format, va_list args) {
+  // Output any given printf style formatted message to stderr
+  if (format) {
+    vfprintf(stderr, format, args);
+    fprintf(stderr, "\n");
+  }
+
+  // Quit with given value
+  exit(value);
 }
 
 
