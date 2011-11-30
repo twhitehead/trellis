@@ -141,10 +141,13 @@ UInt64* forest_left_z(Forest *forest, UInt64 index, UInt depth) {
 
 
 //---------------------------------------------------------------------------------------------------------------//
-// Tree with greatest index and Z value less than or equal to given index and Z value.
+// individual_left: (Individuals, UInt64, UInt64) -> ()
+//
+// Individual with greatest index and Z value less than or equal to given index and Z value.
 //
 // This routine works by treating the given index and an upper bound and reducing it to the point the desired
-// index (the greatest one identifying a tree with a lesser or equal Z value to the given one) is identified.
+// index (the greatest one identifying a individual with a lesser or equal Z value to the given one) is
+// identified.
 //
 // The given index is reduced by checking the Z range in the largest bit-aligned index-range immediately
 // proceeding it for overlap with the given Z value.  If no overlap is found, the index range is skipped by
@@ -157,57 +160,65 @@ UInt64* forest_left_z(Forest *forest, UInt64 index, UInt depth) {
 //
 // The functional pseudo-code follows.
 //
-// tree_left_out(index, step, z)
-//   // At first tree, done
-//   index == 0:
-//     error("no more valid trees")
-//   // Not at first tree, determine step size
-//   otherwise:
-//     tree_left_out_size(index, step, z)
+// individual_left_out:      (UInt64, UInt64, UInt64) -> (UInt64)
+// individual_left_out_size: (UInt64, UInt64, UInt64) -> (UInt64)
+// individual_left_out_step: (UInt64, UInt64, UInt64) -> (UInt64)
 //
-// tree_left_out_size(index, step, z)
+// individual_left_in_size: (UInt64, UInt64, UInt64) -> (UInt64)
+// individual_left_in_step: (UInt64, UInt64, UInt64) -> (UInt64)
+//
+// individual_left_out(index, step, z)
+//   // At first individual, done
+//   index == 0:
+//     fail("no more valid individuals")
+//   // Not at first individual, determine step size
+//   otherwise:
+//     individual_left_out_size(index, step, z)
+//
+// individual_left_out_size(index, step, z)
 //   // On step size boundary, increase step size
 //   index % (step*2) == 0:
-//     tree_left_out_size(index, step*2, z)
+//     individual_left_out_size(index, step*2, z)
 //   // Not on step size boundary, check interval to next boundary
 //   otherwise:
-//     tree_left_out_step(index, step, z)
+//     individual_left_out_step(index, step, z)
 //
-// tree_left_out_step(index, step, z)
-//   // Previous interval contains tree, locate tree in it
-//   tree[index-step] <= z:
-//     tree_left_in_size(index, step, z)
-//   // Previous interval doesn't contain tree, skip over it
+// individual_left_out_step(index, step, z)
+//   // Previous interval contains individual, locate individual in it
+//   individual[index-step] <= z:
+//     individual_left_in_size(index, step, z)
+//   // Previous interval doesn't contain individual, skip over it
 //   otherwise:
-//     tree_left_out(index-step, step, z)
+//     individual_left_out(index-step, step, z)
 //
-// tree_left_in_size(index, step, z)
+// individual_left_in_size(index, step, z)
 //   // Single point, done
 //   step == 1:
 //     index-1
 //   // Not single point, divide into sub regions
 //   otherwise:
-//     tree_left_in_step(index, step/2, z)
+//     individual_left_in_step(index, step/2, z)
 //
-// tree_left_in_step(index, step, z)
-//   // Previous sub region contains tree, locate z point in it
-//   tree[index-step] <= z:
-//     tree_left_in_size(index, step, z)
-//   // Previous sub region doesn't contain tree, skip over it
+// individual_left_in_step(index, step, z)
+//   // Previous sub region contains individual, locate z point in it
+//   individual[index-step] <= z:
+//     individual_left_in_size(index, step, z)
+//   // Previous sub region doesn't contain individual, skip over it
 //   otherwise:
-//     tree_left_in_step(index-step, step, z)
+//     individual_left_in_step(index-step, step, z)
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-void tree_left_out(Forest* forest, UInt64 index, UInt64 z) {
-  UInt64* z = forest_left_z(forest, index-1, DEPTH-1);
+void individual_left(Individuals* individuals, UInt64 index, UInt64 z) {
+  UInt64* left_z = individuals_left_z(individuals, index-1, DEPTH-1);
   UInt64 step = 1;
   UInt depth = DEPTH-1;
 
+  // Find interval containing suitable individuals
   while (1) {
-    // If at first tree, done
+    // If at first individual, done
     if (index == 0) {
-      ...
+      abort(); // ...
     }
 
     // While on step size boundary, increase step size
@@ -221,61 +232,69 @@ void tree_left_out(Forest* forest, UInt64 index, UInt64 z) {
         depth -= 1;
       } while (step >= CLUSTER);
 
-      z = forest_left_z(forest, index-1, depth);
+      left_z = individuals_left_z(individuals, index-1, depth);
     }
 
-    // If previous interval contains tree, locate tree in it
-    if (z[(index-step)%CLUSTER] <= z)
-      return tree_left_in(forest, index, step, depth, z);
+    // If previous interval contains individual, locate individual in it
+    if (left_z[(index-step)%CLUSTER] <= z)
+      break;
 
-    // Previous interval doesn't contain tree, skip over it
+    // Previous interval doesn't contain individual, skip over it
     index -= step;
   }
-}
 
-void tree_left_in(Forest* forest, UInt64 index, UInt64 step, UInt depth, UInt64 z) {
-  UInt64* z = forest_left_z(forest, index-1, DEPTH-1);
-
-  while (1) {
-    // If at single tree, done
+  // Find first suitable individual in containing interval
+  while(1) {
+    // If at single individual, done
     if (step == 1) {
       if (depth == DEPTH-1) {
-        ... index-1 ...
+        abort(); // ... index-1 ...
       }
 
       index *= CLUSTER;
       step *= CLUSTER;
       depth += 1;
 
-      z = forest_left_z(forest, index-1, depth);
+      left_z = individuals_left_z(individuals, index-1, depth);
     }
 
     // Decrease step size to divide into sub intervals
     step /= 2;
 
-    // If previous sub interval doesn't contain tree, skip over it
-    if (z[(index-step)%CLUSTER > z)
+    // If previous sub interval doesn't contain individual, skip over it
+    if (left_z[(index-step)%CLUSTER] > z)
       index -= step;
   }
 }
 
 
-
 //---------------------------------------------------------------------------------------------------------------//
+// z_left: (UInt64, UInt64, UInt64,UInt64) -> ()
+//
 // Greatest Z value lesser than a given Z value falling into a target box.
 //
 // This routine works by treating the given Z value as an upper bound and reducing it to the point the desired
 // Z value (the greatest one falling into the target box and lesser than the given value) is identified.
 //
 // The given Z value is reduced by checking the largest 2x2-aligned box immediately proceeding it for overlap
-// with the target region.  If no overlap is found, the box is skipped by reducing the given Z value to the start
-// of the box and repeating the procedure.  If the given Z value reaches zero, then there is no lesser Z value.
+// with the target region.  If no overlap is found, the box is skipped by reducing the given Z value to the
+// start of the box and repeating the procedure.  If the given Z value reaches zero, then there is no lesser Z
+// value.
 //
 // If overlap is found, the overlapping box is broken down into 2x2 boxes.  Each 2x2 box without overlap is
 // skipped by reducing the given Z value start of it.  Once an overlapping box is found, the procedure is
 // repeated.
 //
 // The functional pseudo-code follows.
+//
+// z_left_out:      (UInt64, UInt64, UInt64,UInt64) -> (UInt64)
+// z_left_out_size: (UInt64, UInt64, UInt64,UInt64) -> (UInt64)
+// z_left_out_step: (UInt64, UInt64, UInt64,UInt64) -> (UInt64)
+//
+// z_left_in_size: (UInt64, UInt64, UInt64,UInt64) -> (UInt64)
+// z_left_in_step: (UInt64, UInt64, UInt64,UInt64) -> (UInt64)
+//
+// z_overlap: (UInt64,UInt64, UInt64,UInt64) -> (Bool)
 //
 // z_left_out(z, step, box_ul_z,box_lr_z)
 //   // At first z point, done
@@ -327,12 +346,12 @@ void tree_left_in(Forest* forest, UInt64 index, UInt64 step, UInt depth, UInt64 
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-void z_left_out(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z) {
+void z_left(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z) {
   // Scan backwards with progressively larger boxes for overlap with target box
   while (1) {
     // At first z point, done
     if (z == 0) {
-      ...
+      abort(); // ...
     }
 
     // While on step size boundary, increase step size
@@ -345,19 +364,17 @@ void z_left_out(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z) {
 
     if ( (ul_z&X_MASK) <= (box_lr_z&X_MASK) && (lr_z&X_MASK) >= (box_ul_z&X_MASK) &&
          (ul_z&Y_MASK) <= (box_lr_z&Y_MASK) && (lr_z&Y_MASK) >= (box_ul_z&Y_MASK) )
-      return z_left_in(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z);
+      break;
 
     // Previous box doesn't overlap with target box, skip over it
     z = ul_z;
   }
-}
 
-void z_left_in(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z) {
   // Scan progressively smaller boxes in overlapping box for first point in target box
   while (1) {
     // At single point, done
     if (step == 1) {
-      ... z-1 ...
+      abort(); // ... z-1 ...
     }
 
     // Decrease step size to divide into sub boxes
