@@ -117,6 +117,77 @@ struct _Forest {
 
 
 //---------------------------------------------------------------------------------------------------------------//
+// z_xy: (UInt32, UInt32) -> (UInt64)
+//
+// Put given X and Y values in Z format (interleave the X and Y bits -- y_n,x_n,...,y_0,x_0).
+//
+// The functional pseudo-code follows.
+//
+// z_xy(x,y)
+//   // Non-zero x or y, directly handle bottom x and y bits and obtain rest by recursion
+//   x > 0 || y > 0:
+//     z_xy(x/2,y/2)*4 + (y%2)*2 + (x%2)
+//   // Zero x and y, done
+//   otherwise:
+//     0
+//
+// Using this code the generate direct conversion tables for 4bit values, and then directly converting 32bit
+// values by treating them as a sequence of eight 4bit values gives the following code.
+//
+UInt64 z_xy(UInt32 x, UInt32 y) {
+  static const uint8_t z_table[] = {
+    [0x00]=0x00, [0x01]=0x01, [0x02]=0x04, [0x03]=0x05, [0x04]=0x10, [0x05]=0x11, [0x06]=0x14, [0x07]=0x15,
+    [0x08]=0x40, [0x09]=0x41, [0x0a]=0x44, [0x0b]=0x45, [0x0c]=0x50, [0x0d]=0x51, [0x0e]=0x54, [0x0f]=0x55,
+    [0x10]=0x02, [0x11]=0x03, [0x12]=0x06, [0x13]=0x07, [0x14]=0x12, [0x15]=0x13, [0x16]=0x16, [0x17]=0x17,
+    [0x18]=0x42, [0x19]=0x43, [0x1a]=0x46, [0x1b]=0x47, [0x1c]=0x52, [0x1d]=0x53, [0x1e]=0x56, [0x1f]=0x57,
+    [0x20]=0x08, [0x21]=0x09, [0x22]=0x0c, [0x23]=0x0d, [0x24]=0x18, [0x25]=0x19, [0x26]=0x1c, [0x27]=0x1d,
+    [0x28]=0x48, [0x29]=0x49, [0x2a]=0x4c, [0x2b]=0x4d, [0x2c]=0x58, [0x2d]=0x59, [0x2e]=0x5c, [0x2f]=0x5d,
+    [0x30]=0x0a, [0x31]=0x0b, [0x32]=0x0e, [0x33]=0x0f, [0x34]=0x1a, [0x35]=0x1b, [0x36]=0x1e, [0x37]=0x1f,
+    [0x38]=0x4a, [0x39]=0x4b, [0x3a]=0x4e, [0x3b]=0x4f, [0x3c]=0x5a, [0x3d]=0x5b, [0x3e]=0x5e, [0x3f]=0x5f,
+    [0x40]=0x20, [0x41]=0x21, [0x42]=0x24, [0x43]=0x25, [0x44]=0x30, [0x45]=0x31, [0x46]=0x34, [0x47]=0x35,
+    [0x48]=0x60, [0x49]=0x61, [0x4a]=0x64, [0x4b]=0x65, [0x4c]=0x70, [0x4d]=0x71, [0x4e]=0x74, [0x4f]=0x75,
+    [0x50]=0x22, [0x51]=0x23, [0x52]=0x26, [0x53]=0x27, [0x54]=0x32, [0x55]=0x33, [0x56]=0x36, [0x57]=0x37,
+    [0x58]=0x62, [0x59]=0x63, [0x5a]=0x66, [0x5b]=0x67, [0x5c]=0x72, [0x5d]=0x73, [0x5e]=0x76, [0x5f]=0x77,
+    [0x60]=0x28, [0x61]=0x29, [0x62]=0x2c, [0x63]=0x2d, [0x64]=0x38, [0x65]=0x39, [0x66]=0x3c, [0x67]=0x3d,
+    [0x68]=0x68, [0x69]=0x69, [0x6a]=0x6c, [0x6b]=0x6d, [0x6c]=0x78, [0x6d]=0x79, [0x6e]=0x7c, [0x6f]=0x7d,
+    [0x70]=0x2a, [0x71]=0x2b, [0x72]=0x2e, [0x73]=0x2f, [0x74]=0x3a, [0x75]=0x3b, [0x76]=0x3e, [0x77]=0x3f,
+    [0x78]=0x6a, [0x79]=0x6b, [0x7a]=0x6e, [0x7b]=0x6f, [0x7c]=0x7a, [0x7d]=0x7b, [0x7e]=0x7e, [0x7f]=0x7f,
+    [0x80]=0x80, [0x81]=0x81, [0x82]=0x84, [0x83]=0x85, [0x84]=0x90, [0x85]=0x91, [0x86]=0x94, [0x87]=0x95,
+    [0x88]=0xc0, [0x89]=0xc1, [0x8a]=0xc4, [0x8b]=0xc5, [0x8c]=0xd0, [0x8d]=0xd1, [0x8e]=0xd4, [0x8f]=0xd5,
+    [0x90]=0x82, [0x91]=0x83, [0x92]=0x86, [0x93]=0x87, [0x94]=0x92, [0x95]=0x93, [0x96]=0x96, [0x97]=0x97,
+    [0x98]=0xc2, [0x99]=0xc3, [0x9a]=0xc6, [0x9b]=0xc7, [0x9c]=0xd2, [0x9d]=0xd3, [0x9e]=0xd6, [0x9f]=0xd7,
+    [0xa0]=0x88, [0xa1]=0x89, [0xa2]=0x8c, [0xa3]=0x8d, [0xa4]=0x98, [0xa5]=0x99, [0xa6]=0x9c, [0xa7]=0x9d,
+    [0xa8]=0xc8, [0xa9]=0xc9, [0xaa]=0xcc, [0xab]=0xcd, [0xac]=0xd8, [0xad]=0xd9, [0xae]=0xdc, [0xaf]=0xdd,
+    [0xb0]=0x8a, [0xb1]=0x8b, [0xb2]=0x8e, [0xb3]=0x8f, [0xb4]=0x9a, [0xb5]=0x9b, [0xb6]=0x9e, [0xb7]=0x9f,
+    [0xb8]=0xca, [0xb9]=0xcb, [0xba]=0xce, [0xbb]=0xcf, [0xbc]=0xda, [0xbd]=0xdb, [0xbe]=0xde, [0xbf]=0xdf,
+    [0xc0]=0xa0, [0xc1]=0xa1, [0xc2]=0xa4, [0xc3]=0xa5, [0xc4]=0xb0, [0xc5]=0xb1, [0xc6]=0xb4, [0xc7]=0xb5,
+    [0xc8]=0xe0, [0xc9]=0xe1, [0xca]=0xe4, [0xcb]=0xe5, [0xcc]=0xf0, [0xcd]=0xf1, [0xce]=0xf4, [0xcf]=0xf5,
+    [0xd0]=0xa2, [0xd1]=0xa3, [0xd2]=0xa6, [0xd3]=0xa7, [0xd4]=0xb2, [0xd5]=0xb3, [0xd6]=0xb6, [0xd7]=0xb7,
+    [0xd8]=0xe2, [0xd9]=0xe3, [0xda]=0xe6, [0xdb]=0xe7, [0xdc]=0xf2, [0xdd]=0xf3, [0xde]=0xf6, [0xdf]=0xf7,
+    [0xe0]=0xa8, [0xe1]=0xa9, [0xe2]=0xac, [0xe3]=0xad, [0xe4]=0xb8, [0xe5]=0xb9, [0xe6]=0xbc, [0xe7]=0xbd,
+    [0xe8]=0xe8, [0xe9]=0xe9, [0xea]=0xec, [0xeb]=0xed, [0xec]=0xf8, [0xed]=0xf9, [0xee]=0xfc, [0xef]=0xfd,
+    [0xf0]=0xaa, [0xf1]=0xab, [0xf2]=0xae, [0xf3]=0xaf, [0xf4]=0xba, [0xf5]=0xbb, [0xf6]=0xbe, [0xf7]=0xbf,
+    [0xf8]=0xea, [0xf9]=0xeb, [0xfa]=0xee, [0xfb]=0xef, [0xfc]=0xfa, [0xfd]=0xfb, [0xfe]=0xfe, [0xff]=0xff
+  };
+  uint8_t part[8];
+
+  part[0] = z_table[(uint8_t)(y >>  0 & 0x0f) << 4 | (uint8_t)(x >>  0 & 0x0f)];
+  part[1] = z_table[(uint8_t)(y >>  4 & 0x0f) << 4 | (uint8_t)(x >>  4 & 0x0f)];
+  part[2] = z_table[(uint8_t)(y >>  8 & 0x0f) << 4 | (uint8_t)(x >>  8 & 0x0f)];
+  part[3] = z_table[(uint8_t)(y >> 12 & 0x0f) << 4 | (uint8_t)(x >> 12 & 0x0f)];
+  part[4] = z_table[(uint8_t)(y >> 16 & 0x0f) << 4 | (uint8_t)(x >> 16 & 0x0f)];
+  part[5] = z_table[(uint8_t)(y >> 20 & 0x0f) << 4 | (uint8_t)(x >> 20 & 0x0f)];
+  part[6] = z_table[(uint8_t)(y >> 24 & 0x0f) << 4 | (uint8_t)(x >> 24 & 0x0f)];
+  part[7] = z_table[(uint8_t)(y >> 28 & 0x0f) << 4 | (uint8_t)(x >> 28 & 0x0f)];
+
+  return ( (uint64_t)(part[0]) <<  0 | (uint64_t)(part[1]) <<  8 |
+           (uint64_t)(part[2]) << 16 | (uint64_t)(part[3]) << 24 |
+           (uint64_t)(part[4]) << 32 | (uint64_t)(part[5]) << 40 |
+           (uint64_t)(part[6]) << 48 | (uint64_t)(part[7]) << 56 );
+}
+
+
+//---------------------------------------------------------------------------------------------------------------//
 // indices_reverse: (UInt64, UInt) -> (UInt64)
 //
 // For given index up to given depth, reverse the entries.
@@ -211,6 +282,72 @@ Level individuals_level(Individuals* individuals, UInt64 index, UInt depth) {
 Level1* individuals_level1(Individuals* individuals, UInt64 index) {
   // Use general routine to get level1
   return individuals_level(individuals, index, DEPTH-1).level1;
+}
+
+
+// individuals_append: (Individuals) -> (Level1)
+//
+// Add a new Level1 onto end of individuals (assumes number%CLUSTER == 0).
+//
+// The functional pseudo-code follows.
+//
+// individuals_append: (Individuals) -> (Individuals)
+// individuals_existing: (Level, UIn64, UInt) -> (Level)
+// individuals_add: (UInt) -> (Level)
+//
+// individuals_append(individuals)
+//   let indices = indices_reverse(number(individuals), DEPTH)
+//   // Entries below this one, descend into them
+//   indices > 0:
+//     individuals { .level = individuals_existing(level(individuals)[indices%CLUSTER], indices/CLUSTER, DEPTH-1) }
+//   // No entries below this one, add them
+//   otherwise:
+//     individuals { .level = individuals_add(DEPTH) }
+//
+// individuals_walk(level, indices, depth)
+//   // Entries below this one, descend into them
+//   indices > 0:
+//     individuals_existing(level(level0(level))[indicies%CLUSTER], indicies/CLUSTER, depth-1)
+//   // No entries below this one, add them
+//   otherwise:
+//     individuals_add(depth)
+//
+// individuals_add(depth)
+//   // Level0 depth, add Level0 and continue down
+//   depth > 0:
+//     level(level0() { .level[0] = individuals_add(depth-1) })
+//   // Level1 depth, add Level1 and done
+//   otherwise:
+//     level(level1())
+//
+// Flattening the recursive calls with loops this becomes the following code.
+//
+Level1* individuals_append(Individuals* individuals) {
+  UInt64 indices = indices_reverse(individuals->number, DEPTH);
+  Level* level = &individuals->level;
+  UInt depth = DEPTH;
+
+  // While existing intermediate Level0 entries, descend into them
+  while (indices > 0) {
+    level = &level->level0->level[indices%CLUSTER];
+    indices /= CLUSTER;
+    depth -= 1;
+  }
+
+  // While needing intermediate Level0 entries, add them
+  while (depth > 1) {
+    if ( !(level->level0 = malloc(sizeof(Level0))) )
+      die_errno(1, "unable to allocate %tu bytes for new Level0", sizeof(Level0));
+    level = &level->level0->level[indices%CLUSTER];
+    indices /= CLUSTER;
+    depth -= 1;
+  }
+
+  // Add final Level1 entry
+  if ( !(level->level1 = malloc(sizeof(Level1))) )
+    die_errno(1, "unable to allocate %tu bytes for new Level1", sizeof(Level1));
+
+  return level->level1;
 }
 
 
@@ -774,6 +911,208 @@ void vdie(int value, char* format, va_list args) {
 
   // Quit with given value
   exit(value);
+}
+
+
+//---------------------------------------------------------------------------------------------------------------//
+// save: (Forest*, char*) -> ()
+// save_forest: (FILE*, Forest*, char*) -> ()
+//
+// Create/truncate the given file name and serialize the given forest to it.
+//
+void save(Forest* forest, char* name) {
+  // Wrap file handle based routine with opening and close details
+  FILE* file;
+
+  if ( !(file = fopen(name,"w")) )
+    die_errno(1, "unable to create/truncate \"%s\" for writing", name);
+  save_forest(file, forest, name);
+  if (fclose(file))
+    die_errno(1, "unable to close \"%s\"", name);
+}
+
+static void save_forest(FILE* file, Forest* forest, char* name) {
+  // Save forest level data
+  if ( fprintf(file, "FOREST %d %d %g %g\n",
+               forest->periodic_x, forest->periodic_y,
+               forest->size_x, forest->size_y) < 0 )
+    die_errno(1, "an error occured while writing to \"%s\"", name);
+
+  // Save varieties
+  Varieties* varieties = &forest->varieties;
+
+  for (UInt varieties_iterator=0; varieties_iterator<varieties->number; varieties_iterator+=1) {
+    // Save variety
+    Variety *variety = &varieties->varieties[varieties_iterator];
+
+    if ( fprintf(file, "VARIETY %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+                 variety->height_mature, variety->height_maximum,
+                 variety->growth_rate, variety->growth_competition_lower, variety->growth_competition_higher,
+                 variety->mortality_initial, variety->mortality_decay, variety->mortality_intrinsic,
+                 variety->fecundity_maximum,
+                 variety->masting_time, variety->masting_phase,
+                 variety->dispersal_probability_short, variety->dispersal_mode_short, variety->dispersal_mode_long)
+         < 0 )
+      die_errno(1, "an error occured while writing to \"%s\"", name);
+
+    // Save individuals
+    Individuals* individuals = &variety->individuals;
+    Level1* level1;
+
+    for (UInt64 individuals_iterator=0; individuals_iterator<individuals->number; individuals_iterator+=1) {
+      // Switch levels if required
+      if (individuals_iterator%CLUSTER == 0)
+        level1 = individuals_level1(individuals, individuals_iterator);
+
+      // Save individual
+      if ( fprintf(file, "INDIVIDUAL %g %g %g\n",
+                   level1->individual[individuals_iterator%CLUSTER].x,
+                   level1->individual[individuals_iterator%CLUSTER].y,
+                   level1->individual[individuals_iterator%CLUSTER].height) < 0 )
+        die_errno(1, "an error occured while writing to \"%s\"", name);
+    }
+  }
+}
+
+
+//---------------------------------------------------------------------------------------------------------------//
+// load: (char*) -> (Forest*)
+// load_forest: (FILE*, char*) -> (Forest*)
+//
+// Read the given file and restore a serialized forest from it.
+//
+Forest* load(char* name) {
+  Forest* forest;
+  FILE* file;
+
+  if ( !(file = fopen(name,"r")) )
+    die_errno(1, "unable to open \"%s\" for reading", name);
+  forest = load_forest(file, name);
+  if (fclose(file))
+    die_errno(1, "unable to close \"%s\"", name);
+
+  return forest;
+}
+
+
+static Forest* load_forest(FILE* file, char* name) {
+  UInt64 line = 1;
+  int records;
+
+  // Load forest level data
+  Forest forest;
+  UInt periodic_x, periodic_y;
+
+  records = fscanf(file, "FOREST %u %u %g %g\n",
+                   &periodic_x, &periodic_y,
+                   &forest.size_x, &forest.size_y);
+  forest.scale = 0x1p32/fmax(forest.size_x,forest.size_y);
+  forest.periodic_x = periodic_x;
+  forest.periodic_y = periodic_y;
+  if ( ferror(file) )
+    die_errno(1, "an error occured while reading from \"%s\"", name);
+  if ( records < 4 )
+    die(1, "problem parsing \"%s\":%"PRIu64": expecting \"FOREST\" "
+        "PERIODIC_X PERIODIC_Y "
+        "SIZE_X SIZE_Y", name, line);
+  else
+    line += 1;
+
+  // Load varieties
+  Varieties varieties = { .number = 0, .varieties = 0 };
+
+  while (1) {
+    // Load variety
+    Variety variety;
+
+    records = fscanf(file, "VARIETY %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+                     &variety.height_mature, &variety.height_maximum,
+                     &variety.growth_rate, &variety.growth_competition_lower, &variety.growth_competition_higher,
+                     &variety.mortality_initial, &variety.mortality_decay, &variety.mortality_intrinsic,
+                     &variety.fecundity_maximum,
+                     &variety.masting_time, &variety.masting_phase,
+                     &variety.dispersal_probability_short,
+                     &variety.dispersal_mode_short, &variety.dispersal_mode_long);
+    if ( ferror(file) )
+      die_errno(1, "an error occured while reading from \"%s\"", name);
+    else if (records == 0 || records == EOF)
+      break;
+    else if (records < 14)
+      die(1, "problem parsing \"%s\":%"PRIu64": expecting \"VARIETY\" "
+          "HEIGHT_MATURE HEIGHT_MAXIMUM "
+          "GROWTH_RATE VARIETY_GROWTH_COMPETITION_LOWER VARIETY_GROWTH_COMPETITION_HIGHER "
+          "MORTALITY_INITIAL MORTALITY_DECAY MORTALITY_INTRINSIC "
+          "FECUNDITY_MAXIMUM "
+          "MASTING_TIME MASTING_PHASE "
+          "DISPERSAL_PROBABILITY_SHORT DISPERSAL_MODE_SHORT DISPERSAL_MODE_LONG", name, line);
+    else
+      line += 1;
+
+    // Load individuals
+    Individuals individuals = { .number = 0 };
+
+    while (1) {
+      // Load individual
+      Individual individual;
+      Level1* level1;
+
+      records = fscanf(file, "INDIVIDUAL %g %g %g\n",
+                       &individual.x, &individual.y, &individual.height);
+      if ( ferror(file) )
+        die_errno(1, "an error occured while reading from \"%s\"", name);
+      else if (records == 0 || records == EOF)
+        break;
+      else if (records < 3)
+        die(1, "problem parsing \"%s\":%"PRIu64": expecting \"INDIVIDUAL\" "
+            "X Y "
+            "HEIGHT", name, line);
+      else if (individual.x < 0 || individual.x >= forest.size_x)
+        die(1, "problem parsing \"%s\":%"PRIu64": expecting \"INDIVIDUAL\" "
+            "the constraint 0 <= X=%g < SIZE_X=%g does not hold", name, line, individual.x, forest.size_x);
+      else if (individual.y < 0 || individual.y >= forest.size_y)
+        die(1, "problem parsing \"%s\":%"PRIu64": expecting \"INDIVIDUAL\" "
+            "the constraint 0 <= Y=%g < SIZE_Y=%g does not hold", name, line, individual.y, forest.size_y);
+      else if (individual.height < 0)
+        die(1, "problem parsing \"%s\":%"PRIu64": expecting \"INDIVIDUAL\" "
+            "the constraint 0 <= HEIGHT=%g", name, line, individual.height);
+      else
+        line += 1;
+
+      // Add individual
+      if ( !(individuals.number%CLUSTER) )
+        level1 = individuals_append(&individuals);
+
+      level1->z[individuals.number%CLUSTER] = z_xy((UInt32)(forest.scale*individual.x),
+                                                   (UInt32)(forest.scale*individual.y));
+      level1->individual[individuals.number%CLUSTER] = individual;
+      individuals.number += 1;
+    }
+
+    // Add individuals
+    variety.individuals = individuals;
+
+    // Add variety (memory is allocated in chunks of 2^n-1: 0,1,3,7,15,...)
+    if ( !(varieties.number & (varieties.number+1)) )  // Need to a reallocate if (varieties.number+1) == 2^n
+      if ( !(varieties.varieties = realloc(varieties.varieties, sizeof(Variety)*((varieties.number+1)*2-1))) )
+        die_errno(1, "unable to grow varieties allocation to %tu bytes",
+                  sizeof(Variety)*((varieties.number+1)*2-1));
+    varieties.varieties[varieties.number] = variety;
+    varieties.number += 1;
+  }
+
+  // Add varieties (memory is shrunk to an exact fit)
+  if ( !(varieties.varieties = realloc(varieties.varieties, sizeof(Variety)*varieties.number)) )
+    die_errno(1, "unable to shrink varieties allocation to %tu bytes", sizeof(Variety)*varieties.number);
+  forest.varieties = varieties;
+
+  // Allocate forest for return
+  Forest* forest_allocated;
+
+  if ( !(forest_allocated = malloc(sizeof(Forest))) )
+    die_errno(1, "unable to allocate %tu bytes for new Forest", sizeof(Forest));
+  *forest_allocated = forest;
+
+  return forest_allocated;
 }
 
 
