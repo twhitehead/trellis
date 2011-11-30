@@ -1,4 +1,30 @@
+//---------------------------------------------------------------------------------------------------------------//
+// Copyright (C) 2011 Tyson Whitehead
+//
+// This code is free software; you can redistribute it and/or modify it under the terms of the GNU General
+// Public License as published by the Free Software Foundation; either version 2, or (at your option) any later
+// version.
+//
+//---------------------------------------------------------------------------------------------------------------//
+
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200112
+#endif
+
+#include <stdbool.h>
 #include <stdint.h>
+#include <stdarg.h>
+
+#include <inttypes.h>
+
+#include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#include <string.h>
+
+#include <math.h>
+
 
 // Split 64b Z space into components (require CLUSTER=2^N for some N and CLUSTER^DEPTH = 2^64)
 
@@ -41,6 +67,44 @@ typedef union _Level Level;
 typedef struct _Level0 Level0;
 typedef struct _Level1 Level1;
 typedef struct _Individual Individual;
+
+
+// Error reporting
+void (__attribute__((format (printf,2,3))) die_errno)(int value, char* format, ...);
+void vdie_errno(int value, char* format, va_list args);
+
+void (__attribute__((format (printf,3,4))) die_errno_explicit)(int errno_original, int value, char* format, ...);
+void vdie_errno_explicit(int errno_original, int value, char* format, va_list args);
+
+void (__attribute__((format (printf,2,3))) die)(int value, char* format, ...);
+void vdie(int value, char* format, va_list args);
+
+// Z conversion function
+UInt64 z_xy(UInt32 x, UInt32 y);
+
+// Helpers for dealing with the individuals level hierarchy
+static UInt64 indices_reverse(UInt64 index, UInt depth);
+
+static Level individuals_level(Individuals* individuals, UInt64 index, UInt depth);
+static Level1* individuals_level1(Individuals* individuals, UInt64 index);
+static UInt64* individuals_left_z(Individuals *individuals, UInt64 index, UInt depth);
+
+// Next individual in range
+void individual_left(Individuals* individuals, UInt64 index, UInt64 z);
+
+// Next Z in bounding box
+void z_left(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z);
+
+// Sorting individuals by Z
+void sort(Individuals* individuals);
+static void sort_both(Individuals* individuals, UInt64 left_start,UInt64 right_start, UInt64 pivot_z);
+
+// Saving forest structure
+void save(Forest* forest, char* name);
+static void save_forest(FILE* file, Forest* forest, char* name);
+
+Forest* load(char* name);
+static Forest* load_forest(FILE* file, char* name);
 
 
 //---------------------------------------------------------------------------------------------------------------//
