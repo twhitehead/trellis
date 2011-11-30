@@ -19,7 +19,6 @@
 
 //---------------------------------------------------------------------------------------------------------------//
 // Single upper case to distinguish types
-
 typedef unsigned int UInt;
 typedef uint32_t UInt32;
 typedef uint64_t UInt64;
@@ -29,114 +28,231 @@ typedef int32_t Int32;
 typedef int64_t Int64;
 
 typedef struct _Forest Forest;
-typedef struct _Level Level;
-typedef struct _Groves Groves;
-typedef struct _Grove Grove;
+
+typedef struct _Varieties Varieties;
+typedef struct _Variety Variety;
+
+typedef struct _Individuals Individuals;
+typedef union _Level Level;
+typedef struct _Level0 Level0;
+typedef struct _Level1 Level1;
+typedef struct _Individual Individual;
 
 
 //---------------------------------------------------------------------------------------------------------------//
-// Basic forest structure
+// Individuals
+struct _Individual {
+  float x;
+  float y;
+  float height;
+};
 
 union _Level {
-  Groves* groves;
-  Grove* grove;
+  Level0* level0;
+  Level1* level1;
 };
 
-struct _Forest {
-  UInt64 size;
-  Level* level;
+struct _Level1 {
+  UInt64 z[CLUSTER];
+  Individual individual[CLUSTER];
 };
 
-struct _Groves {
+struct _Level0 {
   UInt64 left_z[CLUSTER];
   UInt64 right_z[CLUSTER];
-  Level* level[CLUSTER];
+  Level level[CLUSTER];
 };
 
-struct _Grove {
-  UInt64 z[CLUSTER];
+struct _Individuals {
+  UInt64 number;
+  Level level;
+};
+
+// Varieties (individuals grouped by model parameters)
+struct _Variety {
+  float height_mature;
+  float height_maximum;
+
+  float growth_rate;
+  float growth_competition_lower;
+  float growth_competition_higher;
+
+  float mortality_initial;
+  float mortality_decay;
+  float mortality_intrinsic;
+
+  float fecundity_maximum;
+
+  float masting_time;
+  float masting_phase;
+
+  float dispersal_probability_short;
+  float dispersal_mode_short;
+  float dispersal_mode_long;
+
+  Individuals individuals;
+};
+
+struct _Varieties {
+  UInt number;
+  Variety* varieties;
+};
+
+// Forest (all individuals and global model parameters)
+struct _Forest {
+  float scale;
+
+  bool periodic_x;
+  bool periodic_y;
+
+  float size_x;
+  float size_y;
+
+  Varieties varieties;
 };
 
 
 //---------------------------------------------------------------------------------------------------------------//
+// indices_reverse: (UInt64, UInt) -> (UInt64)
+//
 // For given index up to given depth, reverse the entries.
 //
-// index_reverse(index, depth)
-//   index_reverse_shift(index, 0, depth)
+// This routine works by treating the index as a collection of CLUSTER sized indicies.  Shifting the indices off
+// of one integer and onto another reverses their order (same as reversing a list).
 //
-// index_reverse_shift(index_forward, index_reverse, depth)
-//   depth > 0:
-//     index_reverse_shift(index_forward/CLUSTER, index_reverse*CLUSTER+index_forward%CLUSTER, depth-1)
+// The functional pseudo-code follows.
+//
+// indices_reverse: (UInt64, UInt) -> (UInt64)
+// indices_reverse_shift: (UInt64, UInt64, UInt) -> (UInt64)
+//
+// indices_reverse(indices, depth)
+//   // Start with everything in the forward indices and nothing in the reverse
+//   indices_reverse_shift(indicies, 0, depth)
+//
+// indices_reverse_shift(forward, reverse, number)
+//   // More chunks, shift next one from forward indices to reverse and recurse to handle rest
+//   number > 0:
+//     indices_reverse_shift(forward/CLUSTER, reverse*CLUSTER+forward%CLUSTER, number-1)
+//   // No more chunks, done
 //   otherwise:
-//     index_reverse
+//     indices_reverse
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-UInt64 index_reverse(UInt64 index, UInt depth) {
-  UInt64 index_forward = index;
-  UInt64 index_reverse = 0;
+UInt64 indices_reverse(UInt64 indices, UInt number) {
+  // For each level, shift the indices off the end of the one integer and onto the other
+  UInt64 forward = indices;
+  UInt64 reverse = 0;
 
-  for(UInt depth_iterator = depth; depth_iterator>0; depth_iterator-=1) {
-    index_reverse = index_reverse*CLUSTER + index_forward%CLUSTER;
-    index_forward /= CLUSTER;
+  for (UInt iterator=number; iterator>0; iterator-=1) {
+    reverse = reverse*CLUSTER + forward%CLUSTER;
+    forward /= CLUSTER;
   }
 
-  return index_reverse;
+  return reverse;
 }
 
 
+// individuals_level: (Individuals, UInt64, UInt) -> (Level)
+//
 // For given index up to given depth, return the level.
 //
-// forest_level(forest, index, depth)
-//   forest_level_walk(level(forest), index_reverse(index, depth), depth)
+// The functional pseudo-code follows.
 //
-// forest_level_walk(level, indexs, depth)
+// individuals_level: (Individuals, UInt64, UInt) -> (Level)
+// individuals_level_walk: (Level, UInt64, UInt) -> (Level)
+//
+// individuals_level(individuals, index, depth)
+//   // Start at top level with reversed index as a list of individual level indices in required order
+//   individuals_level_walk(level(individuals), indices_reverse(index), depth)
+//
+// individuals_level_walk(level, indices, depth)
+//   // Not at desired depth, use next porition of reversed indices to index next level and recurse
 //   depth > 0:
-//     forest_level_walk(level(groves(level))[indexs%CLUSTER], indexs/CLUSTER, depth-1)
+//     individuals_level_walk(level(level0(level))[indices%CLUSTER], indices/CLUSTER, depth-1)
+//   // At desire depth, done
 //   otherwise:
 //     level
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-Level* forest_level(Forest* forest, UInt64 index, UInt depth) {
-  UInt64 index_reversed = index_reverse(index, depth);
-  Level* level = forest->level;
+Level individuals_level(Individuals* individuals, UInt64 index, UInt depth) {
+  // Traverse each level up to the requested depth
+  UInt64 indices = indices_reverse(index, depth+1);
+  Level level = individuals->level;
 
-  for(UInt depth_iterator = 0; depth_iterator<DEPTH; depth_iterator+=1) {
-    level = level->level[depth_iterator%CLUSTER];
-    depth_iterator /= CLUSTER;
+  for (UInt depth_iterator=depth; depth_iterator>0; depth_iterator-=1) {
+    level = level.level0->level[indices%CLUSTER];
+    indices /= CLUSTER;
   }
 
   return level;
 }
 
 
-// For given index, return the grove
+// individuals_level1: (Individuals, UInt64) -> (Level1)
 //
-// forest_grove(forest, index)
-//   grove(forest_level(forest, index, DEPTH-1))
+// For given index, return the level1.
+//
+// The functional pseudo-code follows.
+//
+// individuals_level1: (Individuals, UInt64) -> (Level1)
+//
+// individuals_level1(individuals, index)
+//   // Use general routine to get level1
+//   level1(individuals_level(individuals, index, DEPTH-1))
 //
 // This becomes the following code.
 //
-Grove* forest_grove(Forest* forest, UInt64 index) {
-  return forest_level(forest, index, DEPTH-1);
+Level1* individuals_level1(Individuals* individuals, UInt64 index) {
+  // Use general routine to get level1
+  return individuals_level(individuals, index, DEPTH-1).level1;
 }
 
-// For given index up to given depth, return the left Z bound
+
+// individuals_z: (Individuals, UInt64) -> (UInt64)
 //
-// forest_left_z(forest, index, depth)
+// For given index, return the Z value.
+//
+// The functional pseudo-code follows.
+//
+// individuals_z: (Individuals, UInt64) -> (UInt64)
+//
+// individuals_z(individuals, index)
+//   z(individuals_level1(individuals, index))[index%CLUSTER]
+//
+// This becomes the following code.
+//
+UInt64 individuals_z(Individuals* individuals, UInt64 index) {
+  return individuals_level1(individuals, index)->z[index%CLUSTER];
+}
+
+
+// individuals_left_z: (Individuals, UInt64, UInt) -> (UInt64)
+//
+// For given index up to given depth, return the left Z bound array.
+//
+// The functional pseudo-code follows.
+//
+// individuals_left_z: (Individuals, UInt64, UInt) -> (UInt64)
+//
+// individuals_left_z(individuals, index, depth)
+//   // Given depth is Level0
 //   depth > DEPTH-1:
-//     z_left(groves(forest_level(forest, index, depth)))
+//     z_left(level0(individuals_level(individuals, index, depth)))
+//   // Given depth is Level1
 //   otherwise:
-//     z(grove(forest_level(forest, index, depth)))
+//     z(level1(individuals_level(individuals, index, depth)))
 //
 // This becomes the following code
 //
-UInt64* forest_left_z(Forest *forest, UInt64 index, UInt depth) {
-  if (depth > DEPTH-1)
-    return forest_level(forest, index, depth)->groves->left_z;
+UInt64* individuals_left_z(Individuals* individuals, UInt64 index, UInt depth) {
+  // If depth is a level0 level, the left Z bound array is left_z
+  if (depth < DEPTH-1)
+    return individuals_level(individuals, index, depth).level0->left_z;
+  // If depth is a level1 level, the left Z bound array is z (the actual Z values)
   else
-    return forest_level(forest, index, depth)->grove->z;
+    return individuals_level(individuals, index, depth).level1->z;
 }
 
 
