@@ -395,6 +395,10 @@ void z_left(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z) {
 }
 
 
+// sort: (Individuals) -> ()
+//
+// sort_both:  (Individuals, Int64,Int64, Int64) -> ()
+//
 // In-place pivot sort.
 //
 // This routine works by recursively choosing a pivot and breaking elements into a left subset <= pivot and a
@@ -404,56 +408,72 @@ void z_left(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z) {
 //
 // The functional pseudo-code follows.
 //
-// sort(trees, left_start,right_start, pivot_z)
+// sort: (Individuals) -> ()
+//
+// sort_both:  (Individuals, UInt64,UInt64, UInt64) -> ()
+// sort_left:  (Individuals, UInt64, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64) -> ()
+// sort_right: (Individuals, UInt64, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64) -> ()
+//
+// sort(individuals)
+//   // If there are individuals, use the centre element as initial pivot
+//   size(individuals) > 0:
+//     sort_both(individuals, 0,size(individuals)-1, individuals[size(individuals)/2])
+//   // If there are no individuals, done
+//   otherwise:
+//     0
+//
+// sort_both(individuals, left_start,right_start, pivot_z)
 //   // Split into left-hand side <= pivot and right-hand side > pivot
 //   let (left_end,  left_min, left_max,
-//        right_end, right_min,right_max) = sort_left(trees, pivot_z,
+//        right_end, right_min,right_max) = sort_left(individuals, pivot_z,
 //                                                    left_start, left_start,  UINT64_MAX,0,
 //                                                    right_start,right_start, UINT64_MAX,0)
 //   // Repeat on each of left-hand and right-hand if they have at least two different elements in them
 //       () = left_min  < left_max:
-//              sort(trees, left_start,left_end,    (left_min_z +left_max_z) /2)
+//              sort_both(individuals, left_start,left_end,    (left_min_z +left_max_z) /2)
 //       () = right_min < right_max:
-//              sort(trees, right_end, right_start, (right_min_z+right_max_z)/2)
+//              sort_both(individuals, right_end, right_start, (right_min_z+right_max_z)/2)
 //   // Done
 //   ()
 //
-// sort_left(trees, pivot_z,
+// sort_left(individuals, pivot_z,
 //           left_start, left_current,  left_min_z, left_max_z,
 //           right_start,right_current, right_min_z,right_max_z)
 //   // Left side hasn't reached right side, process element
 //   left_current <= right_current:
 //     // Element <= pivot, move it into left-hand side and continue left scan with next element
-//     trees[left_current] <= pivot_z:
-//       sort_left( trees, pivot_z,
-//                  left_start, left_current+1, min(trees[left], left_min_z), max(trees[left], left_max_z),
-//                  right_start,right_current,                   right_min_z,                  right_max_z)
+//     individuals[left_current] <= pivot_z:
+//       sort_left( individuals, pivot_z,
+//                  left_start, left_current+1,
+//                  min(individuals[left],left_min_z), max(individuals[left],left_max_z),
+//                  right_start,right_current, right_min_z,right_max_z)
 //     // Element > pivot, switch to right scan to find element to swap it with
-//     trees[left_current] >  pivot_z:
-//       sort_right(trees, pivot_z,
-//                  left_start, left_current,                    left_min_z,                   left_max_z,
-//                  right_start,right_current,                   right_min_z,                  right_max_z)
+//     individuals[left_current] >  pivot_z:
+//       sort_right(individuals, pivot_z,
+//                  left_start, left_current,  left_min_z, left_max_z,
+//                  right_start,right_current, right_min_z,right_max_z)
 //   // Left side reached right side, return sides
 //   otherwise:
 //     (right_current, left_min, left_max,
 //      left_current,  right_min,right_max)
 //
-// sort_right(trees, pivot_z,
+// sort_right(individuals, pivot_z,
 //            left_start, left_current,  left_min_z, left_max_z,
 //            right_start,right_current, right_min_z,right_max_z)
 //   // Right side hasn't reached left side, process element
 //   left_current <= right_current:
 //     // Element > pivot, move it into right-hand side and continue right scan with next element
-//     trees[right_current] > pivot_z:
-//       sort_right(trees, pivot_z,
-//                  left_start, left_current,                    left_min_z,                   left_max_z),
-//                  right_start,right_current-1,min(trees[right],right_min_z),max(trees[right],right_max_z))
+//     individuals[right_current] > pivot_z:
+//       sort_right(individuals, pivot_z,
+//                  left_start, left_current,    left_min_z,left_max_z,
+//                  right_start,right_current-1,
+//                  min(individuals[right],right_min_z),max(individuals[right],right_max_z))
 //     // Element <= pivot, swap it with > element found in left scan and switch back to left scan
-//     trees[left_current] <= pivot_z:
-//       swap(trees, left_current, right_current)
-//       sort_left( trees, pivot_z,
-//                  left_start, left_current,                    left_min_z,                   left_max_z,
-//                  right_start,right_current,                   right_min_z,                  right_max_z)
+//     individuals[left_current] <= pivot_z:
+//       swap(individuals, left_current, right_current)
+//       sort_left( individuals, pivot_z,
+//                  left_start, left_current,    left_min_z, left_max_z,
+//                  right_start,right_current,   right_min_z,right_max_z)
 //   // Reach side reached left side, return sides
 //   otherwise:
 //     (right_current, left_min, left_max,
@@ -461,12 +481,16 @@ void z_left(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z) {
 //
 // Flattening the recursive calls with do loops this becomes the following code.
 //
-void sort(Forest* forest) {
-  // Use centre element for initial pivot
-  sort_both(forest, 0,forest->size-1, forest_z(forest, forest->size/2));
+void sort(Individuals* individuals) {
+  // If there are individuals, use the centre element for initial pivot
+  if (individuals->number)
+    return sort_both(individuals, 0,individuals->number-1, individuals_z(individuals, individuals->number/2));
+  // If there are no individuals, done
+  else
+    return;
 }
 
-void sort_both(Forest* forest, UInt64 left_start,UInt64 right_start, UInt64 pivot_z) {
+static void sort_both(Individuals* individuals, UInt64 left_start,UInt64 right_start, UInt64 pivot_z) {
   UInt64 left_current = left_start;
   UInt64 left_min_z = UINT64_MAX;
   UInt64 left_max_z = 0;
@@ -475,8 +499,8 @@ void sort_both(Forest* forest, UInt64 left_start,UInt64 right_start, UInt64 pivo
   UInt64 right_min_z = UINT64_MAX;
   UInt64 right_max_z = 0;
 
-  Grove* left_grove = forest_grove(forest, left_current);
-  Grove* right_grove = forest_grove(forest, right_current);
+  Level1* left_level1 = individuals_level1(individuals, left_current);
+  Level1* right_level1 = individuals_level1(individuals, right_current);
 
   // Sweep to centre splitting into left <= pivot and right > pivot by swaping left > pivot and right <= pivot
   while (1) {
@@ -485,18 +509,18 @@ void sort_both(Forest* forest, UInt64 left_start,UInt64 right_start, UInt64 pivo
 
     // Find element from left > pivot
     while (left_current <= right_current) {
-      left_z = left_grove->z[left_current%CLUSTER];
+      left_z = left_level1->z[left_current%CLUSTER];
 
       // No element found, move to next and repeat
       if (left_z <= pivot_z) {
         // Update left min and max for new left <= pivot element
-        left_min_z = min(left_min_z,left_z);
-        left_max_z = max(left_z,left_max_z);
+        left_min_z = left_min_z <= left_z ? left_min_z : left_z;
+        left_max_z = left_max_z >= left_z ? left_max_z : left_z;
 
         // Advance to next possible left element
         left_current += 1;
         if (left_current%CLUSTER == 0)
-          left_grove = forest_grove(forest, left_current);
+          left_level1 = individuals_level1(individuals, left_current);
       }
       // Element found, break
       else
@@ -505,18 +529,18 @@ void sort_both(Forest* forest, UInt64 left_start,UInt64 right_start, UInt64 pivo
 
     // Find element from right <= pivot
     while (left_current <= right_current) {
-      right_z = right_grove->z[right_current%CLUSTER];
+      right_z = right_level1->z[right_current%CLUSTER];
 
       // No element found, move to next and repeat
       if (right_z > pivot_z) {
         // Update right min and max for new right > pivot element
-        right_min_z = min(right_min_z,right_z);
-        right_max_z = max(right_z,right_max_z);
+        right_min_z = right_min_z <= right_z ? right_min_z : right_z;
+        right_max_z = right_max_z >= right_z ? right_max_z : right_z;
 
         // Advance to next possible right element
         right_current -= 1;
         if (right_current%CLUSTER == CLUSTER-1)
-          right_grove = forest_grove(forest, right_current);
+          right_level1 = individuals_level1(individuals, right_current);
       }
       // Element found, break
       else
@@ -525,8 +549,14 @@ void sort_both(Forest* forest, UInt64 left_start,UInt64 right_start, UInt64 pivo
 
     // Not at centre, left > pivot and right <= pivot elements found, swap them
     if (left_current <= right_current) {
-      left_grove->z[left_current%CLUSTER] = right_z;
-      right_grove->z[right_current%CLUSTER] = left_z;
+      left_level1->z[left_current%CLUSTER] = right_z;
+      right_level1->z[right_current%CLUSTER] = left_z;
+
+      Individual left_individual = left_level1->individual[left_current%CLUSTER];
+      Individual right_individual = right_level1->individual[right_current%CLUSTER];
+
+      left_level1->individual[left_current%CLUSTER] = right_individual;
+      right_level1->individual[right_current%CLUSTER] = left_individual;
     }
     // At centre, seperated into left <= pivot and right > pivot subsets, break
     else
@@ -535,9 +565,11 @@ void sort_both(Forest* forest, UInt64 left_start,UInt64 right_start, UInt64 pivo
 
   // Sort new left <= pivot and right > pivot subsets
   if (left_min_z  < left_max_z)
-    sort_both(forest, left_start,  right_current, left_min_z /2+left_max_z /2 + (left_min_z %2+left_max_z %2)/2);
+    sort_both(individuals, left_start,  right_current,
+              left_min_z /2+left_max_z /2 + (left_min_z %2+left_max_z %2)/2);
   if (right_min_z < right_max_z)
-    sort_both(forest, left_current,right_start,   right_min_z/2+right_max_z/2 + (right_min_z%2+right_max_z%2)/2);
+    sort_both(individuals, left_current,right_start,
+              right_min_z/2+right_max_z/2 + (right_min_z%2+right_max_z%2)/2);
 }
 
 
