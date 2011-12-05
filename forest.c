@@ -57,16 +57,17 @@ typedef int Int;
 typedef int32_t Int32;
 typedef int64_t Int64;
 
-typedef struct _Forest Forest;
-
-typedef struct _Varieties Varieties;
+typedef struct _Space Space;
 typedef struct _Variety Variety;
-
-typedef struct _Individuals Individuals;
-typedef union _Level Level;
-typedef struct _Level0 Level0;
-typedef struct _Level1 Level1;
 typedef struct _Individual Individual;
+
+typedef struct _SSpace* SSpace;
+typedef struct _SVariety SVariety;
+typedef struct _SVarieties* SVarieties;
+typedef struct _SIndividuals* SIndividuals;
+typedef union _SIndividuals_ SIndividuals_;
+typedef struct _SIndividuals0* SIndividuals0;
+typedef struct _SIndividuals1* SIndividuals1;
 
 
 // Error reporting
@@ -85,58 +86,40 @@ UInt64 z_xy(UInt32 x, UInt32 y);
 // Helpers for dealing with the individuals level hierarchy
 static UInt64 indices_reverse(UInt64 index, UInt depth);
 
-static Level individuals_level(Individuals* individuals, UInt64 index, UInt depth);
-static Level1* individuals_level1(Individuals* individuals, UInt64 index);
-static UInt64* individuals_left_z(Individuals *individuals, UInt64 index, UInt depth);
+static SIndividuals_ sindividuals_sindividuals_(SIndividuals sindividuals, UInt64 index, UInt depth);
+static SIndividuals1 sindividuals_sindividuals1(SIndividuals sindividuals, UInt64 index);
+static UInt64* sindividuals_left_z(SIndividuals sindividuals, UInt64 index, UInt depth);
 
 // Next individual in range
-void individual_left(Individuals* individuals, UInt64 index, UInt64 z);
+void individual_left(SIndividuals sindividuals, UInt64 index, UInt64 z);
 
 // Next Z in bounding box
 void z_left(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z);
 
 // Sorting individuals by Z
-void sort(Individuals* individuals);
-static void sort_both(Individuals* individuals, UInt64 left_start,UInt64 right_start, UInt64 pivot_z);
+void sort(SIndividuals sindividuals);
+static void sort_both(SIndividuals sindividuals, UInt64 left_start,UInt64 right_start, UInt64 pivot_z);
 
-// Saving forest structure
-void save(Forest* forest, char* name);
-static void save_forest(FILE* file, Forest* forest, char* name);
+// Saving/loading
+void save(SSpace sspace, char* name);
+static void save_fp(FILE* file, SSpace sspace, char* name);
 
-Forest* load(char* name);
-static Forest* load_forest(FILE* file, char* name);
+SSpace load(char* name);
+static SSpace load_fp(FILE* file, char* name);
 
 
 //---------------------------------------------------------------------------------------------------------------//
-// Individuals
-struct _Individual {
-  float x;
-  float y;
-  float height;
+// Parameters
+struct _Space {
+  float scale;
+
+  bool periodic_x;
+  bool periodic_y;
+
+  float size_x;
+  float size_y;
 };
 
-union _Level {
-  Level0* level0;
-  Level1* level1;
-};
-
-struct _Level1 {
-  UInt64 z[CLUSTER];
-  Individual individual[CLUSTER];
-};
-
-struct _Level0 {
-  UInt64 left_z[CLUSTER];
-  UInt64 right_z[CLUSTER];
-  Level level[CLUSTER];
-};
-
-struct _Individuals {
-  UInt64 number;
-  Level level;
-};
-
-// Varieties (individuals grouped by model parameters)
 struct _Variety {
   float height_mature;
   float height_maximum;
@@ -157,27 +140,77 @@ struct _Variety {
   float dispersal_probability_short;
   float dispersal_mode_short;
   float dispersal_mode_long;
-
-  Individuals individuals;
 };
 
-struct _Varieties {
+struct _Individual {
+  float x;
+  float y;
+  float height;
+};
+
+
+// Scaffolding (space -(1:N)-> variety -(1:N)-> individual)
+struct _SSpace {
+  Space space;
+  SVarieties svarieties;
+};
+
+struct _SVariety {
+  Variety variety;
+  SIndividuals sindividuals;
+};
+
+struct _SVarieties {
   UInt number;
-  Variety* varieties;
+  SVariety svariety[];
 };
 
-// Forest (all individuals and global model parameters)
-struct _Forest {
-  float scale;
-
-  bool periodic_x;
-  bool periodic_y;
-
-  float size_x;
-  float size_y;
-
-  Varieties varieties;
+union _SIndividuals_ {
+  SIndividuals0 sindividuals0;
+  SIndividuals1 sindividuals1;
 };
+
+struct _SIndividuals {
+  UInt64 number;
+  SIndividuals_ sindividuals_;
+};
+
+struct _SIndividuals0 {
+  UInt64 left_z[CLUSTER];
+  UInt64 right_z[CLUSTER];
+  SIndividuals_ sindividuals_[CLUSTER];
+};
+
+struct _SIndividuals1 {
+  UInt64 z[CLUSTER];
+  Individual individual[CLUSTER];
+};
+
+
+// Reduction system
+struct _ReduceOut {
+  float height;
+};
+
+struct _ReduceIn {
+};
+
+struct _ReduceGlobal {
+};
+
+struct _AggregateOut {
+  float height_max;
+};
+
+struct _AggregateIn {
+};
+
+struct _AggreagteGlobal {
+};
+
+
+//---------------------------------------------------------------------------------------------------------------//
+
 
 
 //---------------------------------------------------------------------------------------------------------------//
@@ -292,177 +325,177 @@ UInt64 indices_reverse(UInt64 indices, UInt number) {
 }
 
 
-// individuals_level: (Individuals, UInt64, UInt) -> (Level)
+// sindividuals_sindividuals_: (SIndividuals, UInt64, UInt) -> (SIndividuals_)
 //
-// For given index up to given depth, return the level.
+// For given index up to given depth, return the SIndividuals_.
 //
 // The functional pseudo-code follows.
 //
-// individuals_level: (Individuals, UInt64, UInt) -> (Level)
-// individuals_level_walk: (Level, UInt64, UInt) -> (Level)
+// sindividuals_sindividuals_: (SIndividuals, UInt64, UInt) -> (SIndividuals_)
+// sindividuals_sindividuals_walk: (SIndividuals_, UInt64, UInt) -> (SIndividuals_)
 //
-// individuals_level(individuals, index, depth)
+// sindividuals_sindividuals_(individuals, index, depth)
 //   // Start at top level with reversed index as a list of individual level indices in required order
-//   individuals_level_walk(level(individuals), indices_reverse(index), depth)
+//   sindividuals_sindividuals_walk(individuals.individuals_, indices_reverse(index), depth)
 //
-// individuals_level_walk(level, indices, depth)
+// sindividuals_sindividuals_walk(individuals_, indices, depth)
 //   // Not at desired depth, use next porition of reversed indices to index next level and recurse
 //   depth > 0:
-//     individuals_level_walk(level(level0(level))[indices%CLUSTER], indices/CLUSTER, depth-1)
+//     sindividuals_sindividuals_walk(individuals_.individuals0.individuals_[indices%CLUSTER],
+//                                    indices/CLUSTER, depth-1)
 //   // At desire depth, done
 //   otherwise:
 //     level
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-Level individuals_level(Individuals* individuals, UInt64 index, UInt depth) {
+SIndividuals_ sindividuals_sindividuals_(SIndividuals sindividuals, UInt64 index, UInt depth) {
   // Traverse each level up to the requested depth
   UInt64 indices = indices_reverse(index, depth+1);
-  Level level = individuals->level;
+  SIndividuals_ sindividuals_ = sindividuals->sindividuals_;
 
   for (UInt depth_iterator=depth; depth_iterator>0; depth_iterator-=1) {
-    level = level.level0->level[indices%CLUSTER];
+    sindividuals_ = sindividuals_.sindividuals0->sindividuals_[indices%CLUSTER];
     indices /= CLUSTER;
   }
 
-  return level;
+  return sindividuals_;
 }
 
 
-// individuals_level1: (Individuals, UInt64) -> (Level1)
+// sindividuals_sindividuals1: (SIndividuals, UInt64) -> (SIndividuals1)
 //
-// For given index, return the level1.
+// For given index, return the SIndividuals1.
 //
 // The functional pseudo-code follows.
 //
-// individuals_level1: (Individuals, UInt64) -> (Level1)
+// sindividuals_sindividuals1: (SIndividuals, UInt64) -> (SIndividuals1)
 //
-// individuals_level1(individuals, index)
-//   // Use general routine to get level1
-//   level1(individuals_level(individuals, index, DEPTH-1))
+// sindividuals_sindividuals1(sindividuals1, index)
+//   // Use general routine to get sindividuals1
+//   sindividuals_sindividuals_(sindividuals, index, DEPTH-1).sindividuals_.sindividuals1
 //
 // This becomes the following code.
 //
-Level1* individuals_level1(Individuals* individuals, UInt64 index) {
-  // Use general routine to get level1
-  return individuals_level(individuals, index, DEPTH-1).level1;
+SIndividuals1 sindividuals_sindividuals1(SIndividuals sindividuals, UInt64 index) {
+  // Use general routine to get sindividuals1
+  return sindividuals_sindividuals_(sindividuals, index, DEPTH-1).sindividuals1;
 }
 
 
-// individuals_append: (Individuals) -> (Level1)
+// sindividuals_grow: (*SIndividuals) -> (SIndividuals1)
 //
-// Add a new Level1 onto end of individuals (assumes number%CLUSTER == 0).
+// Add a new SIndividuals1 onto end of individuals (assumes number%CLUSTER == 0).
 //
 // The functional pseudo-code follows.
 //
-// individuals_append: (Individuals) -> (Individuals)
-// individuals_existing: (Level, UIn64, UInt) -> (Level)
-// individuals_add: (UInt) -> (Level)
+// sindividuals_grow: (*SIndividuals) -> (SIndividuals_)
+// sindividuals_grow_old: (*SIndividuals_, UInt64, UInt) -> (SIndividuals_)
+// sindividuals_grow_new: (*SIndividuals_, UInt) -> (SIndividuals_)
 //
-// individuals_append(individuals)
-//   let indices = indices_reverse(number(individuals), DEPTH)
+// sindividuals_grow(sindividuals)
+//   sindividuals_grow_old(sindividuals.sindividuals_, indicies_reverse(sindividuals.number), DEPTH)
+//
+// sindividuals_grow_old(sindividuals_, indices, depth)
 //   // Entries below this one, descend into them
 //   indices > 0:
-//     individuals { .level = individuals_existing(level(individuals)[indices%CLUSTER], indices/CLUSTER, DEPTH-1) }
+//     sindividuals_grow_old(sindividuals_.sindividuals0.sindividuals_[indicies%CLUSTER], 
+//                           indicies/CLUSTER, depth-1)
 //   // No entries below this one, add them
 //   otherwise:
-//     individuals { .level = individuals_add(DEPTH) }
+//     sindividuals_grow_new(sindividuals_, depth)
 //
-// individuals_walk(level, indices, depth)
-//   // Entries below this one, descend into them
-//   indices > 0:
-//     individuals_existing(level(level0(level))[indicies%CLUSTER], indicies/CLUSTER, depth-1)
-//   // No entries below this one, add them
-//   otherwise:
-//     individuals_add(depth)
-//
-// individuals_add(depth)
-//   // Level0 depth, add Level0 and continue down
+// sindividuals_grow_new(sindividuals_, depth)
+//   // SIndividual0 depth, add SIndividual0 and continue down
 //   depth > 0:
-//     level(level0() { .level[0] = individuals_add(depth-1) })
-//   // Level1 depth, add Level1 and done
+//     let sindividuals0 = SIndividuals0()
+//         () = sindividuals_{ .sindividuals0 = sindividuals0 }
+//     sindividuals_grow_new(sindivididuals0.sindividuals_[0], depth-1)
+//   // SIndividuals1 depth, add SIndividuals1 and done
 //   otherwise:
-//     level(level1())
+//     let sindividuals1 = SIndividuals_(SIndividuals1())
+//         () = sindividuals_{ .sindividuals1 = sindividuals1 }
+//     sindividuals1
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-Level1* individuals_append(Individuals* individuals) {
-  UInt64 indices = indices_reverse(individuals->number, DEPTH);
-  Level* level = &individuals->level;
+SIndividuals1 sindividuals_grow(SIndividuals sindividuals) {
+  UInt64 indices = indices_reverse(sindividuals->number, DEPTH);
+  SIndividuals_* sindividuals_ = &sindividuals->sindividuals_;
   UInt depth = DEPTH;
 
-  // While existing intermediate Level0 entries, descend into them
+  // While existing intermediate SIndividuals0 entries, descend into them
   while (indices > 0) {
-    level = &level->level0->level[indices%CLUSTER];
+    sindividuals_ = &sindividuals_->sindividuals0->sindividuals_[indices%CLUSTER];
     indices /= CLUSTER;
     depth -= 1;
   }
 
-  // While needing intermediate Level0 entries, add them
+  // While needing intermediate SIndividuals0 entries, add them
   while (depth > 1) {
-    if ( !(level->level0 = malloc(sizeof(Level0))) )
-      die_errno(1, "unable to allocate %tu bytes for new Level0", sizeof(Level0));
-    level = &level->level0->level[indices%CLUSTER];
+    if ( !(sindividuals_->sindividuals0 = malloc(sizeof(struct _SIndividuals0))) )
+      die_errno(1, "unable to allocate %tu bytes for new SIndividuals0", sizeof(struct _SIndividuals0));
+    sindividuals_ = &sindividuals_->sindividuals0->sindividuals_[indices%CLUSTER];
     indices /= CLUSTER;
     depth -= 1;
   }
 
-  // Add final Level1 entry
-  if ( !(level->level1 = malloc(sizeof(Level1))) )
-    die_errno(1, "unable to allocate %tu bytes for new Level1", sizeof(Level1));
+  // Add final SIndividuals1 entry
+  if ( !(sindividuals_->sindividuals1 = malloc(sizeof(struct _SIndividuals1))) )
+    die_errno(1, "unable to allocate %tu bytes for new SIndividuals1", sizeof(struct _SIndividuals1));
 
-  return level->level1;
+  return sindividuals_->sindividuals1;
 }
 
 
-// individuals_z: (Individuals, UInt64) -> (UInt64)
+// sindividuals_z: (SIndividuals, UInt64) -> (UInt64)
 //
 // For given index, return the Z value.
 //
 // The functional pseudo-code follows.
 //
-// individuals_z: (Individuals, UInt64) -> (UInt64)
+// sindividuals_z: (SIndividuals, UInt64) -> (UInt64)
 //
-// individuals_z(individuals, index)
-//   z(individuals_level1(individuals, index))[index%CLUSTER]
+// sindividuals_z(sindividuals, index)
+//   sindividuals1(sindividuals, index).z[index%CLUSTER]
 //
 // This becomes the following code.
 //
-UInt64 individuals_z(Individuals* individuals, UInt64 index) {
-  return individuals_level1(individuals, index)->z[index%CLUSTER];
+UInt64 sindividuals_z(SIndividuals sindividuals, UInt64 index) {
+  return sindividuals_sindividuals1(sindividuals, index)->z[index%CLUSTER];
 }
 
 
-// individuals_left_z: (Individuals, UInt64, UInt) -> (UInt64)
+// sindividuals_left_z: (SIndividuals, UInt64, UInt) -> (UInt64[])
 //
 // For given index up to given depth, return the left Z bound array.
 //
 // The functional pseudo-code follows.
 //
-// individuals_left_z: (Individuals, UInt64, UInt) -> (UInt64)
+// sindividuals_left_z: (SIndividuals, UInt64, UInt) -> (UInt64[])
 //
-// individuals_left_z(individuals, index, depth)
-//   // Given depth is Level0
+// sindividuals_left_z(sindividuals, index, depth)
+//   // Given depth is SIndividual0
 //   depth > DEPTH-1:
-//     z_left(level0(individuals_level(individuals, index, depth)))
-//   // Given depth is Level1
+//     sindividuals_sindividuals_(sindividuals, index, depth).sindividuals0.z_left
+//   // Given depth is SIndividuals1
 //   otherwise:
-//     z(level1(individuals_level(individuals, index, depth)))
+//     sindividuals_sindividuals_(sindividuals, index, depth).sindividuals1.z
 //
 // This becomes the following code
 //
-UInt64* individuals_left_z(Individuals* individuals, UInt64 index, UInt depth) {
-  // If depth is a level0 level, the left Z bound array is left_z
+UInt64* sindividuals_left_z(SIndividuals sindividuals, UInt64 index, UInt depth) {
+  // If depth is at SIndividual0, the left Z bound array is left_z
   if (depth < DEPTH-1)
-    return individuals_level(individuals, index, depth).level0->left_z;
-  // If depth is a level1 level, the left Z bound array is z (the actual Z values)
+    return sindividuals_sindividuals_(sindividuals, index, depth).sindividuals0->left_z;
+  // If depth is at SIndividual1, the left Z bound array is z (the actual Z values)
   else
-    return individuals_level(individuals, index, depth).level1->z;
+    return sindividuals_sindividuals_(sindividuals, index, depth).sindividuals1->z;
 }
 
 
 //---------------------------------------------------------------------------------------------------------------//
-// individual_left: (Individuals, UInt64, UInt64) -> ()
+// individual_left: (SIndividuals, UInt64, UInt64) -> ()
 //
 // Individual with greatest index and Z value less than or equal to given index and Z value.
 //
@@ -479,59 +512,64 @@ UInt64* individuals_left_z(Individuals* individuals, UInt64 index, UInt depth) {
 // overlap is skipped by reducing the given index to the start of it.  Once an overlapping region is found, the
 // procedure is repeated.
 //
-// The functional pseudo-code follows.
+// The functional pseudo-code follows.  The complexity of SIndividuals indexing is hidden in the [] operator.
 //
-// individual_left_out:      (UInt64, UInt64, UInt64) -> (UInt64)
-// individual_left_out_size: (UInt64, UInt64, UInt64) -> (UInt64)
-// individual_left_out_step: (UInt64, UInt64, UInt64) -> (UInt64)
+// individual_left: (SIndividuals, UInt64, UInt64) -> (UInt64)
 //
-// individual_left_in_size: (UInt64, UInt64, UInt64) -> (UInt64)
-// individual_left_in_step: (UInt64, UInt64, UInt64) -> (UInt64)
+// individual_left_out:      (SIndividuals, UInt64, UInt64, UInt64) -> (UInt64)
+// individual_left_out_size: (SIndividuals, UInt64, UInt64, UInt64) -> (UInt64)
+// individual_left_out_step: (SIndividuals, UInt64, UInt64, UInt64) -> (UInt64)
 //
-// individual_left_out(index, step, z)
+// individual_left_in_size: (SIndividuals, UInt64, UInt64, UInt64) -> (UInt64)
+// individual_left_in_step: (SIndividuals, UInt64, UInt64, UInt64) -> (UInt64)
+//
+// individual_left(sindividuals, index, z)
+//   individual_left_out(sindividuals, index, 1, z)
+//
+// individual_left_out(sindividuals, index, step, z)
 //   // At first individual, done
 //   index == 0:
 //     fail("no more valid individuals")
 //   // Not at first individual, determine step size
 //   otherwise:
-//     individual_left_out_size(index, step, z)
+//     individual_left_out_size(sindividuals, index, step, z)
 //
-// individual_left_out_size(index, step, z)
+// individual_left_out_size(sindividuals, index, step, z)
 //   // On step size boundary, increase step size
 //   index % (step*2) == 0:
-//     individual_left_out_size(index, step*2, z)
+//     individual_left_out_size(sindividuals, index, step*2, z)
 //   // Not on step size boundary, check interval to next boundary
 //   otherwise:
-//     individual_left_out_step(index, step, z)
+//     individual_left_out_step(sindividuals, index, step, z)
 //
-// individual_left_out_step(index, step, z)
+// individual_left_out_step(sindividuals, index, step, z)
 //   // Previous interval contains individual, locate individual in it
-//   individual[index-step] <= z:
-//     individual_left_in_size(index, step, z)
+//   sindividuals.z[index-step] <= z:
+//     individual_left_in_size(sindividuals, index, step, z)
 //   // Previous interval doesn't contain individual, skip over it
 //   otherwise:
-//     individual_left_out(index-step, step, z)
+//     individual_left_out(sindividuals, index-step, step, z)
 //
-// individual_left_in_size(index, step, z)
+// individual_left_in_size(sindividuals, index, step, z)
 //   // Single point, done
 //   step == 1:
 //     index-1
 //   // Not single point, divide into sub regions
 //   otherwise:
-//     individual_left_in_step(index, step/2, z)
+//     individual_left_in_step(sindividuals, index, step/2, z)
 //
-// individual_left_in_step(index, step, z)
+// individual_left_in_step(sindividuals, index, step, z)
 //   // Previous sub region contains individual, locate z point in it
-//   individual[index-step] <= z:
-//     individual_left_in_size(index, step, z)
+//   sindividuals.z[index-step] <= z:
+//     individual_left_in_size(sindividuals, index, step, z)
 //   // Previous sub region doesn't contain individual, skip over it
 //   otherwise:
-//     individual_left_in_step(index-step, step, z)
+//     individual_left_in_step(sindividuals, index-step, step, z)
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-void individual_left(Individuals* individuals, UInt64 index, UInt64 z) {
-  UInt64* left_z = individuals_left_z(individuals, index-1, DEPTH-1);
+void individual_left(SIndividuals sindividuals, UInt64 index, UInt64 z) {
+  UInt64* left_z = sindividuals_left_z(sindividuals, index-1, DEPTH-1);
   UInt64 step = 1;
   UInt depth = DEPTH-1;
 
@@ -553,7 +591,7 @@ void individual_left(Individuals* individuals, UInt64 index, UInt64 z) {
         depth -= 1;
       } while (step >= CLUSTER);
 
-      left_z = individuals_left_z(individuals, index-1, depth);
+      left_z = sindividuals_left_z(sindividuals, index-1, depth);
     }
 
     // If previous interval contains individual, locate individual in it
@@ -576,7 +614,7 @@ void individual_left(Individuals* individuals, UInt64 index, UInt64 z) {
       step *= CLUSTER;
       depth += 1;
 
-      left_z = individuals_left_z(individuals, index-1, depth);
+      left_z = sindividuals_left_z(sindividuals, index-1, depth);
     }
 
     // Decrease step size to divide into sub intervals
@@ -716,9 +754,9 @@ void z_left(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z) {
 }
 
 
-// sort: (Individuals) -> ()
+// sort: (*SIndividuals) -> ()
 //
-// sort_both:  (Individuals, Int64,Int64, Int64) -> ()
+// sort_both:  (*SIndividuals, Int64,Int64, Int64) -> ()
 //
 // In-place pivot sort.
 //
@@ -727,50 +765,56 @@ void z_left(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z) {
 // equal).  This implies the subset it fully sorted and will occur for sure once singelton subsets are reached.
 // The first pivot is the middle element and later pivots are the average of the minimum and maximum.
 //
-// The functional pseudo-code follows.
+// The functional pseudo-code follows.  The complexity of SIndividuals indexing is hidden in the [] operator.
 //
-// sort: (Individuals) -> ()
+// sort: (*SIndividuals) -> ()
 //
-// sort_both:  (Individuals, UInt64,UInt64, UInt64) -> ()
-// sort_left:  (Individuals, UInt64, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64) -> ()
-// sort_right: (Individuals, UInt64, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64) -> ()
+// sort_both:  (*SIndividuals, UInt64,UInt64, UInt64) -> ()
+// sort_left:  (*SIndividuals, UInt64, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64) -> ()
+// sort_right: (*SIndividuals, UInt64, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64) -> ()
 //
-// sort(individuals)
+// swap: (*SIndividuals, UInt64, UInt64) -> ()
+//
+// sort(sindividuals)
 //   // If there are individuals, use the centre element as initial pivot
-//   size(individuals) > 0:
-//     sort_both(individuals, 0,size(individuals)-1, individuals[size(individuals)/2])
+//   sindividuals.number > 0:
+//     sort_both(individuals, 0,sindividuals.number-1, individuals[sindividuals.number/2])
 //   // If there are no individuals, done
 //   otherwise:
 //     0
 //
-// sort_both(individuals, left_start,right_start, pivot_z)
+// sort_both(sindividuals, left_start,right_start, pivot_z)
 //   // Split into left-hand side <= pivot and right-hand side > pivot
 //   let (left_end,  left_min, left_max,
-//        right_end, right_min,right_max) = sort_left(individuals, pivot_z,
+//        right_end, right_min,right_max) = sort_left(sindividuals, pivot_z,
 //                                                    left_start, left_start,  UINT64_MAX,0,
 //                                                    right_start,right_start, UINT64_MAX,0)
 //   // Repeat on each of left-hand and right-hand if they have at least two different elements in them
 //       () = left_min  < left_max:
-//              sort_both(individuals, left_start,left_end,    (left_min_z +left_max_z) /2)
+//              sort_both(sindividuals, left_start,left_end,    (left_min_z +left_max_z) /2)
+//            otherwise:
+//              ()
 //       () = right_min < right_max:
-//              sort_both(individuals, right_end, right_start, (right_min_z+right_max_z)/2)
+//              sort_both(sindividuals, right_end, right_start, (right_min_z+right_max_z)/2)
+//            otherwise:
+//              ()
 //   // Done
 //   ()
 //
-// sort_left(individuals, pivot_z,
+// sort_left(sindividuals, pivot_z,
 //           left_start, left_current,  left_min_z, left_max_z,
 //           right_start,right_current, right_min_z,right_max_z)
 //   // Left side hasn't reached right side, process element
 //   left_current <= right_current:
 //     // Element <= pivot, move it into left-hand side and continue left scan with next element
-//     individuals[left_current] <= pivot_z:
-//       sort_left( individuals, pivot_z,
+//     sindividuals.z[left_current] <= pivot_z:
+//       sort_left( sindividuals, pivot_z,
 //                  left_start, left_current+1,
-//                  min(individuals[left],left_min_z), max(individuals[left],left_max_z),
+//                  min(sindividuals.z[left],left_min_z), max(sindividuals.z[left],left_max_z),
 //                  right_start,right_current, right_min_z,right_max_z)
 //     // Element > pivot, switch to right scan to find element to swap it with
-//     individuals[left_current] >  pivot_z:
-//       sort_right(individuals, pivot_z,
+//     sindividuals.z[left_current] >  pivot_z:
+//       sort_right(sindividuals, pivot_z,
 //                  left_start, left_current,  left_min_z, left_max_z,
 //                  right_start,right_current, right_min_z,right_max_z)
 //   // Left side reached right side, return sides
@@ -778,21 +822,21 @@ void z_left(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z) {
 //     (right_current, left_min, left_max,
 //      left_current,  right_min,right_max)
 //
-// sort_right(individuals, pivot_z,
+// sort_right(sindividuals, pivot_z,
 //            left_start, left_current,  left_min_z, left_max_z,
 //            right_start,right_current, right_min_z,right_max_z)
 //   // Right side hasn't reached left side, process element
 //   left_current <= right_current:
 //     // Element > pivot, move it into right-hand side and continue right scan with next element
-//     individuals[right_current] > pivot_z:
-//       sort_right(individuals, pivot_z,
+//     sindividuals[right_current] > pivot_z:
+//       sort_right(sindividuals, pivot_z,
 //                  left_start, left_current,    left_min_z,left_max_z,
 //                  right_start,right_current-1,
-//                  min(individuals[right],right_min_z),max(individuals[right],right_max_z))
+//                  min(sindividuals[right],right_min_z),max(sindividuals[right],right_max_z))
 //     // Element <= pivot, swap it with > element found in left scan and switch back to left scan
-//     individuals[left_current] <= pivot_z:
-//       swap(individuals, left_current, right_current)
-//       sort_left( individuals, pivot_z,
+//     sindividuals.z[left_current] <= pivot_z:
+//       let () = swap(sindividuals, left_current, right_current)
+//       sort_left( sindividuals, pivot_z,
 //                  left_start, left_current,    left_min_z, left_max_z,
 //                  right_start,right_current,   right_min_z,right_max_z)
 //   // Reach side reached left side, return sides
@@ -800,18 +844,27 @@ void z_left(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z) {
 //     (right_current, left_min, left_max,
 //      left_current,  right_min,right_max)
 //
+// swap(sindividuals, index0, index1)
+//   let individual0 = sindividuals.individual[index0]
+//       individual1 = sindividuals.individual[index1]
+//       z0 = sindividuals.z[index0]
+//       z1 = sindividuals.z[index1]
+//       () = sindividuals.individual{ [index0] = individual1, [index1] = individual0 }
+//       () = sindividuals.z{ [index0] = z1, [index1] = z0 }
+//   ()
+//
 // Flattening the recursive calls with do loops this becomes the following code.
 //
-void sort(Individuals* individuals) {
+void sort(SIndividuals sindividuals) {
   // If there are individuals, use the centre element for initial pivot
-  if (individuals->number)
-    return sort_both(individuals, 0,individuals->number-1, individuals_z(individuals, individuals->number/2));
+  if (sindividuals->number)
+    return sort_both(sindividuals, 0,sindividuals->number-1, sindividuals_z(sindividuals, sindividuals->number/2));
   // If there are no individuals, done
   else
     return;
 }
 
-static void sort_both(Individuals* individuals, UInt64 left_start,UInt64 right_start, UInt64 pivot_z) {
+static void sort_both(SIndividuals sindividuals, UInt64 left_start,UInt64 right_start, UInt64 pivot_z) {
   UInt64 left_current = left_start;
   UInt64 left_min_z = UINT64_MAX;
   UInt64 left_max_z = 0;
@@ -820,8 +873,8 @@ static void sort_both(Individuals* individuals, UInt64 left_start,UInt64 right_s
   UInt64 right_min_z = UINT64_MAX;
   UInt64 right_max_z = 0;
 
-  Level1* left_level1 = individuals_level1(individuals, left_current);
-  Level1* right_level1 = individuals_level1(individuals, right_current);
+  SIndividuals1 left_level1 = sindividuals_sindividuals1(sindividuals, left_current);
+  SIndividuals1 right_level1 = sindividuals_sindividuals1(sindividuals, right_current);
 
   // Sweep to centre splitting into left <= pivot and right > pivot by swaping left > pivot and right <= pivot
   while (1) {
@@ -841,7 +894,7 @@ static void sort_both(Individuals* individuals, UInt64 left_start,UInt64 right_s
         // Advance to next possible left element
         left_current += 1;
         if (left_current%CLUSTER == 0)
-          left_level1 = individuals_level1(individuals, left_current);
+          left_level1 = sindividuals_sindividuals1(sindividuals, left_current);
       }
       // Element found, break
       else
@@ -861,7 +914,7 @@ static void sort_both(Individuals* individuals, UInt64 left_start,UInt64 right_s
         // Advance to next possible right element
         right_current -= 1;
         if (right_current%CLUSTER == CLUSTER-1)
-          right_level1 = individuals_level1(individuals, right_current);
+          right_level1 = sindividuals_sindividuals1(sindividuals, right_current);
       }
       // Element found, break
       else
@@ -886,10 +939,10 @@ static void sort_both(Individuals* individuals, UInt64 left_start,UInt64 right_s
 
   // Sort new left <= pivot and right > pivot subsets
   if (left_min_z  < left_max_z)
-    sort_both(individuals, left_start,  right_current,
+    sort_both(sindividuals, left_start,  right_current,
               left_min_z /2+left_max_z /2 + (left_min_z %2+left_max_z %2)/2);
   if (right_min_z < right_max_z)
-    sort_both(individuals, left_current,right_start,
+    sort_both(sindividuals, left_current,right_start,
               right_min_z/2+right_max_z/2 + (right_min_z%2+right_max_z%2)/2);
 }
 
@@ -979,60 +1032,63 @@ void vdie(int value, char* format, va_list args) {
 
 
 //---------------------------------------------------------------------------------------------------------------//
-// save: (Forest*, char*) -> ()
-// save_forest: (FILE*, Forest*, char*) -> ()
+// save: (SSpace, char*) -> ()
+// save_fp: (FILE*, SSpace, char*) -> ()
 //
 // Create/truncate the given file name and serialize the given forest to it.
 //
-void save(Forest* forest, char* name) {
+void save(SSpace sspace, char* name) {
   // Wrap file handle based routine with opening and close details
   FILE* file;
 
   if ( !(file = fopen(name,"w")) )
     die_errno(1, "unable to create/truncate \"%s\" for writing", name);
-  save_forest(file, forest, name);
+  save_fp(file, sspace, name);
   if (fclose(file))
     die_errno(1, "unable to close \"%s\"", name);
 }
 
-static void save_forest(FILE* file, Forest* forest, char* name) {
+static void save_fp(FILE* file, SSpace sspace, char* name) {
   // Save forest level data
-  if ( fprintf(file, "FOREST %d %d %g %g\n",
-               forest->periodic_x, forest->periodic_y,
-               forest->size_x, forest->size_y) < 0 )
+  Space space = sspace->space;
+  if ( fprintf(file, "SPACE %d %d %g %g\n",
+               space.periodic_x, space.periodic_y,
+               space.size_x, space.size_y) < 0 )
     die_errno(1, "an error occured while writing to \"%s\"", name);
 
   // Save varieties
-  Varieties* varieties = &forest->varieties;
+  SVarieties svarieties = sspace->svarieties;
 
-  for (UInt varieties_iterator=0; varieties_iterator<varieties->number; varieties_iterator+=1) {
+  for (UInt svarieties_iterator=0; svarieties_iterator<svarieties->number; svarieties_iterator+=1) {
     // Save variety
-    Variety *variety = &varieties->varieties[varieties_iterator];
+    SVariety svariety = svarieties->svariety[svarieties_iterator];
+    Variety variety = svariety.variety;
 
     if ( fprintf(file, "VARIETY %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-                 variety->height_mature, variety->height_maximum,
-                 variety->growth_rate, variety->growth_competition_lower, variety->growth_competition_higher,
-                 variety->mortality_initial, variety->mortality_decay, variety->mortality_intrinsic,
-                 variety->fecundity_maximum,
-                 variety->masting_time, variety->masting_phase,
-                 variety->dispersal_probability_short, variety->dispersal_mode_short, variety->dispersal_mode_long)
+                 variety.height_mature, variety.height_maximum,
+                 variety.growth_rate, variety.growth_competition_lower, variety.growth_competition_higher,
+                 variety.mortality_initial, variety.mortality_decay, variety.mortality_intrinsic,
+                 variety.fecundity_maximum,
+                 variety.masting_time, variety.masting_phase,
+                 variety.dispersal_probability_short, variety.dispersal_mode_short, variety.dispersal_mode_long)
          < 0 )
       die_errno(1, "an error occured while writing to \"%s\"", name);
 
     // Save individuals
-    Individuals* individuals = &variety->individuals;
-    Level1* level1;
+    SIndividuals sindividuals = svariety.sindividuals;
+    SIndividuals1 sindividuals1;
 
-    for (UInt64 individuals_iterator=0; individuals_iterator<individuals->number; individuals_iterator+=1) {
+    for (UInt64 individual_iterator=0; individual_iterator<sindividuals->number; individual_iterator+=1) {
       // Switch levels if required
-      if (individuals_iterator%CLUSTER == 0)
-        level1 = individuals_level1(individuals, individuals_iterator);
+      if (individual_iterator%CLUSTER == 0)
+        sindividuals1 = sindividuals_sindividuals1(sindividuals, individual_iterator);
 
       // Save individual
+      Individual individual = sindividuals1->individual[individual_iterator%CLUSTER];
+
       if ( fprintf(file, "INDIVIDUAL %g %g %g\n",
-                   level1->individual[individuals_iterator%CLUSTER].x,
-                   level1->individual[individuals_iterator%CLUSTER].y,
-                   level1->individual[individuals_iterator%CLUSTER].height) < 0 )
+                   individual.x, individual.y,
+                   individual.height) < 0 )
         die_errno(1, "an error occured while writing to \"%s\"", name);
     }
   }
@@ -1040,52 +1096,66 @@ static void save_forest(FILE* file, Forest* forest, char* name) {
 
 
 //---------------------------------------------------------------------------------------------------------------//
-// load: (char*) -> (Forest*)
-// load_forest: (FILE*, char*) -> (Forest*)
+// load: (char*) -> (SSpace)
+// load_forest: (FILE*, char*) -> (SSpace)
 //
 // Read the given file and restore a serialized forest from it.
 //
-Forest* load(char* name) {
-  Forest* forest;
+SSpace load(char* name) {
+  SSpace sspace;
   FILE* file;
 
   if ( !(file = fopen(name,"r")) )
     die_errno(1, "unable to open \"%s\" for reading", name);
-  forest = load_forest(file, name);
+  sspace = load_fp(file, name);
   if (fclose(file))
     die_errno(1, "unable to close \"%s\"", name);
 
-  return forest;
+  return sspace;
 }
 
 
-static Forest* load_forest(FILE* file, char* name) {
+static SSpace load_fp(FILE* file, char* name) {
   UInt64 line = 1;
   int records;
 
-  // Load forest level data
-  Forest forest;
+  SSpace sspace;
+
+  if ( !(sspace = malloc(sizeof(struct _SSpace))) )
+    die_errno(1, "unable to allocate %tu bytes for SSpace", sizeof(struct _SSpace));
+
+  // Load space data
+  Space space;
   UInt periodic_x, periodic_y;
 
-  records = fscanf(file, "FOREST %u %u %g %g\n",
+  records = fscanf(file, "SPACE %u %u %g %g\n",
                    &periodic_x, &periodic_y,
-                   &forest.size_x, &forest.size_y);
-  forest.scale = 0x1p32/fmax(forest.size_x,forest.size_y);
-  forest.periodic_x = periodic_x;
-  forest.periodic_y = periodic_y;
+                   &space.size_x, &space.size_y);
+  space.scale = 0x1p32/fmax(space.size_x,space.size_y);
+  space.periodic_x = periodic_x;
+  space.periodic_y = periodic_y;
   if ( ferror(file) )
     die_errno(1, "an error occured while reading from \"%s\"", name);
   if ( records < 4 )
-    die(1, "problem parsing \"%s\":%"PRIu64": expecting \"FOREST\" "
+    die(1, "problem parsing \"%s\":%"PRIu64": expecting \"SPACE\" "
         "PERIODIC_X PERIODIC_Y "
         "SIZE_X SIZE_Y", name, line);
   else
     line += 1;
 
+  sspace->space = space;
+
   // Load varieties
-  Varieties varieties = { .number = 0, .varieties = 0 };
+  SVarieties svarieties;
+
+  if ( !(svarieties = malloc(sizeof(struct _SVarieties))) )
+    die_errno(1, "unable to allocate %tu bytes for SVarieties", sizeof(struct _SVarieties));
+
+  svarieties->number = 0;
 
   while (1) {
+    SVariety svariety;
+
     // Load variety
     Variety variety;
 
@@ -1112,13 +1182,20 @@ static Forest* load_forest(FILE* file, char* name) {
     else
       line += 1;
 
+    svariety.variety = variety;
+
     // Load individuals
-    Individuals individuals = { .number = 0 };
+    SIndividuals sindividuals;
+
+    if ( !(sindividuals = malloc(sizeof(struct _SIndividuals))) )
+      die_errno(1, "unable to allocate %tu bytes for SIndividuals", sizeof(struct _SIndividuals));
+
+    sindividuals->number = 0;
 
     while (1) {
       // Load individual
       Individual individual;
-      Level1* level1;
+      SIndividuals1 sindividuals1;
 
       records = fscanf(file, "INDIVIDUAL %g %g %g\n",
                        &individual.x, &individual.y, &individual.height);
@@ -1130,53 +1207,48 @@ static Forest* load_forest(FILE* file, char* name) {
         die(1, "problem parsing \"%s\":%"PRIu64": expecting \"INDIVIDUAL\" "
             "X Y "
             "HEIGHT", name, line);
-      else if (individual.x < 0 || individual.x >= forest.size_x)
+      else if (individual.x < 0 || individual.x >= space.size_x)
         die(1, "problem parsing \"%s\":%"PRIu64": expecting \"INDIVIDUAL\" "
-            "the constraint 0 <= X=%g < SIZE_X=%g does not hold", name, line, individual.x, forest.size_x);
-      else if (individual.y < 0 || individual.y >= forest.size_y)
+            "the constraint 0 <= X=%g < SIZE_X=%g does not hold", name, line,
+            individual.x, sspace->space.size_x);
+      else if (individual.y < 0 || individual.y >= space.size_y)
         die(1, "problem parsing \"%s\":%"PRIu64": expecting \"INDIVIDUAL\" "
-            "the constraint 0 <= Y=%g < SIZE_Y=%g does not hold", name, line, individual.y, forest.size_y);
+            "the constraint 0 <= Y=%g < SIZE_Y=%g does not hold", name, line,
+            individual.y, sspace->space.size_y);
       else if (individual.height < 0)
         die(1, "problem parsing \"%s\":%"PRIu64": expecting \"INDIVIDUAL\" "
             "the constraint 0 <= HEIGHT=%g", name, line, individual.height);
       else
         line += 1;
 
-      // Add individual
-      if ( !(individuals.number%CLUSTER) )
-        level1 = individuals_append(&individuals);
+      if ( !(sindividuals->number%CLUSTER) )  // sindividuals->number == n*CLUSTER (CLUSTER chunks: 0, CLUSTER, ..)
+        sindividuals1 = sindividuals_grow(sindividuals);
 
-      level1->z[individuals.number%CLUSTER] = z_xy((UInt32)(forest.scale*individual.x),
-                                                   (UInt32)(forest.scale*individual.y));
-      level1->individual[individuals.number%CLUSTER] = individual;
-      individuals.number += 1;
+      sindividuals1->z[sindividuals->number%CLUSTER] = z_xy((UInt32)(sspace->space.scale*individual.x),
+                                                            (UInt32)(sspace->space.scale*individual.y));
+      sindividuals1->individual[sindividuals->number%CLUSTER] = individual;
+      sindividuals->number += 1;
     }
 
-    // Add individuals
-    variety.individuals = individuals;
+    svariety.sindividuals = sindividuals;
 
-    // Add variety (memory is allocated in chunks of 2^n-1: 0,1,3,7,15,...)
-    if ( !(varieties.number & (varieties.number+1)) )  // Need to a reallocate if (varieties.number+1) == 2^n
-      if ( !(varieties.varieties = realloc(varieties.varieties, sizeof(Variety)*((varieties.number+1)*2-1))) )
-        die_errno(1, "unable to grow varieties allocation to %tu bytes",
-                  sizeof(Variety)*((varieties.number+1)*2-1));
-    varieties.varieties[varieties.number] = variety;
-    varieties.number += 1;
+    if ( !(svarieties->number & (svarieties->number+1)) )  // (varieties->number+1) == 2^n (2^n-1 chunks: 0,1,3,..)
+      if ( !(svarieties = realloc(svarieties,
+                                  (sizeof(struct _SVarieties)+sizeof(SVariety)*((svarieties->number+1)*2-1)))) )
+        die_errno(1, "unable to grow SVarieties allocation to %tu bytes",
+                  (sizeof(struct _SVarieties)+sizeof(SVariety)*((svarieties->number+1)*2-1)));
+
+    svarieties->svariety[svarieties->number] = svariety;
+    svarieties->number += 1;
   }
 
-  // Add varieties (memory is shrunk to an exact fit)
-  if ( !(varieties.varieties = realloc(varieties.varieties, sizeof(Variety)*varieties.number)) )
-    die_errno(1, "unable to shrink varieties allocation to %tu bytes", sizeof(Variety)*varieties.number);
-  forest.varieties = varieties;
+  if ( !(svarieties = realloc(svarieties, sizeof(struct _SVarieties)+sizeof(SVariety)*svarieties->number)) )
+    die_errno(1, "unable to shrink SVarieties allocation to %tu bytes",
+              sizeof(struct _SVarieties)+sizeof(SVariety)*svarieties->number);
 
-  // Allocate forest for return
-  Forest* forest_allocated;
+  sspace->svarieties = svarieties;
 
-  if ( !(forest_allocated = malloc(sizeof(Forest))) )
-    die_errno(1, "unable to allocate %tu bytes for new Forest", sizeof(Forest));
-  *forest_allocated = forest;
-
-  return forest_allocated;
+  return sspace;
 }
 
 
@@ -1184,6 +1256,11 @@ static Forest* load_forest(FILE* file, char* name) {
 // Program entrance point
 
 int main() {
+  SSpace sspace;
+
+  sspace = load("checkpoint.txt");
+  sort(sspace->svarieties->svariety[0].sindividuals);
+  save_fp(stdout, sspace, "-");
 
   return 0;
 }
