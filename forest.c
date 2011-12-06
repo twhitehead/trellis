@@ -98,7 +98,10 @@ void z_left(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z);
 
 // Sorting individuals by Z
 void sort(SIndividuals sindividuals);
-static void sort_both(SIndividuals sindividuals, UInt64 left_start,UInt64 right_start, UInt64 pivot_z);
+static void sort_both(SIndividuals sindividuals,
+                      SIndividuals1 left_sindividuals1_start, SIndividuals1 right_sindividuals1_start,
+                      UInt64 left_index_start,                UInt64 right_index_start,
+                      UInt64 pivot_z);
 
 // Saving/loading
 void save(SSpace sspace, char* name);
@@ -399,7 +402,7 @@ SIndividuals1 sindividuals_sindividuals1(SIndividuals sindividuals, UInt64 index
 // sindividuals_grow_old(sindividuals_, indices, depth)
 //   // Entries below this one, descend into them
 //   indices > 0:
-//     sindividuals_grow_old(sindividuals_.sindividuals0.sindividuals_[indicies%CLUSTER], 
+//     sindividuals_grow_old(sindividuals_.sindividuals0.sindividuals_[indicies%CLUSTER],
 //                           indicies/CLUSTER, depth-1)
 //   // No entries below this one, add them
 //   otherwise:
@@ -858,23 +861,29 @@ void z_left(UInt64 z, UInt64 step, UInt64 box_ul_z,UInt64 box_lr_z) {
 void sort(SIndividuals sindividuals) {
   // If there are individuals, use the centre element for initial pivot
   if (sindividuals->number)
-    return sort_both(sindividuals, 0,sindividuals->number-1, sindividuals_z(sindividuals, sindividuals->number/2));
+    return sort_both(sindividuals,
+                     sindividuals_sindividuals1(sindividuals, 0),
+                     sindividuals_sindividuals1(sindividuals, sindividuals->number-1),
+                     0, sindividuals->number-1,
+                     sindividuals_z(sindividuals, sindividuals->number/2));
   // If there are no individuals, done
   else
     return;
 }
 
-static void sort_both(SIndividuals sindividuals, UInt64 left_start,UInt64 right_start, UInt64 pivot_z) {
-  UInt64 left_current = left_start;
+static void sort_both(SIndividuals sindividuals,
+                      SIndividuals1 left_sindividuals1_start, SIndividuals1 right_sindividuals1_start,
+                      UInt64 left_index_start,                UInt64 right_index_start,
+                      UInt64 pivot_z) {
+  SIndividuals1 left_sindividuals1_current = left_sindividuals1_start;
+  UInt64 left_index_current = left_index_start;
   UInt64 left_min_z = UINT64_MAX;
   UInt64 left_max_z = 0;
 
-  UInt64 right_current = right_start;
+  SIndividuals1 right_sindividuals1_current = right_sindividuals1_start;
+  UInt64 right_index_current = right_index_start;
   UInt64 right_min_z = UINT64_MAX;
   UInt64 right_max_z = 0;
-
-  SIndividuals1 left_level1 = sindividuals_sindividuals1(sindividuals, left_current);
-  SIndividuals1 right_level1 = sindividuals_sindividuals1(sindividuals, right_current);
 
   // Sweep to centre splitting into left <= pivot and right > pivot by swaping left > pivot and right <= pivot
   while (1) {
@@ -882,8 +891,8 @@ static void sort_both(SIndividuals sindividuals, UInt64 left_start,UInt64 right_
     UInt64 right_z;
 
     // Find element from left > pivot
-    while (left_current <= right_current) {
-      left_z = left_level1->z[left_current%CLUSTER];
+    while (left_index_current <= right_index_current) {
+      left_z = left_sindividuals1_current->z[left_index_current%CLUSTER];
 
       // No element found, move to next and repeat
       if (left_z <= pivot_z) {
@@ -892,9 +901,9 @@ static void sort_both(SIndividuals sindividuals, UInt64 left_start,UInt64 right_
         left_max_z = left_max_z >= left_z ? left_max_z : left_z;
 
         // Advance to next possible left element
-        left_current += 1;
-        if (left_current%CLUSTER == 0)
-          left_level1 = sindividuals_sindividuals1(sindividuals, left_current);
+        left_index_current += 1;
+        if (left_index_current%CLUSTER == 0)
+          left_sindividuals1_current = sindividuals_sindividuals1(sindividuals, left_index_current);
       }
       // Element found, break
       else
@@ -902,8 +911,8 @@ static void sort_both(SIndividuals sindividuals, UInt64 left_start,UInt64 right_
     }
 
     // Find element from right <= pivot
-    while (left_current <= right_current) {
-      right_z = right_level1->z[right_current%CLUSTER];
+    while (left_index_current <= right_index_current) {
+      right_z = right_sindividuals1_current->z[right_index_current%CLUSTER];
 
       // No element found, move to next and repeat
       if (right_z > pivot_z) {
@@ -912,9 +921,9 @@ static void sort_both(SIndividuals sindividuals, UInt64 left_start,UInt64 right_
         right_max_z = right_max_z >= right_z ? right_max_z : right_z;
 
         // Advance to next possible right element
-        right_current -= 1;
-        if (right_current%CLUSTER == CLUSTER-1)
-          right_level1 = sindividuals_sindividuals1(sindividuals, right_current);
+        right_index_current -= 1;
+        if (right_index_current%CLUSTER == CLUSTER-1)
+          right_sindividuals1_current = sindividuals_sindividuals1(sindividuals, right_index_current);
       }
       // Element found, break
       else
@@ -922,15 +931,15 @@ static void sort_both(SIndividuals sindividuals, UInt64 left_start,UInt64 right_
     }
 
     // Not at centre, left > pivot and right <= pivot elements found, swap them
-    if (left_current <= right_current) {
-      left_level1->z[left_current%CLUSTER] = right_z;
-      right_level1->z[right_current%CLUSTER] = left_z;
+    if (left_index_current <= right_index_current) {
+      left_sindividuals1_current->z[left_index_current%CLUSTER] = right_z;
+      right_sindividuals1_current->z[right_index_current%CLUSTER] = left_z;
 
-      Individual left_individual = left_level1->individual[left_current%CLUSTER];
-      Individual right_individual = right_level1->individual[right_current%CLUSTER];
+      Individual left_individual = left_sindividuals1_current->individual[left_index_current%CLUSTER];
+      Individual right_individual = right_sindividuals1_current->individual[right_index_current%CLUSTER];
 
-      left_level1->individual[left_current%CLUSTER] = right_individual;
-      right_level1->individual[right_current%CLUSTER] = left_individual;
+      left_sindividuals1_current->individual[left_index_current%CLUSTER] = right_individual;
+      right_sindividuals1_current->individual[right_index_current%CLUSTER] = left_individual;
     }
     // At centre, seperated into left <= pivot and right > pivot subsets, break
     else
@@ -939,10 +948,14 @@ static void sort_both(SIndividuals sindividuals, UInt64 left_start,UInt64 right_
 
   // Sort new left <= pivot and right > pivot subsets
   if (left_min_z  < left_max_z)
-    sort_both(sindividuals, left_start,  right_current,
+    sort_both(sindividuals,
+              left_sindividuals1_start,  right_sindividuals1_current,
+              left_index_start,          right_index_current,
               left_min_z /2+left_max_z /2 + (left_min_z %2+left_max_z %2)/2);
   if (right_min_z < right_max_z)
-    sort_both(sindividuals, left_current,right_start,
+    sort_both(sindividuals,
+              left_sindividuals1_current,right_sindividuals1_start,
+              left_index_current,        right_index_start,
               right_min_z/2+right_max_z/2 + (right_min_z%2+right_max_z%2)/2);
 }
 
