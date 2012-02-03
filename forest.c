@@ -469,13 +469,13 @@ struct _RWorld {
 // Using the Z_xy_int code to generate direct conversion tables for 4b values, and then directly converting 32b
 // values by treating them as a sequence of eight 4b values gives the following code.
 //
-UInt64 Z_xy(Float32 x, Float32 y, Float32 scale) {
-  Float32 x_scaled = roundf(x*scale);
-  Float32 y_scaled = roundf(y*scale);
-  UInt32 x_uint = x_scaled < 0 ? 0 : x_scaled > UINT64_MAX ? UINT64_MAX : x_scaled;
-  UInt32 y_uint = y_scaled < 0 ? 0 : y_scaled > UINT64_MAX ? UINT64_MAX : y_scaled;
+UInt64 Z_xy(Float32 const x, Float32 const y, Float32 const scale) {
+  Float32 const x_scaled = roundf(x*scale);
+  Float32 const y_scaled = roundf(y*scale);
+  UInt32 const x_uint = x_scaled < 0 ? 0 : x_scaled > UINT64_MAX ? UINT64_MAX : x_scaled;
+  UInt32 const y_uint = y_scaled < 0 ? 0 : y_scaled > UINT64_MAX ? UINT64_MAX : y_scaled;
 
-  uint8_t static z_table[] = {
+  uint8_t static const z_table[] = {
     [0x00]=0x00, [0x01]=0x01, [0x02]=0x04, [0x03]=0x05, [0x04]=0x10, [0x05]=0x11, [0x06]=0x14, [0x07]=0x15,
     [0x08]=0x40, [0x09]=0x41, [0x0a]=0x44, [0x0b]=0x45, [0x0c]=0x50, [0x0d]=0x51, [0x0e]=0x54, [0x0f]=0x55,
     [0x10]=0x02, [0x11]=0x03, [0x12]=0x06, [0x13]=0x07, [0x14]=0x12, [0x15]=0x13, [0x16]=0x16, [0x17]=0x17,
@@ -510,7 +510,7 @@ UInt64 Z_xy(Float32 x, Float32 y, Float32 scale) {
     [0xf8]=0xea, [0xf9]=0xeb, [0xfa]=0xee, [0xfb]=0xef, [0xfc]=0xfa, [0xfd]=0xfb, [0xfe]=0xfe, [0xff]=0xff
   };
 
-  UInt8 part[8] = {
+  UInt8 const part[8] = {
     [0] = z_table[(UInt8)(y_uint >>  0 & 0x0f) << 4 | (UInt8)(x_uint >>  0 & 0x0f)],
     [1] = z_table[(UInt8)(y_uint >>  4 & 0x0f) << 4 | (UInt8)(x_uint >>  4 & 0x0f)],
     [2] = z_table[(UInt8)(y_uint >>  8 & 0x0f) << 4 | (UInt8)(x_uint >>  8 & 0x0f)],
@@ -555,7 +555,7 @@ UInt64 Z_xy(Float32 x, Float32 y, Float32 scale) {
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-UInt64 Indices_reverse(UInt64 indices) {
+UInt64 Indices_reverse(UInt64 const indices) {
   // For each level, shift the indices off the end of the one integer and onto the other
   UInt64 forward = indices;
   UInt64 reverse = 0;
@@ -574,7 +574,7 @@ UInt64 Indices_reverse(UInt64 indices) {
 //
 // Release resources associated with svarieties.
 //
-void SVarieties_end(SVarieties svarieties) {
+void SVarieties_end(SVarieties const svarieties) {
   free(svarieties);
 }
 
@@ -584,7 +584,7 @@ void SVarieties_end(SVarieties svarieties) {
 //
 // Release resources associated with ssindividuals.
 //
-void SSIndividuals_end(SSIndividuals ssindividuals) {
+void SSIndividuals_end(SSIndividuals const ssindividuals) {
   for (UInt iterator = 0; iterator < ssindividuals->number; iterator+=1)
     SIndividuals_end(ssindividuals->sindividuals[iterator]);
 
@@ -597,8 +597,8 @@ void SSIndividuals_end(SSIndividuals ssindividuals) {
 //
 // SIndividuals with for number Individual rooted at sindividuals_.
 //
-SIndividuals SIndividuals_raw(UInt64 number, SIndividuals_ sindividuals_) {
-  SIndividuals sindividuals = { .number = number, .sindividuals_ = sindividuals_ };
+SIndividuals SIndividuals_raw(UInt64 const number, SIndividuals_ const sindividuals_) {
+  SIndividuals const sindividuals = { .number = number, .sindividuals_ = sindividuals_ };
 
   return sindividuals;
 }
@@ -609,7 +609,7 @@ SIndividuals SIndividuals_raw(UInt64 number, SIndividuals_ sindividuals_) {
 // SIndividuals with no Individuals.
 //
 SIndividuals SIndividuals_none() {
-  SIndividuals sindividuals = { .number = 0 };
+  SIndividuals const sindividuals = { .number = 0 };
 
   return sindividuals;
 }
@@ -653,7 +653,7 @@ SIndividuals SIndividuals_none() {
 //
 // Flattening the recursive calls with loops and a sindividuals_ stack array this becomes the following code.
 //
-void SIndividuals_end(SIndividuals sindividuals) {
+void SIndividuals_end(SIndividuals const sindividuals) {
   SIndividuals_ sindividuals__stack[DEPTH] = { [DEPTH-1] = sindividuals.sindividuals_ };
   UInt64 index = 0;
   UInt bit = 64-64/DEPTH;
@@ -713,8 +713,8 @@ void SIndividuals_end(SIndividuals sindividuals) {
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-SIndividuals_ SIndividuals__sindividuals_(SIndividuals_ sindividuals_,
-					  UInt64 index, UInt depth) {
+SIndividuals_ SIndividuals__sindividuals_(SIndividuals_ const sindividuals_,
+					  UInt64 const index, UInt const depth) {
   // Traverse each level up to the requested depth
   UInt64 indices = Indices_reverse(index);
   SIndividuals_ sindividuals__next = sindividuals_;
@@ -741,7 +741,7 @@ SIndividuals_ SIndividuals__sindividuals_(SIndividuals_ sindividuals_,
 //
 // This becomes the following code.
 //
-SIndividuals1 SIndividuals__sindividuals1(SIndividuals_ sindividuals_, UInt64 index) {
+SIndividuals1 SIndividuals__sindividuals1(SIndividuals_ const sindividuals_, UInt64 const index) {
   return SIndividuals__sindividuals_(sindividuals_, index, DEPTH-1).sindividuals1;
 }
 
@@ -751,8 +751,8 @@ SIndividuals1 SIndividuals__sindividuals1(SIndividuals_ sindividuals_, UInt64 in
 //
 // Valid IZ with given values
 // 
-IZ IZ_valid(UInt64 z) {
-  IZ iz = { .valid = true, .z = z };
+IZ IZ_valid(UInt64 const z) {
+  IZ const iz = { .valid = true, .z = z };
 
   return iz;
 }
@@ -763,7 +763,7 @@ IZ IZ_valid(UInt64 z) {
 // Invalid IZ.
 //
 IZ IZ_invalid() {
-  IZ iz = { .valid = false };
+  IZ const iz = { .valid = false };
 
   return iz;
 }
@@ -773,7 +773,7 @@ IZ IZ_invalid() {
 //
 // Duplicate of original IZ with Z set to z.
 //
-IZ IZ_zSet(IZ iz, UInt64 z) {
+IZ IZ_zSet(IZ const iz, UInt64 const z) {
   // Invalid iz, done
   if (!iz.valid)
     return iz;
@@ -856,7 +856,7 @@ IZ IZ_zSet(IZ iz, UInt64 z) {
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-IZ IZ_nextBox(IZ iz, UInt64 box_ul_z, UInt64 box_lr_z) {
+IZ IZ_nextBox(IZ const iz, UInt64 const box_ul_z, UInt64 const box_lr_z) {
   // Interval [z+1,box_lr_z+1) does not contain Z value, done
   if (!iz.valid || iz.z >= box_lr_z)
     return IZ_invalid();
@@ -871,8 +871,8 @@ IZ IZ_nextBox(IZ iz, UInt64 box_ul_z, UInt64 box_lr_z) {
       bit += 1;
 
     // If previous box overlaps with target box, locate Z point in it
-    UInt64 ul_z = z+1;
-    UInt64 lr_z = z+(1<<2*bit);
+    UInt64 const ul_z = z+1;
+    UInt64 const lr_z = z+(1<<2*bit);
 
     if ( (ul_z&X_MASK) <= (box_lr_z&X_MASK) && (lr_z&X_MASK) >= (box_ul_z&X_MASK) &&
          (ul_z&Y_MASK) <= (box_lr_z&Y_MASK) && (lr_z&Y_MASK) >= (box_ul_z&Y_MASK) )
@@ -893,8 +893,8 @@ IZ IZ_nextBox(IZ iz, UInt64 box_ul_z, UInt64 box_lr_z) {
 
     // While previous sub box doesn't overlap with target box, skip over it (could be unrolled to 3 checks)
     while (1) {
-      UInt64 ul_z = z+1;
-      UInt64 lr_z = z+(1<<2*bit);
+      UInt64 const ul_z = z+1;
+      UInt64 const lr_z = z+(1<<2*bit);
 
       if ( (ul_z&X_MASK) <= (box_lr_z&X_MASK) && (lr_z&X_MASK) >= (box_ul_z&X_MASK) &&
            (ul_z&Y_MASK) <= (box_lr_z&Y_MASK) && (lr_z&Y_MASK) >= (box_ul_z&Y_MASK) )
@@ -914,10 +914,10 @@ IZ IZ_nextBox(IZ iz, UInt64 box_ul_z, UInt64 box_lr_z) {
 //
 // Valid IIndividuals with given values.
 //
-IIndividuals IIndividuals_valid(UInt64 number, UInt64 index,
-                                SIndividuals_ sindividuals_, SIndividuals1 sindividuals1) {
-  IIndividuals iindividuals = { .valid = true, .number = number, .index = index,
-				.sindividuals_ = sindividuals_, .sindividuals1 = sindividuals1 };
+IIndividuals IIndividuals_valid(UInt64 const number, UInt64 const index,
+                                SIndividuals_ const sindividuals_, SIndividuals1 const sindividuals1) {
+  IIndividuals const iindividuals = { .valid = true, .number = number, .index = index,
+				      .sindividuals_ = sindividuals_, .sindividuals1 = sindividuals1 };
 
   return iindividuals;
 }
@@ -928,7 +928,7 @@ IIndividuals IIndividuals_valid(UInt64 number, UInt64 index,
 // Invalid IIndividuals.
 //
 IIndividuals IIndividuals_invalid() {
-  IIndividuals iindividuals = { .valid = false };
+  IIndividuals const iindividuals = { .valid = false };
 
   return iindividuals;
 }
@@ -938,8 +938,8 @@ IIndividuals IIndividuals_invalid() {
 //
 // Duplicate of original IIndividuals with index and SIndividuals1 set index and sindividuals1.
 //
-IIndividuals IIndividuals_indexSet(IIndividuals iindividuals,
-				   UInt64 index, SIndividuals1 sindividuals1) {
+IIndividuals IIndividuals_indexSet(IIndividuals const iindividuals,
+				   UInt64 const index, SIndividuals1 const sindividuals1) {
   // Invalid iindividuals, done
   if (!iindividuals.valid)
     return iindividuals;
@@ -957,7 +957,7 @@ IIndividuals IIndividuals_indexSet(IIndividuals iindividuals,
 //
 // Z value (of Individual) indexed by iindividuals (must be valid).
 //
-UInt64 IIndividuals_z(IIndividuals iindividuals) {
+UInt64 IIndividuals_z(IIndividuals const iindividuals) {
   return iindividuals.sindividuals1->z[iindividuals.index%CLUSTER];
 }
 
@@ -966,7 +966,7 @@ UInt64 IIndividuals_z(IIndividuals iindividuals) {
 //
 // Individual indexed by iindividuals (must be valid).
 //
-Individual IIndividuals_individual(IIndividuals iindividuals) {
+Individual IIndividuals_individual(IIndividuals const iindividuals) {
   return iindividuals.sindividuals1->individual[iindividuals.index%CLUSTER];
 }
 
@@ -975,7 +975,7 @@ Individual IIndividuals_individual(IIndividuals iindividuals) {
 //
 // First IIndividual for given sindividuals.
 //
-IIndividuals IIndividuals_first(SIndividuals sindividuals) {
+IIndividuals IIndividuals_first(SIndividuals const sindividuals) {
   // No individuals, done
   if (sindividuals.number == 0)
     return IIndividuals_invalid();
@@ -990,7 +990,7 @@ IIndividuals IIndividuals_first(SIndividuals sindividuals) {
 //
 // Next IIndividuals after given iindividuals.
 //
-IIndividuals IIndividuals_next(IIndividuals iindividuals) {
+IIndividuals IIndividuals_next(IIndividuals const iindividuals) {
   // No more individuals, done
   if (!iindividuals.valid || iindividuals.index+1 == iindividuals.number)
     return IIndividuals_invalid();
@@ -1049,7 +1049,7 @@ IIndividuals IIndividuals_next(IIndividuals iindividuals) {
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-IIndividuals IIndividuals_firstZ(SIndividuals sindividuals, IZ iz) {
+IIndividuals IIndividuals_firstZ(SIndividuals const sindividuals, IZ const iz) {
   // There are no valid individuals with Z >= z, done
   if (sindividuals.number == 0 ||
       sindividuals.sindividuals_.sindividuals0->right_z[sindividuals.number-1 >> 64-64/DEPTH] < iz.z)
@@ -1158,7 +1158,7 @@ IIndividuals IIndividuals_firstZ(SIndividuals sindividuals, IZ iz) {
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-IIndividuals IIndividuals_nextZ(IIndividuals iindividuals, IZ iz) {
+IIndividuals IIndividuals_nextZ(IIndividuals const iindividuals, IZ const iz) {
   // There are no valid individuals with Z >= z, done
   if (!iindividuals.valid || !iz.valid ||
       iindividuals.index+1 == iindividuals.number ||
@@ -1253,8 +1253,8 @@ IIndividuals IIndividuals_nextZ(IIndividuals iindividuals, IZ iz) {
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-IIndividuals IIndividuals_firstBox(SIndividuals sindividuals,
-				   UInt64 box_ul_z, UInt64 box_lr_z) {
+IIndividuals IIndividuals_firstBox(SIndividuals const sindividuals,
+				   UInt64 const box_ul_z, UInt64 const box_lr_z) {
   // Start with first individual after upper-left hand side of box
   IIndividuals iindividuals_new = IIndividuals_firstZ(sindividuals, IZ_valid(box_ul_z));
 
@@ -1265,13 +1265,13 @@ IIndividuals IIndividuals_firstBox(SIndividuals sindividuals,
       break;
 
     // Individual is in box, done
-    UInt64 z = IIndividuals_z(iindividuals_new);
+    UInt64 const z = IIndividuals_z(iindividuals_new);
     if ( (z&X_MASK) <= (box_lr_z&X_MASK) && (z&X_MASK) >= (box_ul_z&X_MASK) &&
          (z&Y_MASK) <= (box_lr_z&Y_MASK) && (z&Y_MASK) >= (box_ul_z&Y_MASK) )
       break;
 
     // Try next individual
-    IZ iz_new = IZ_nextBox(IZ_valid(z), box_ul_z,box_lr_z);
+    IZ const iz_new = IZ_nextBox(IZ_valid(z), box_ul_z,box_lr_z);
     iindividuals_new = IIndividuals_nextZ(iindividuals_new, iz_new);
   }
 
@@ -1314,8 +1314,8 @@ IIndividuals IIndividuals_firstBox(SIndividuals sindividuals,
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-IIndividuals IIndividuals_nextBox(IIndividuals iindividuals,
-				  UInt64 box_ul_z, UInt64 box_lr_z) {
+IIndividuals IIndividuals_nextBox(IIndividuals const iindividuals,
+				  UInt64 const box_ul_z, UInt64 const box_lr_z) {
   // Start with next individual
   IIndividuals iindividuals_new = IIndividuals_next(iindividuals);
 
@@ -1326,13 +1326,13 @@ IIndividuals IIndividuals_nextBox(IIndividuals iindividuals,
       break;
 
     // Individual is in box, done
-    UInt64 z = IIndividuals_z(iindividuals_new);
+    UInt64 const z = IIndividuals_z(iindividuals_new);
     if ( (z&X_MASK) <= (box_lr_z&X_MASK) && (z&X_MASK) >= (box_ul_z&X_MASK) &&
          (z&Y_MASK) <= (box_lr_z&Y_MASK) && (z&Y_MASK) >= (box_ul_z&Y_MASK) )
       break;
 
     // Try next individual
-    IZ iz_new = IZ_nextBox(IZ_valid(z), box_ul_z,box_lr_z);
+    IZ const iz_new = IZ_nextBox(IZ_valid(z), box_ul_z,box_lr_z);
     iindividuals_new = IIndividuals_nextZ(iindividuals_new, iz_new);
   }
 
@@ -1364,7 +1364,7 @@ AVarieties AVarieties_begin() {
 //
 // Adds svarieties onto end of avarieties.
 //
-AVarieties AVarieties_append(AVarieties avarieties, Variety variety) {
+AVarieties AVarieties_append(AVarieties const avarieties, Variety const variety) {
   AVarieties avarieties_new;
 
   // All space is used up (number == 2^N), expand space by *2
@@ -1389,7 +1389,7 @@ AVarieties AVarieties_append(AVarieties avarieties, Variety variety) {
 //
 // Convert into SVarieties (assumes AVarieties_ struct is same as SVarieties_).
 // 
-SVarieties AVarieties_end(AVarieties avarieties) {
+SVarieties AVarieties_end(AVarieties const avarieties) {
   SVarieties avarieties_new = avarieties;
 
   // Release extra unused space
@@ -1426,7 +1426,7 @@ ASIndividuals ASIndividuals_begin() {
 //
 // Adds sindividuals onto end of asindividuals.
 //
-ASIndividuals ASIndividuals_append(ASIndividuals asindividuals, SIndividuals sindividuals) {
+ASIndividuals ASIndividuals_append(ASIndividuals const asindividuals, SIndividuals const sindividuals) {
   ASIndividuals asindividuals_new;
 
   // All space is used up (number == 2^N), expand space by *2
@@ -1452,7 +1452,7 @@ ASIndividuals ASIndividuals_append(ASIndividuals asindividuals, SIndividuals sin
 //
 // Convert into SSIndividuals (assumes ASIndividuals_ struct is same as SSIndividuals_).
 // 
-SSIndividuals ASIndividuals_end(ASIndividuals asindividuals) {
+SSIndividuals ASIndividuals_end(ASIndividuals const asindividuals) {
   SSIndividuals asindividuals_new;
 
   // Release extra unused space
@@ -1472,7 +1472,7 @@ SSIndividuals ASIndividuals_end(ASIndividuals asindividuals) {
 // AIndividuals with no Individuals.
 //
 AIndividuals AIndividuals_begin() {
-  AIndividuals aindividuals = { .number = 0 };
+  AIndividuals const aindividuals = { .number = 0 };
 
   return aindividuals;
 }
@@ -1517,8 +1517,8 @@ AIndividuals AIndividuals_begin() {
 //
 // This becomes the following code.
 //
-AIndividuals AIndividuals_append(AIndividuals aindividuals,
-				 Individual individual, UInt64 z) {
+AIndividuals AIndividuals_append(AIndividuals const aindividuals,
+				 Individual const individual, UInt64 const z) {
   AIndividuals aindividuals_new = aindividuals;
 
   // New bottom level required, create one to add individual to
@@ -1590,8 +1590,8 @@ AIndividuals AIndividuals_append(AIndividuals aindividuals,
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-SIndividuals_ AIndividuals_attach(SIndividuals_ sindividuals_,
-				  SIndividuals1 sindividuals1, UInt64 index) {
+SIndividuals_ AIndividuals_attach(SIndividuals_ const sindividuals_,
+				  SIndividuals1 const sindividuals1, UInt64 const index) {
   UInt64 indices = Indices_reverse(index);
   SIndividuals_ sindividuals__new = sindividuals_;
   SIndividuals_* sindividuals__link = &sindividuals__new;
@@ -1643,7 +1643,7 @@ SIndividuals_ AIndividuals_attach(SIndividuals_ sindividuals_,
 //
 // This becomes the following code.
 //
-SIndividuals AIndividuals_end(AIndividuals aindividuals) {
+SIndividuals AIndividuals_end(AIndividuals const aindividuals) {
   // Individuals, attach SIndividuals1, sort them, build the left/right Z cache values, and return SIndividuals
   if (aindividuals.number > 0) {
     SIndividuals_ sindividuals_;
@@ -1708,7 +1708,7 @@ SIndividuals AIndividuals_end(AIndividuals aindividuals) {
 //
 // Flattening the recursive calls with loops and a sindividuals_ stack array this becomes the following code.
 //
-SIndividuals_ AIndividuals_cache(SIndividuals_ sindividuals_, UInt64 number) {
+SIndividuals_ AIndividuals_cache(SIndividuals_ const sindividuals_, UInt64 const number) {
   SIndividuals_ sindividuals__stack[DEPTH] = { [DEPTH-1] = sindividuals_ };
   UInt64 index = 0;
   UInt bit = 64-64/DEPTH;
@@ -1861,7 +1861,7 @@ SIndividuals_ AIndividuals_cache(SIndividuals_ sindividuals_, UInt64 number) {
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-SIndividuals_ AIndividuals_sort(SIndividuals_ sindividuals_, UInt64 number, UInt64 pivot_z) {
+SIndividuals_ AIndividuals_sort(SIndividuals_ const sindividuals_, UInt64 const number, UInt64 const pivot_z) {
   // Individuals, pivot sort
   if (number > 0)
     return AIndividuals_sortBoth(sindividuals_,
@@ -1875,11 +1875,11 @@ SIndividuals_ AIndividuals_sort(SIndividuals_ sindividuals_, UInt64 number, UInt
 }
 
 
-SIndividuals_ AIndividuals_sortBoth(SIndividuals_ sindividuals_,
-				    SIndividuals1 left_sindividuals1_start,
-				    SIndividuals1 right_sindividuals1_start,
-				    UInt64 left_index_start, UInt64 right_index_start,
-				    UInt64 pivot_z) {
+SIndividuals_ AIndividuals_sortBoth(SIndividuals_ const sindividuals_,
+				    SIndividuals1 const left_sindividuals1_start,
+				    SIndividuals1 const right_sindividuals1_start,
+				    UInt64 const left_index_start, UInt64 const right_index_start,
+				    UInt64 const pivot_z) {
   SIndividuals1 left_sindividuals1_current = left_sindividuals1_start;
   UInt64 left_index_current = left_index_start;
   UInt64 left_z_min = UINT64_MAX;
@@ -1940,8 +1940,8 @@ SIndividuals_ AIndividuals_sortBoth(SIndividuals_ sindividuals_,
       left_sindividuals1_current->z[left_index_current%CLUSTER] = right_z;
       right_sindividuals1_current->z[right_index_current%CLUSTER] = left_z;
 
-      Individual left_individual = left_sindividuals1_current->individual[left_index_current%CLUSTER];
-      Individual right_individual = right_sindividuals1_current->individual[right_index_current%CLUSTER];
+      Individual const left_individual = left_sindividuals1_current->individual[left_index_current%CLUSTER];
+      Individual const right_individual = right_sindividuals1_current->individual[right_index_current%CLUSTER];
 
       left_sindividuals1_current->individual[left_index_current%CLUSTER] = right_individual;
       right_sindividuals1_current->individual[right_index_current%CLUSTER] = left_individual;
@@ -1972,7 +1972,7 @@ SIndividuals_ AIndividuals_sortBoth(SIndividuals_ sindividuals_,
 //
 // SRVarieties prepared for reduction of svarities (initialized with Reduce_variety_inital).
 //
-SRVarieties SRVarieties_begin(Space space, SVarieties svarieties) {
+SRVarieties SRVarieties_begin(Space const space, SVarieties const svarieties) {
   SRVarieties srvarieties;
 
   // Create a RVariety for each Variety
@@ -1984,10 +1984,10 @@ SRVarieties SRVarieties_begin(Space space, SVarieties svarieties) {
   // Initialize each RVariety with RVariety_first
   for (UInt index=0; index<svarieties->number; index+=1) {
     // Break out Variety
-    Variety variety = svarieties->variety[index];
+    Variety const variety = svarieties->variety[index];
 
     // Initialize RVariety
-    RVariety rvariety = RVariety_first(space, variety);
+    RVariety const rvariety = RVariety_first(space, variety);
 
     srvarieties->rvariety[index] = rvariety;
   }
@@ -2013,8 +2013,8 @@ void SRVarieties_end(SRVarieties srvarieties) {
 //
 // SRIndividualsIn prepared for reduction of sindividuals (initialized with RIndividualIn_first).
 //
-SRIndividualsIn SRIndividualsIn_begin(Space space, Variety variety,
-				      SIndividuals sindividuals) {
+SRIndividualsIn SRIndividualsIn_begin(Space const space, Variety const variety,
+				      SIndividuals const sindividuals) {
   SRIndividualsIn srindividualsin;
 
   // Create a RIndividualIn for each Individual in sindividuals
@@ -2028,10 +2028,10 @@ SRIndividualsIn SRIndividualsIn_begin(Space space, Variety variety,
         iindividuals.valid;
         iindividuals = IIndividuals_next(iindividuals) ) {
     // Break out Individual
-    Individual individual = IIndividuals_individual(iindividuals);
+    Individual const individual = IIndividuals_individual(iindividuals);
 
     // Initialize RIndividualIn
-    RIndividualIn rindividualin = RIndividualIn_first(space, variety, individual);
+    RIndividualIn const rindividualin = RIndividualIn_first(space, variety, individual);
 
     srindividualsin->rindividualin[iindividuals.index] = rindividualin;
   }
@@ -2047,7 +2047,7 @@ SRIndividualsIn SRIndividualsIn_begin(Space space, Variety variety,
 //
 // Release resources associated with srindividualsin.
 //
-void SRIndividualsIn_end(SRIndividualsIn srindividualsin) {
+void SRIndividualsIn_end(SRIndividualsIn const srindividualsin) {
   free(srindividualsin);
 }
 
@@ -2056,8 +2056,8 @@ void SRIndividualsIn_end(SRIndividualsIn srindividualsin) {
 //
 // SEIndividualsOut prepared for reduction of sindividuals (initialized with RIndividualOut_first).
 //
-SRIndividualsOut SRIndividualsOut_begin(Space space, Variety variety,
-					SIndividuals sindividuals) {
+SRIndividualsOut SRIndividualsOut_begin(Space const space, Variety const variety,
+					SIndividuals const sindividuals) {
   SRIndividualsOut srindividualsout;
 
   // Create a RIndividualsOut for each Individual
@@ -2071,10 +2071,10 @@ SRIndividualsOut SRIndividualsOut_begin(Space space, Variety variety,
         iindividuals.valid;
         iindividuals = IIndividuals_next(iindividuals) ) {
     // Break out Individual
-    Individual individual = IIndividuals_individual(iindividuals);
+    Individual const individual = IIndividuals_individual(iindividuals);
 
     // Initialize RIndividualOut
-    RIndividualOut rindividualout = RIndividualOut_first(space, variety, individual);
+    RIndividualOut const rindividualout = RIndividualOut_first(space, variety, individual);
 
     srindividualsout->rindividualout[iindividuals.index] = rindividualout;
   }
@@ -2090,7 +2090,7 @@ SRIndividualsOut SRIndividualsOut_begin(Space space, Variety variety,
 //
 // Release resources associated with srindividualsout.
 //
-void SRIndividualsOut_end(SRIndividualsOut srindividualsout) {
+void SRIndividualsOut_end(SRIndividualsOut const srindividualsout) {
   free(srindividualsout);
 }
 
@@ -2100,8 +2100,8 @@ void SRIndividualsOut_end(SRIndividualsOut srindividualsout) {
 //
 // SSRIndividualsIn prepared for reduction of ssindividuals (initialized with RIndividualIn_first).
 //
-SSRIndividualsIn SSRIndividualsIn_begin(Space space, SVarieties svarieties,
-					SSIndividuals ssindividuals) {
+SSRIndividualsIn SSRIndividualsIn_begin(Space const space, SVarieties const svarieties,
+					SSIndividuals const ssindividuals) {
   UInt number = svarieties->number <= ssindividuals->number ? svarieties->number : ssindividuals->number;
   SSRIndividualsIn ssrindividualsin;
 
@@ -2114,11 +2114,11 @@ SSRIndividualsIn SSRIndividualsIn_begin(Space space, SVarieties svarieties,
   // Initialize each SRIndividualsIn with SRIndividualsIn_begin (uses RIndividualIn_first)
   for (UInt index=0; index<number; index+=1) {
     // Break out (Variety,SIndividuals) pair
-    Variety variety = svarieties->variety[index];
-    SIndividuals sindividuals = ssindividuals->sindividuals[index];
+    Variety const variety = svarieties->variety[index];
+    SIndividuals const sindividuals = ssindividuals->sindividuals[index];
 
     // Initialize SRIndividualsIn
-    SRIndividualsIn srindividualsin = SRIndividualsIn_begin(space, variety, sindividuals);
+    SRIndividualsIn const srindividualsin = SRIndividualsIn_begin(space, variety, sindividuals);
 
     ssrindividualsin->srindividualsin[index] = srindividualsin;
   }
@@ -2134,11 +2134,11 @@ SSRIndividualsIn SSRIndividualsIn_begin(Space space, SVarieties svarieties,
 //
 // Release resources associated with ssrindividualsin.
 //
-void SSRIndividualsIn_end(SSRIndividualsIn ssrindividualsin) {
+void SSRIndividualsIn_end(SSRIndividualsIn const ssrindividualsin) {
   // Release SRIndividualsIn resources
   for (UInt index=0; index<ssrindividualsin->number; index+=1) {
     // Break in SRIndividualsIn
-    SRIndividualsIn srindividualsin = ssrindividualsin->srindividualsin[index];
+    SRIndividualsIn const srindividualsin = ssrindividualsin->srindividualsin[index];
 
     // Release SRIndividualsIn resources
     SRIndividualsIn_end(srindividualsin);
@@ -2153,9 +2153,9 @@ void SSRIndividualsIn_end(SSRIndividualsIn ssrindividualsin) {
 //
 // SSRIndividualsOut prepared for reduction of ssindividuals (initialized with RIndividualOut_first).
 //
-SSRIndividualsOut SSRIndividualsOut_begin(Space space, SVarieties svarieties,
-					  SSIndividuals ssindividuals) {
-  UInt number = svarieties->number <= ssindividuals->number ? svarieties->number : ssindividuals->number;
+SSRIndividualsOut SSRIndividualsOut_begin(Space const space, SVarieties const svarieties,
+					  SSIndividuals const ssindividuals) {
+  UInt const number = svarieties->number <= ssindividuals->number ? svarieties->number : ssindividuals->number;
   SSRIndividualsOut ssrindividualsout;
 
   // Create a SRIndivdiualsOut for each (Variety,SIndividuals) pair
@@ -2167,11 +2167,11 @@ SSRIndividualsOut SSRIndividualsOut_begin(Space space, SVarieties svarieties,
   // Initialize each SRIndividualsOut with SRIndividualsOut_begin (uses RIndividualOut_first)
   for (UInt index=0; index<number; index+=1) {
     // Break out (Variety,SIndividuals) pair
-    Variety variety = svarieties->variety[index];
-    SIndividuals sindividuals = ssindividuals->sindividuals[index];
+    Variety const variety = svarieties->variety[index];
+    SIndividuals const sindividuals = ssindividuals->sindividuals[index];
 
     // Initialize SRIndividualsOut
-    SRIndividualsOut srindividualsout = SRIndividualsOut_begin(space, variety, sindividuals);
+    SRIndividualsOut const srindividualsout = SRIndividualsOut_begin(space, variety, sindividuals);
 
     ssrindividualsout->srindividualsout[index] = srindividualsout;
   }
@@ -2187,11 +2187,11 @@ SSRIndividualsOut SSRIndividualsOut_begin(Space space, SVarieties svarieties,
 //
 // Release resources associated with ssrindividualsout.
 //
-void SSRIndividualsOut_end(SSRIndividualsOut ssrindividualsout) {
+void SSRIndividualsOut_end(SSRIndividualsOut const ssrindividualsout) {
   // Release SRIndividualsOut resources
   for (UInt index=0; index<ssrindividualsout->number; index+=1) {
     // Break in SRIndividualsOut
-    SRIndividualsOut srindividualsout = ssrindividualsout->srindividualsout[index];
+    SRIndividualsOut const srindividualsout = ssrindividualsout->srindividualsout[index];
 
     // Release SRIndividualsOut resources
     SRIndividualsOut_end(srindividualsout);
@@ -2214,7 +2214,7 @@ void SSRIndividualsOut_end(SSRIndividualsOut ssrindividualsout) {
 //
 // The second versions explicitly take an errno value, the first versions use the global errno value.
 //
-void Error_dieErrNo(int value, char const* format, ...) {
+void Error_dieErrNo(int const value, char const* const format, ...) {
   // Setup va_list for args and invoke that version
   va_list args;
 
@@ -2223,13 +2223,13 @@ void Error_dieErrNo(int value, char const* format, ...) {
   va_end(args);
 }
 
-void Error_vdieErrNo(int value, char const* format, va_list args) {
+void Error_vdieErrNo(int const value, char const* const format, va_list args) {
   // Invoke explicit version with global errno value
   Error_vdieErrNoExplict(errno, value, format, args);
 }
 
 
-void Error_dieErrNoExplict(int errno_original, int value, char const* format, ...) {
+void Error_dieErrNoExplict(int const errno_original, int const value, char const* const format, ...) {
   // Setup va_list for args and invoke that version
   va_list args;
 
@@ -2238,7 +2238,7 @@ void Error_dieErrNoExplict(int errno_original, int value, char const* format, ..
   va_end(args);
 }
 
-void Error_vdieErrNoExplict(int errno_original, int value, char const* format, va_list args) {
+void Error_vdieErrNoExplict(int const errno_original, int const value, char const* const format, va_list args) {
   // Output any given printf style formatted message to stderr
   if (format) {
     vfprintf(stderr, format, args);
@@ -2264,7 +2264,7 @@ void Error_vdieErrNoExplict(int errno_original, int value, char const* format, v
 // If given printf style formatted message, print it to stderr followed by a newline, and then exit with given
 // error value.
 //
-void Error_die(int value, char const* format, ...) {
+void Error_die(int const value, char const* const format, ...) {
   // Setup va_list for args and invoke that version
   va_list args;
 
@@ -2274,7 +2274,7 @@ void Error_die(int value, char const* format, ...) {
 }
 
 
-void Error_vdie(int value, char const* format, va_list args) {
+void Error_vdie(int const value, char const* const format, va_list args) {
   // Output any given printf style formatted message to stderr
   if (format) {
     vfprintf(stderr, format, args);
@@ -2292,7 +2292,7 @@ void Error_vdie(int value, char const* format, va_list args) {
 //
 // Create/truncate the given file name and serialize the given world to it.
 //
-void World_save(World world, char const* name) {
+void World_save(World const world, char const* const name) {
   // Wrap file handle based routine with opening and close details
   FILE* file;
 
@@ -2303,11 +2303,11 @@ void World_save(World world, char const* name) {
     Error_dieErrNo(1, "unable to close \"%s\"", name);
 }
 
-void World_save_fp(FILE* file, World world, char const* name) {
+void World_save_fp(FILE* const file, World const world, char const* const name) {
   // Break out world components
-  Space space = world.space;
-  SVarieties svarieties = world.svarieties;
-  SSIndividuals ssindividuals = world.ssindividuals;
+  Space const space = world.space;
+  SVarieties const svarieties = world.svarieties;
+  SSIndividuals const ssindividuals = world.ssindividuals;
 
   // Save forest level data
   if ( fprintf(file, "SPACE %d %d %g %g\n",
@@ -2316,13 +2316,13 @@ void World_save_fp(FILE* file, World world, char const* name) {
     Error_dieErrNo(1, "an error occured while writing to \"%s\"", name);
 
   // Save varieties
-  UInt varieties_number = ( svarieties->number <= ssindividuals->number ?
+  UInt const varieties_number = ( svarieties->number <= ssindividuals->number ?
 				  svarieties->number : ssindividuals->number );
 
   for (UInt varieties_index = 0; varieties_index<varieties_number; varieties_index+=1) {
     // Break out variety components
-    Variety variety = svarieties->variety[varieties_index];
-    SIndividuals sindividuals = ssindividuals->sindividuals[varieties_index];
+    Variety const variety = svarieties->variety[varieties_index];
+    SIndividuals const sindividuals = ssindividuals->sindividuals[varieties_index];
 
     // Save variety
     if ( fprintf(file, "VARIETY %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
@@ -2340,7 +2340,7 @@ void World_save_fp(FILE* file, World world, char const* name) {
           iindividuals.valid;
           iindividuals = IIndividuals_next(iindividuals) ) {
       // Break out individual components
-      Individual individual = IIndividuals_individual(iindividuals);
+      Individual const individual = IIndividuals_individual(iindividuals);
 
       // Save individual
       if ( fprintf(file, "INDIVIDUAL %g %g %g\n",
@@ -2357,7 +2357,7 @@ void World_save_fp(FILE* file, World world, char const* name) {
 //
 // Read the given file and restore a serialized forest from it.
 //
-World World_load(char const* name) {
+World World_load(char const* const name) {
   World world;
   FILE* file;
 
@@ -2371,7 +2371,7 @@ World World_load(char const* name) {
 }
 
 
-World World_load_fp(FILE* file, char const* name) {
+World World_load_fp(FILE* const file, char const* const name) {
   UInt64 line = 1;
   int records;
 
@@ -2471,10 +2471,10 @@ World World_load_fp(FILE* file, char const* name) {
   }
 
   // Package up and return components
-  SVarieties svarieties = AVarieties_end(avarieties);
-  SSIndividuals ssindividuals = ASIndividuals_end(asindividuals);
+  SVarieties const svarieties = AVarieties_end(avarieties);
+  SSIndividuals const ssindividuals = ASIndividuals_end(asindividuals);
 
-  World world = { .space = space, .svarieties = svarieties, .ssindividuals = ssindividuals };
+  World const world = { .space = space, .svarieties = svarieties, .ssindividuals = ssindividuals };
 
   return world;
 }
@@ -2484,7 +2484,7 @@ World World_load_fp(FILE* file, char const* name) {
 //
 // Release resources associated with world
 //
-void World_end(World world) {
+void World_end(World const world) {
   SVarieties_end(world.svarieties);
   SSIndividuals_end(world.ssindividuals);
 }
@@ -2627,35 +2627,35 @@ void World_end(World world) {
 //
 // Expressing the folds as loops this becomes the following code.
 //
-RWorld World_reduce(World world) {
+RWorld World_reduce(World const world) {
   // Break out world level components
-  Space space = world.space;
-  SVarieties svarieties = world.svarieties;
-  SSIndividuals ssindividuals = world.ssindividuals;
+  Space const space = world.space;
+  SVarieties const svarieties = world.svarieties;
+  SSIndividuals const ssindividuals = world.ssindividuals;
 
   // Reduction setup
   RSpace rspace = RSpace_first(space);
-  SRVarieties srvarieties = SRVarieties_begin(space, svarieties);
-  SSRIndividualsIn ssrindividualsin = SSRIndividualsIn_begin(space, svarieties, ssindividuals);
-  SSRIndividualsOut ssrindividualsout = SSRIndividualsOut_begin(space, svarieties, ssindividuals);
+  SRVarieties const srvarieties = SRVarieties_begin(space, svarieties);
+  SSRIndividualsIn const ssrindividualsin = SSRIndividualsIn_begin(space, svarieties, ssindividuals);
+  SSRIndividualsOut const ssrindividualsout = SSRIndividualsOut_begin(space, svarieties, ssindividuals);
 
   // Reduction outer loop over varieties
-  UInt varieties_number = ( svarieties->number <= ssindividuals->number ?
+  UInt const varieties_number = ( svarieties->number <= ssindividuals->number ?
 				  svarieties->number : ssindividuals->number );
 
   for (UInt varieties0_index=0; varieties0_index<varieties_number; varieties0_index+=1) {
     // Break out outer variety components
-    Variety variety0 = svarieties->variety[varieties0_index];
-    SIndividuals sindividuals0 = ssindividuals->sindividuals[varieties0_index];
+    Variety const variety0 = svarieties->variety[varieties0_index];
+    SIndividuals const sindividuals0 = ssindividuals->sindividuals[varieties0_index];
     RVariety rvariety = srvarieties->rvariety[varieties0_index];
-    SRIndividualsIn srindividualsin = ssrindividualsin->srindividualsin[varieties0_index];
+    SRIndividualsIn const srindividualsin = ssrindividualsin->srindividualsin[varieties0_index];
 
     // Outer loop over individuals
     for ( IIndividuals iindividuals0 = IIndividuals_first(sindividuals0);
           iindividuals0.valid;
           iindividuals0 = IIndividuals_next(iindividuals0) ) {
       // Break out outer individual components
-      Individual individual0 = IIndividuals_individual(iindividuals0);
+      Individual const individual0 = IIndividuals_individual(iindividuals0);
       RIndividualIn rindividualin = srindividualsin->rindividualin[iindividuals0.index];
 
       // Outer level reductions
@@ -2665,20 +2665,20 @@ RWorld World_reduce(World world) {
       // Reduction inner loop over varieties
       for (UInt varieties1_index=0; varieties1_index<varieties_number; varieties1_index+=1) {
         // Break out inner variety components
-        Variety variety1 = svarieties->variety[varieties1_index];
-        SIndividuals sindividuals1 = ssindividuals->sindividuals[varieties1_index];
-        SRIndividualsOut srindividualsout = ssrindividualsout->srindividualsout[varieties1_index];
+        Variety const variety1 = svarieties->variety[varieties1_index];
+        SIndividuals const sindividuals1 = ssindividuals->sindividuals[varieties1_index];
+        SRIndividualsOut const srindividualsout = ssrindividualsout->srindividualsout[varieties1_index];
 
         // Reduction inner loop over individuals in in loop
-        Box box_in = RIndividualIn_bound(space, variety0,individual0, variety1);
-        UInt64 box_in_ul_z = Z_xy(box_in.ul_x, box_in.ul_y, space.scale);
-        UInt64 box_in_lr_z = Z_xy(box_in.lr_x, box_in.lr_y, space.scale);
+        Box const box_in = RIndividualIn_bound(space, variety0,individual0, variety1);
+        UInt64 const box_in_ul_z = Z_xy(box_in.ul_x, box_in.ul_y, space.scale);
+        UInt64 const box_in_lr_z = Z_xy(box_in.lr_x, box_in.lr_y, space.scale);
 
         for ( IIndividuals iindividuals1 = IIndividuals_firstBox(sindividuals1, box_in_ul_z,box_in_lr_z);
               iindividuals1.valid;
               iindividuals1 = IIndividuals_nextBox(iindividuals1, box_in_ul_z,box_in_lr_z) ) {
           // Break out inner individual components
-          Individual individual1 = IIndividuals_individual(iindividuals1);
+          Individual const individual1 = IIndividuals_individual(iindividuals1);
 
           // Inner level reductions (individual to self is special case done in reduction setup)
           if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index) &&
@@ -2689,15 +2689,15 @@ RWorld World_reduce(World world) {
         }
 
         // Reduction inner loop over individuals in out loop
-        Box box_out = RIndividualOut_bound(space, variety0,individual0, variety1);
-        UInt64 box_out_ul_z = Z_xy(box_out.ul_x, box_out.ul_y, space.scale);
-        UInt64 box_out_lr_z = Z_xy(box_out.lr_x, box_out.lr_y, space.scale);
+        Box const box_out = RIndividualOut_bound(space, variety0,individual0, variety1);
+        UInt64 const box_out_ul_z = Z_xy(box_out.ul_x, box_out.ul_y, space.scale);
+        UInt64 const box_out_lr_z = Z_xy(box_out.lr_x, box_out.lr_y, space.scale);
 
         for ( IIndividuals iindividuals1 = IIndividuals_firstBox(sindividuals1, box_out_ul_z,box_out_lr_z);
               iindividuals1.valid;
               iindividuals1 = IIndividuals_nextBox(iindividuals1, box_out_ul_z,box_out_lr_z) ) {
           // Break out inner individual level components
-          Individual individual1 = IIndividuals_individual(iindividuals1);
+          Individual const individual1 = IIndividuals_individual(iindividuals1);
           RIndividualOut rindividualout = srindividualsout->rindividualout[iindividuals1.index];
 
           // Inner level reductions (individual to self is special case done in reduction setup)
@@ -2717,8 +2717,8 @@ RWorld World_reduce(World world) {
   }
 
   // Package up and return the reduction
-  RWorld rworld = { .rspace = rspace, .srvarieties = srvarieties,
-		    .ssrindividualsin = ssrindividualsin, .ssrindividualsout = ssrindividualsout };
+  RWorld const rworld = { .rspace = rspace, .srvarieties = srvarieties,
+			  .ssrindividualsin = ssrindividualsin, .ssrindividualsout = ssrindividualsout };
 
   return rworld;
 }
@@ -2763,19 +2763,19 @@ RWorld World_reduce(World world) {
 //
 // Expressing the folds as loops this becomes the following code.
 //
-World World_next(World world, RWorld rworld, Thread thread) {
+World World_next(World const world, RWorld const rworld, Thread const thread) {
   // Break out world level components
-  Space space = world.space;
-  SVarieties svarieties = world.svarieties;
-  SSIndividuals ssindividuals = world.ssindividuals;
+  Space const space = world.space;
+  SVarieties const svarieties = world.svarieties;
+  SSIndividuals const ssindividuals = world.ssindividuals;
 
-  RSpace rspace = rworld.rspace;
-  SRVarieties srvarieties = rworld.srvarieties;
-  SSRIndividualsIn ssrindividualsin = rworld.ssrindividualsin;
-  SSRIndividualsOut ssrindividualsout = rworld.ssrindividualsout;
+  RSpace const rspace = rworld.rspace;
+  SRVarieties const srvarieties = rworld.srvarieties;
+  SSRIndividualsIn const ssrindividualsin = rworld.ssrindividualsin;
+  SSRIndividualsOut const ssrindividualsout = rworld.ssrindividualsout;
 
   // Next space
-  Space space_new = Space_next(space, rspace, thread);
+  Space const space_new = Space_next(space, rspace, thread);
 
   // Construction loop over varieties
   UInt varieties_number;
@@ -2789,14 +2789,14 @@ World World_next(World world, RWorld rworld, Thread thread) {
 
   for (UInt varieties_index=0; varieties_index<varieties_number; varieties_index+=1) {
     // Break out variety components
-    Variety variety = svarieties->variety[varieties_index];
-    SIndividuals sindividuals = ssindividuals->sindividuals[varieties_index];
-    RVariety rvariety = srvarieties->rvariety[varieties_index];
-    SRIndividualsIn srindividualsin = ssrindividualsin->srindividualsin[varieties_index];
-    SRIndividualsOut srindividualsout = ssrindividualsout->srindividualsout[varieties_index];
+    Variety const variety = svarieties->variety[varieties_index];
+    SIndividuals const sindividuals = ssindividuals->sindividuals[varieties_index];
+    RVariety const rvariety = srvarieties->rvariety[varieties_index];
+    SRIndividualsIn const srindividualsin = ssrindividualsin->srindividualsin[varieties_index];
+    SRIndividualsOut const srindividualsout = ssrindividualsout->srindividualsout[varieties_index];
     
     // Next variety
-    Variety variety_new = Variety_next(space, variety, rspace, rvariety, thread);
+    Variety const variety_new = Variety_next(space, variety, rspace, rvariety, thread);
     avarieties = AVarieties_append(avarieties, variety_new);
 
     // Construction loop over individuals
@@ -2812,9 +2812,9 @@ World World_next(World world, RWorld rworld, Thread thread) {
           iindividuals.valid && iindividuals.index < individuals_number;
           iindividuals = IIndividuals_next(iindividuals) ) {
       // Break out individuals components
-      Individual individual = IIndividuals_individual(iindividuals);
-      RIndividualIn rindividualin = srindividualsin->rindividualin[iindividuals.index];
-      RIndividualOut rindividualout = srindividualsout->rindividualout[iindividuals.index];
+      Individual const individual = IIndividuals_individual(iindividuals);
+      RIndividualIn const rindividualin = srindividualsin->rindividualin[iindividuals.index];
+      RIndividualOut const rindividualout = srindividualsout->rindividualout[iindividuals.index];
 
       // Next individual
       aindividuals = Individual_next(aindividuals, space, variety, individual,
@@ -2822,16 +2822,16 @@ World World_next(World world, RWorld rworld, Thread thread) {
                                      thread);
     }
 
-    SIndividuals sindividuals_new = AIndividuals_end(aindividuals);
+    SIndividuals const sindividuals_new = AIndividuals_end(aindividuals);
     asindividuals = ASIndividuals_append(asindividuals, sindividuals_new);
   }
 
-  SVarieties svarieties_new = AVarieties_end(avarieties);
-  SSIndividuals ssindividuals_new = ASIndividuals_end(asindividuals);
+  SVarieties const svarieties_new = AVarieties_end(avarieties);
+  SSIndividuals const ssindividuals_new = ASIndividuals_end(asindividuals);
 
   // Package up and return components
-  World world_new = { .space = space_new, .svarieties = svarieties_new,
-		      .ssindividuals = ssindividuals_new };
+  World const world_new = { .space = space_new, .svarieties = svarieties_new,
+			    .ssindividuals = ssindividuals_new };
 
   return world_new;
 }
@@ -2842,7 +2842,7 @@ World World_next(World world, RWorld rworld, Thread thread) {
 //
 // Release resources associated with rworld.
 //
-void RWorld_end(RWorld rworld) {
+void RWorld_end(RWorld const rworld) {
   SRVarieties_end(rworld.srvarieties);
   SSRIndividualsIn_end(rworld.ssrindividualsin);
   SSRIndividualsOut_end(rworld.ssrindividualsout);
@@ -2850,101 +2850,101 @@ void RWorld_end(RWorld rworld) {
 
 
 //---------------------------------------------------------------------------------------------------------------//
-Space Space_next(Space space, RSpace rspace, Thread thread) {
+Space Space_next(Space const space, RSpace const rspace, Thread const thread) {
   return space;
 }
 
-Variety Variety_next(Space space, Variety variety,
-		     RSpace rspace, RVariety rvariety,
-		     Thread thread) {
+Variety Variety_next(Space const space, Variety const variety,
+		     RSpace const rspace, RVariety const rvariety,
+		     Thread const thread) {
   return variety;
 }
 
-AIndividuals Individual_next(AIndividuals aindividuals,
-                             Space space, Variety variety, Individual individual,
-                             RSpace rspace, RVariety rvariety,
-                             RIndividualIn rindividualin, RIndividualOut rindividualout,
-                             Thread thread) {
+AIndividuals Individual_next(AIndividuals const aindividuals,
+                             Space const space, Variety const variety, Individual const individual,
+                             RSpace const rspace, RVariety const rvariety,
+                             RIndividualIn const rindividualin, RIndividualOut const rindividualout,
+                             Thread const thread) {
   return AIndividuals_append(aindividuals, individual, Z_xy(individual.x, individual.y, space.scale));
 }
 
 
-RSpace RSpace_first(Space space) {
+RSpace RSpace_first(Space const space) {
   RSpace rspace = { };
   return rspace;
 }
-RSpace RSpace_rest(Space space, Variety variety, Individual individual) {
+RSpace RSpace_rest(Space const space, Variety const variety, Individual const individual) {
   RSpace rspace = { };
   return rspace;
 }
-RSpace RSpace_merge(RSpace rspace0, RSpace rspace1) {
+RSpace RSpace_merge(RSpace const rspace0, RSpace const rspace1) {
   RSpace rspace = { };
   return rspace;
 }
 
 
-RVariety RVariety_first(Space space, Variety variety) {
+RVariety RVariety_first(Space const space, Variety const variety) {
   RVariety rvariety = { };
   return rvariety;
 }
-RVariety RVariety_rest(Space space, Variety variety, Individual individual) {
+RVariety RVariety_rest(Space const space, Variety const variety, Individual const individual) {
   RVariety rvariety = { };
   return rvariety;
 }
-RVariety RVariety_merge(RVariety rvariety0, RVariety rvariety1) {
+RVariety RVariety_merge(RVariety const rvariety0, RVariety const rvariety1) {
   RVariety rvariety = { };
   return rvariety;
 }
 
 
-Box RIndividualIn_bound(Space space, Variety variety0, Individual individual0,
-			Variety variety1) {
+Box RIndividualIn_bound(Space const space, Variety const variety0, Individual const individual0,
+			Variety const variety1) {
   Box box = { };
   return box;
 }
-Box RIndividualOut_bound(Space space, Variety variety0, Individual individual1,
+Box RIndividualOut_bound(Space const space, Variety const variety0, Individual const individual1,
 			 Variety variety1) {
   Box box = { };
   return box;
 }
 
 
-Bool RIndividualIn_filter(Space space, Variety variety0, Individual individual0,
-			  Variety variety1, Individual individual1) {
+Bool RIndividualIn_filter(Space const space, Variety const variety0, Individual const individual0,
+			  Variety const variety1, Individual const individual1) {
   return true;
 }
 
-Bool RIndividualOut_filter(Space space, Variety variety0, Individual individual0,
-			   Variety variety1, Individual individual1) {
+Bool RIndividualOut_filter(Space const space, Variety const variety0, Individual const individual0,
+			   Variety const variety1, Individual const individual1) {
   return true;
 }
 
 
-RIndividualIn RIndividualIn_first(Space space, Variety variety, Individual individual) {
+RIndividualIn RIndividualIn_first(Space const space, Variety const variety, Individual const individual) {
   RIndividualIn rindividualin = { };
   return rindividualin;
 }
-RIndividualIn RIndividualIn_rest(Space space, Variety variety0, Individual individual0,
-				 Variety variety1, Individual individual1) {
+RIndividualIn RIndividualIn_rest(Space const space, Variety const variety0, Individual const individual0,
+				 Variety const variety1, Individual const individual1) {
   RIndividualIn rindividualin = { };
   return rindividualin;
 }
-RIndividualIn RIndividualIn_merge(RIndividualIn rindividualin0, RIndividualIn rindividualin1) {
+RIndividualIn RIndividualIn_merge(RIndividualIn const rindividualin0, RIndividualIn const rindividualin1) {
   RIndividualIn rindividualin = { };
   return rindividualin;
 }
 
 
-RIndividualOut RIndividualOut_first(Space space, Variety variety, Individual individual) {
+RIndividualOut RIndividualOut_first(Space const space, Variety const variety, Individual const individual) {
   RIndividualOut rindividualin = { };
   return rindividualin;
 }
-RIndividualOut RIndividualOut_rest(Space space, Variety variety0, Individual individual0,
-				   Variety variety1, Individual individual1) {
+RIndividualOut RIndividualOut_rest(Space const space, Variety const variety0, Individual const individual0,
+				   Variety const variety1, Individual const individual1) {
   RIndividualOut rindividualin = { };
   return rindividualin;
 }
-RIndividualOut RIndividualOut_merge(RIndividualOut rindividualin0, RIndividualOut rindividualin1) {
+RIndividualOut RIndividualOut_merge(RIndividualOut const rindividualin0, RIndividualOut const rindividualin1) {
   RIndividualOut rindividualin = { };
   return rindividualin;
 }
