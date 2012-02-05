@@ -19,7 +19,7 @@
 #include "model-data.c"
 
 #include "system-func.h"
-#include "system-data.c"
+#include "system-data.h"
 
 
 //---------------------------------------------------------------------------------------------------------------//

@@ -20,7 +20,7 @@
 #include <inttypes.h>
 
 #include "system-func.h"
-#include "system-data.c"
+#include "system-data.h"
 
 #include "error-func.h"
 #include "model-func.h"

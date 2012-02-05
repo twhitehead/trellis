@@ -17,7 +17,7 @@
 
 #include "system-type.h"
 
-#include "model-data.c"
+#include "model-data.h"
 
 // Split 64b Z space into components (require CLUSTER=2^N for some N and CLUSTER^DEPTH = 2^64)
 

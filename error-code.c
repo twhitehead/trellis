@@ -21,7 +21,7 @@
 #include <stdlib.h>
 
 #include "error-func.h"
-#include "error-data.c"
+#include "error-data.h"
 
 
 //---------------------------------------------------------------------------------------------------------------//
