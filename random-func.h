@@ -55,14 +55,6 @@ Tuple_MersenneTwister_Float32 tuple_MersenneTwister_Float32(MersenneTwister firs
 Tuple_MersenneTwister_Float32_Float32 tuple_MersenneTwister_Float32_Float32
 (MersenneTwister first, Float32 second, Float32 third);
 
-Tuple_World_SVarieties_SSIndividuals tuple_World_SVarieties_SSIndividuals
-(World first, SVarieties second, SSIndividuals third);
-Tuple_Space_World_SVarieties_SSIndividuals tuple_Space_World_SVarieties_SSIndividuals
-(Space first, World second, SVarieties third, SSIndividuals fourth);
-Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
-tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
-(RWorld first, SRVarieties second, SSRIndividualsIn third, SSRIndividualsOut fourth);
-
 
 //---------------------------------------------------------------------------------------------------------------//
 

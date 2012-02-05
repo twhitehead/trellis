@@ -128,6 +128,16 @@ void State_next_
  RWorld rworld, SRVarieties srvarieties, SSRIndividualsIn ssrindividualsin, SSRIndividualsOut ssrindividualsout,
  Thread thread);
 
+//
+Tuple_World_SVarieties_SSIndividuals tuple_World_SVarieties_SSIndividuals
+(World first, SVarieties second, SSIndividuals third);
+Tuple_Space_World_SVarieties_SSIndividuals tuple_Space_World_SVarieties_SSIndividuals
+(Space first, World second, SVarieties third, SSIndividuals fourth);
+Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
+tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
+(RWorld first, SRVarieties second, SSRIndividualsIn third, SSRIndividualsOut fourth);
+
+
 //---------------------------------------------------------------------------------------------------------------//
 
 #endif // SYSTEM_FUNC
