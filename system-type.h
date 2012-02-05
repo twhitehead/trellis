@@ -66,11 +66,6 @@ typedef struct _SVarieties* AVarieties;
 typedef struct _SSIndividuals* ASIndividuals;
 typedef struct _AIndividuals AIndividuals;
 
-typedef struct _MersenneTwister* MersenneTwister;
-
-typedef struct _Tuple_MersenneTwister_UInt32 Tuple_MersenneTwister_UInt32;
-typedef struct _Tuple_MersenneTwister_Float32 Tuple_MersenneTwister_Float32;
-typedef struct _Tuple_MersenneTwister_Float32_Float32 Tuple_MersenneTwister_Float32_Float32;
 typedef struct _Tuple_World_SVarieties_SSIndividuals Tuple_World_SVarieties_SSIndividuals;
 typedef struct _Tuple_Space_World_SVarieties_SSIndividuals Tuple_Space_World_SVarieties_SSIndividuals;
 typedef struct _Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
