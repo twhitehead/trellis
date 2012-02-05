@@ -24,10 +24,6 @@
 #define DEPTH  4
 #define CLUSTER 65536
 
-// Buffer size for fatal errors
-
-#define ERRNO_BUFFER 1024
-
 // Z values
 //
 // Z values form a fractal, which each set of two bits giving a layer of 2x2 connected boxes connected in a Z

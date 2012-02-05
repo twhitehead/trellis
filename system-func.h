@@ -102,17 +102,6 @@ SSRIndividualsOut SSRIndividualsOut_begin(World world, SVarieties svarieties, SS
 void SSRIndividualsOut_end(SSRIndividualsOut ssrindividualsout);
 
 //
-void (__attribute__((format (printf,2,3))) Error_dieErrNo)(int value, char const* format, ...);
-void Error_vdieErrNo(int value, char const* format, va_list args);
-
-void (__attribute__((format (printf,3,4))) Error_dieErrNoExplict)(int errno_original, int value, 
-								  char const* format, ...);
-void Error_vdieErrNoExplict(int errno_original, int value, char const* format, va_list args);
-
-void (__attribute__((format (printf,2,3))) Error_die)(int value, char const* format, ...);
-void Error_vdie(int value, char const* format, va_list args);
-
-//
 void State_save(char const* name, Space space,
 		World world, SVarieties svarieties, SSIndividuals ssindividuals);
 void State_saveFP(FILE* file, char const* name, Space space,

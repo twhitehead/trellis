@@ -18,7 +18,8 @@
 #include "model-func.h"
 #include "model-data.c"
 
-#include "system-code.c"
+#include "system-func.h"
+#include "system-data.c"
 
 
 //---------------------------------------------------------------------------------------------------------------//
