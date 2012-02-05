@@ -15,11 +15,8 @@
 #ifndef MODEL_C_CODE
 #define MODEL_C_CODE
 
-#include "model-func.h"
-#include "model-data.c"
-
-#include "system-func.h"
-#include "system-data.h"
+#include "model.h"
+#include "system.h"
 
 
 //---------------------------------------------------------------------------------------------------------------//

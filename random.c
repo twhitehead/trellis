@@ -15,12 +15,12 @@
 #ifndef RANDOM_CODE
 #define RANDOM_CODE
 
+#include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
-#include "random-func.h"
-#include "random-data.h"
-
-#include "system-func.h"
+#include "random.h"
+#include "error.h"
 
 
 //---------------------------------------------------------------------------------------------------------------//

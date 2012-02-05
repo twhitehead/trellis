@@ -20,8 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "error-func.h"
-#include "error-data.h"
+#include "error.h"
 
 
 //---------------------------------------------------------------------------------------------------------------//
