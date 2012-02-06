@@ -18,6 +18,8 @@
 
 //---------------------------------------------------------------------------------------------------------------//
 // Single upper case to distinguish types
+typedef struct _Thread Thread;
+
 typedef struct _World World;
 typedef struct _Variety Variety;
 typedef struct _Individual Individual;

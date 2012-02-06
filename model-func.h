@@ -32,7 +32,10 @@ RVariety RVariety_rest(World world, Variety variety, Individual individual);
 RVariety RVariety_merge(RVariety rvariety0, RVariety rvariety1);
 
 //
-Box RIndividualIn_bound(World world, Variety variety0, Individual individual0, Variety variety1);
+Tuple_Float32_Float32_Float32_Float32
+RIndividualIn_bound(World world, Variety variety0, Individual individual0, Variety variety1);
+void RIndividualIn_bound_(Float32* first, Float32* second, Float32* third, Float32* fourth,
+			  World world, Variety variety0, Individual individual0, Variety variety1);
 Bool RIndividualIn_filter(World world, Variety variety0, Individual individual0,
 			  Variety variety1, Individual individual1);
 
@@ -42,7 +45,10 @@ RIndividualIn RIndividualIn_rest(World world, Variety variety0, Individual indiv
 RIndividualIn RIndividualIn_merge(RIndividualIn rindividualin0, RIndividualIn rindividualin1);
 
 //
-Box RIndividualOut_bound(World world, Variety variety0, Individual individual0, Variety variety1);
+Tuple_Float32_Float32_Float32_Float32
+RIndividualOut_bound(World world, Variety variety0, Individual individual0, Variety variety1);
+void RIndividualOut_bound_(Float32* first, Float32* second, Float32* third, Float32* fourth,
+			   World world, Variety variety0, Individual individual0, Variety variety1);
 Bool RIndividualOut_filter(World world, Variety variety0, Individual individual0,
 			   Variety variety1, Individual individual1);
 

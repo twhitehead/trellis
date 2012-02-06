@@ -49,14 +49,38 @@ RVariety RVariety_merge(RVariety const rvariety0, RVariety const rvariety1) {
 }
 
 
-Box RIndividualIn_bound(World const world, Variety const variety0, Individual const individual0,
-			Variety const variety1) {
-  Box box = { };
+void RIndividualIn_bound_(Float32* const first, Float32* const second, Float32* const third,
+			  Float32* const fourth,
+			  World const world, Variety const variety0, Individual const individual0,
+			  Variety const variety1) {
+  Tuple_Float32_Float32_Float32_Float32 value =
+    RIndividualIn_bound(world, variety0, individual0, variety1);
+  *first = value.first;
+  *second = value.second;
+  *third = value.third;
+  *fourth = value.fourth;
+}
+Tuple_Float32_Float32_Float32_Float32 RIndividualIn_bound(World const world,
+							  Variety const variety0, Individual const individual0,
+							  Variety const variety1) {
+  Tuple_Float32_Float32_Float32_Float32 box = { };
   return box;
 }
-Box RIndividualOut_bound(World const world, Variety const variety0, Individual const individual1,
-			 Variety variety1) {
-  Box box = { };
+void RIndividualOut_bound_(Float32* const first, Float32* const second, Float32* const third,
+			   Float32* const fourth,
+			   World const world, Variety const variety0, Individual const individual1, 
+			   Variety const variety1) {
+  Tuple_Float32_Float32_Float32_Float32 value =
+    RIndividualOut_bound(world, variety0, individual1, variety1);
+  *first = value.first;
+  *second = value.second;
+  *third = value.third;
+  *fourth = value.fourth;
+}
+Tuple_Float32_Float32_Float32_Float32 RIndividualOut_bound(World const world,
+							   Variety const variety0, Individual const individual1, 
+							   Variety const variety1) {
+  Tuple_Float32_Float32_Float32_Float32 box = { };
   return box;
 }
 

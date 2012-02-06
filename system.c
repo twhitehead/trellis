@@ -1782,6 +1782,12 @@ void SSRIndividualsOut_end(SSRIndividualsOut const ssrindividualsout) {
 
 //---------------------------------------------------------------------------------------------------------------//
 // Tuples
+Tuple_Float32_Float32_Float32_Float32 tuple_Float32_Float32_Float32_Float32
+(Float32 const first, Float32 const second, Float32 const third, Float32 const fourth) {
+  Tuple_Float32_Float32_Float32_Float32 const value =
+    { .first = first, .second = second, .third = third, .fourth = fourth };
+  return value;
+}
 Tuple_World_SVarieties_SSIndividuals tuple_World_SVarieties_SSIndividuals
 (World const first, SVarieties const second, SSIndividuals const third) {
   Tuple_World_SVarieties_SSIndividuals const value = { .first = first, .second = second, .third = third };
@@ -2027,7 +2033,8 @@ Tuple_Space_World_SVarieties_SSIndividuals State_loadFP(FILE* const file, char c
 }
 
 
-// State_reduce: (Space) -> (RSpace)
+// State_reduce: (Space, World, SVarieties, SSIndividuals)
+//                 -> (RWorld, SRVarieties, SSRIndividualsIn, SSRIndividualsOut)
 //
 // Compute the reduction spaces
 //
@@ -2213,9 +2220,11 @@ Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
         SRIndividualsOut const srindividualsout = ssrindividualsout->srindividualsout[varieties1_index];
 
         // Reduction inner loop over individuals in in loop
-        Box const box_in = RIndividualIn_bound(world, variety0,individual0, variety1);
-        UInt64 const box_in_ul_z = Z_xy(box_in.ul_x, box_in.ul_y, space.scale);
-        UInt64 const box_in_lr_z = Z_xy(box_in.lr_x, box_in.lr_y, space.scale);
+	Float32 box_in_ul_x,box_in_ul_y, box_in_lr_x,box_in_lr_y;
+	RIndividualIn_bound_(&box_in_ul_x,&box_in_ul_y, &box_in_lr_x,&box_in_lr_y,
+			     world, variety0,individual0, variety1);
+        UInt64 const box_in_ul_z = Z_xy(box_in_ul_x, box_in_ul_y, space.scale);
+        UInt64 const box_in_lr_z = Z_xy(box_in_lr_x, box_in_lr_y, space.scale);
 
         for ( IIndividuals iindividuals1 = IIndividuals_firstBox(sindividuals1, box_in_ul_z,box_in_lr_z);
               iindividuals1.valid;
@@ -2232,9 +2241,11 @@ Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
         }
 
         // Reduction inner loop over individuals in out loop
-        Box const box_out = RIndividualOut_bound(world, variety0,individual0, variety1);
-        UInt64 const box_out_ul_z = Z_xy(box_out.ul_x, box_out.ul_y, space.scale);
-        UInt64 const box_out_lr_z = Z_xy(box_out.lr_x, box_out.lr_y, space.scale);
+	Float32 box_out_ul_x,box_out_ul_y, box_out_lr_x,box_out_lr_y;
+        RIndividualOut_bound_(&box_out_ul_x,&box_out_ul_y, &box_out_lr_x,&box_out_lr_y,
+			      world, variety0,individual0, variety1);
+        UInt64 const box_out_ul_z = Z_xy(box_out_ul_x, box_out_ul_y, space.scale);
+        UInt64 const box_out_lr_z = Z_xy(box_out_lr_x, box_out_lr_y, space.scale);
 
         for ( IIndividuals iindividuals1 = IIndividuals_firstBox(sindividuals1, box_out_ul_z,box_out_lr_z);
               iindividuals1.valid;

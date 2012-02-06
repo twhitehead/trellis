@@ -39,10 +39,6 @@ typedef float Float;
 typedef float Float32;
 typedef double Float64;
 
-typedef struct _Box Box;
-
-typedef struct _Thread* Thread;
-
 typedef struct _Space Space;
 
 typedef struct _SVarieties* SVarieties;
@@ -65,6 +61,7 @@ typedef struct _SVarieties* AVarieties;
 typedef struct _SSIndividuals* ASIndividuals;
 typedef struct _AIndividuals AIndividuals;
 
+typedef struct _Tuple_Float32_Float32_Float32_Float32 Tuple_Float32_Float32_Float32_Float32;
 typedef struct _Tuple_World_SVarieties_SSIndividuals Tuple_World_SVarieties_SSIndividuals;
 typedef struct _Tuple_Space_World_SVarieties_SSIndividuals Tuple_Space_World_SVarieties_SSIndividuals;
 typedef struct _Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut

@@ -37,6 +37,19 @@
 
 
 //---------------------------------------------------------------------------------------------------------------//
+// Space
+struct _Space {
+  Bool periodic_x;
+  Bool periodic_y;
+
+  Float32 scale;
+
+  Float32 size_x;
+  Float32 size_y;
+};
+
+
+//---------------------------------------------------------------------------------------------------------------//
 // Individuals
 struct _SVarieties {
   UInt number;
@@ -141,44 +154,14 @@ struct _AIndividuals {
 
 
 //---------------------------------------------------------------------------------------------------------------//
-// Returned
-struct _Box {
-  Float32 ul_x;
-  Float32 ul_y;
-  Float32 lr_x;
-  Float32 lr_y;
-};
-
-
-struct _Thread {
-};
-
-
-struct _Space {
-  Bool periodic_x;
-  Bool periodic_y;
-
-  Float32 scale;
-
-  Float32 size_x;
-  Float32 size_y;
-
-  World world;
-  SVarieties svarieties;
-  SSIndividuals ssindividuals;
-};
-
-
-struct _RSpace {
-  RWorld rworld;
-  SRVarieties srvarieties;
-  SSRIndividualsIn ssrindividualsin;
-  SSRIndividualsOut ssrindividualsout;
-};
-
-
-//---------------------------------------------------------------------------------------------------------------//
 // Tuples
+struct _Tuple_Float32_Float32_Float32_Float32 {
+  Float32 first;
+  Float32 second;
+  Float32 third;
+  Float32 fourth;
+};
+
 struct _Tuple_World_SVarieties_SSIndividuals {
   World first;
   SVarieties second;

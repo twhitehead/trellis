@@ -129,6 +129,8 @@ void State_next_
  Thread thread);
 
 //
+Tuple_Float32_Float32_Float32_Float32 tuple_Float32_Float32_Float32_Float32
+(Float32 first, Float32 second, Float32 third, Float32 fourth);
 Tuple_World_SVarieties_SSIndividuals tuple_World_SVarieties_SSIndividuals
 (World first, SVarieties second, SSIndividuals third);
 Tuple_Space_World_SVarieties_SSIndividuals tuple_Space_World_SVarieties_SSIndividuals
