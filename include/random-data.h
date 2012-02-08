@@ -15,6 +15,8 @@
 #ifndef RANDOM_DATA
 #define RANDOM_DATA
 
+#include "random-type.h"
+
 #include "system-type.h"
 
 // Mersenne Twister 19937[1] as described on Wikipedia (presumably based on Matsumato and Nishimura's code)

@@ -10,3 +10,4 @@
 #include "random-type.h"
 #include "random-func.h"
 #include "random-data.h"
+#include "random-code.h"

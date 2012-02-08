@@ -19,8 +19,12 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "random.h"
-#include "error.h"
+#include "random-type.h"
+#include "random-func.h"
+#include "random-data.h"
+
+#include "error-func.h"
+#include "error-code.h"
 
 
 //---------------------------------------------------------------------------------------------------------------//

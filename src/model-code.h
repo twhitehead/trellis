@@ -15,8 +15,14 @@
 #ifndef MODEL_C_CODE
 #define MODEL_C_CODE
 
-#include "model.h"
-#include "system.h"
+#include "model-type.h"
+#include "model-func.h"
+#include "model-data.h"
+
+#include "system-type.h"
+#include "system-func.h"
+#include "system-data.h"
+#include "system-code.h"
 
 
 //---------------------------------------------------------------------------------------------------------------//
@@ -144,24 +150,6 @@ AIndividuals Individual_next(AIndividuals const aindividuals, Space const space,
                              RIndividualIn const rindividualin, RIndividualOut const rindividualout,
                              Thread const thread) {
   return AIndividuals_append(aindividuals, individual, Z_xy(individual.x, individual.y, space.scale));
-}
-
-
-//---------------------------------------------------------------------------------------------------------------//
-
-int main() {
-  Space space;
-  World world;
-  SVarieties svarieties;
-  SSIndividuals ssindividuals;
-
-  State_load_(&space, &world, &svarieties, &ssindividuals, "checkpoint-0.new");
-  State_save("checkout-1.txt", space, world, svarieties, ssindividuals);
-
-  SVarieties_end(svarieties);
-  SSIndividuals_end(ssindividuals);
-
-  return 0;
 }
 
 

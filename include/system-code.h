@@ -19,9 +19,15 @@
 #include <math.h>
 #include <inttypes.h>
 
-#include "system.h"
-#include "error.h"
-#include "model.h"
+#include "system-type.h"
+#include "system-func.h"
+#include "system-data.h"
+
+#include "error-func.h"
+#include "error-code.h"
+
+#include "model-func.h"
+#include "model-code.h"
 
 
 //---------------------------------------------------------------------------------------------------------------//
