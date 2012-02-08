@@ -15,6 +15,8 @@
 #ifndef MODEL_DATA
 #define MODEL_DATA
 
+#include <stdio.h>
+
 #include "model-type.h"
 
 #include "system-type.h"
@@ -77,6 +79,34 @@ struct _Individual {
   Float32 x;
   Float32 y;
   Float32 height;
+};
+
+
+//---------------------------------------------------------------------------------------------------------------//
+// Tuples
+struct _Tuple_World_FILE_UInt64 {
+  World first;
+  FILE* second;
+  UInt64 third;
+};
+
+struct _Tuple_Variety_FILE_UInt64 {
+  Variety first;
+  FILE* second;
+  UInt64 third;
+};
+
+struct _Tuple_Individual_FILE_UInt64 {
+  Individual first;
+  FILE* second;
+  UInt64 third;
+};
+
+struct _Tuple_Float32_Float32_Float32_Float32 {
+  Float32 first;
+  Float32 second;
+  Float32 third;
+  Float32 fourth;
 };
 
 

@@ -15,12 +15,33 @@
 #ifndef MODEL_FUNC
 #define MODEL_FUNC
 
+#include <stdio.h>
+
 #include "model-type.h"
 
 #include "system-type.h"
 
 
 //---------------------------------------------------------------------------------------------------------------//
+//
+FILE* World_saveFP(Space space, World world, char const* name, FILE* file);
+Tuple_World_FILE_UInt64 World_loadFP(Space space, char const* name, FILE* file, UInt64 line);
+void World_loadFP_(World* first, FILE** second, UInt64* third,
+		   Space space, char const* name, FILE* file, UInt64 line);
+
+FILE* Variety_saveFP(Space space, World world, Variety variety, char const* name, FILE* file);
+Tuple_Variety_FILE_UInt64 Variety_loadFP(Space space, World world,
+					 char const* name, FILE* file, UInt64 line);
+void Variety_loadFP_(Variety* first, FILE** second, UInt64* third,
+		     Space space, World world, char const* name, FILE* file, UInt64 line);
+
+FILE* Individual_saveFP(Space space, World world, Variety variety, Individual individual,
+			char const* name, FILE* file);
+Tuple_Individual_FILE_UInt64 Individual_loadFP(Space space, World const world, Variety variety,
+					       char const* name, FILE* file, UInt64 line);
+void Individual_loadFP_(Individual* first, FILE** second, UInt64* third,
+			Space space, World world, Variety variety, char const* name, FILE* file, UInt64 line);
+
 //
 RWorld RWorld_first(World world);
 RWorld RWorld_rest(World world, Variety variety, Individual individual);
@@ -67,6 +88,14 @@ AIndividuals Individual_next(AIndividuals aindividuals, Space space,
 			     RWorld rworld, RVariety rvariety,
 			     RIndividualIn rindividualin, RIndividualOut rindividualout,
 			     Thread thread);
+
+//
+Tuple_World_FILE_UInt64 tuple_World_FILE_UInt64(World first, FILE* second, UInt64 third);
+Tuple_Variety_FILE_UInt64 tuple_Variety_FILE_UInt64(Variety first, FILE* second, UInt64 third);
+Tuple_Individual_FILE_UInt64 tuple_Individual_FILE_UInt64(Individual first, FILE* second, UInt64 third);
+
+Tuple_Float32_Float32_Float32_Float32 tuple_Float32_Float32_Float32_Float32
+(Float32 first, Float32 second, Float32 third, Float32 fourth);
 
 
 //---------------------------------------------------------------------------------------------------------------//

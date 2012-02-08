@@ -15,6 +15,8 @@
 #ifndef SYSTEM_DATA
 #define SYSTEM_DATA
 
+#include <stdio.h>
+
 #include "system-type.h"
 
 #include "model-data.h"
@@ -155,13 +157,6 @@ struct _AIndividuals {
 
 //---------------------------------------------------------------------------------------------------------------//
 // Tuples
-struct _Tuple_Float32_Float32_Float32_Float32 {
-  Float32 first;
-  Float32 second;
-  Float32 third;
-  Float32 fourth;
-};
-
 struct _Tuple_World_SVarieties_SSIndividuals {
   World first;
   SVarieties second;
@@ -173,6 +168,15 @@ struct _Tuple_Space_World_SVarieties_SSIndividuals {
   World second;
   SVarieties third;
   SSIndividuals fourth;
+};
+
+struct _Tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64 {
+  Space first;
+  World second;
+  SVarieties third;
+  SSIndividuals fourth;
+  FILE* fifth;
+  UInt64 sixth;
 };
 
 struct _Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut {

@@ -102,17 +102,17 @@ SSRIndividualsOut SSRIndividualsOut_begin(World world, SVarieties svarieties, SS
 void SSRIndividualsOut_end(SSRIndividualsOut ssrindividualsout);
 
 //
-void State_save(char const* name, Space space,
-		World world, SVarieties svarieties, SSIndividuals ssindividuals);
-void State_saveFP(FILE* file, char const* name, Space space,
-		  World world, SVarieties svarieties, SSIndividuals ssindividuals);
+void State_save(Space space, World world, SVarieties svarieties, SSIndividuals ssindividuals, char const* name);
+FILE* State_saveFP(Space space, World world, SVarieties svarieties, SSIndividuals ssindividuals,
+		   char const* name, FILE* file);
 
 Tuple_Space_World_SVarieties_SSIndividuals State_load(char const* name);
 void State_load_(Space* first, World* second, SVarieties* third, SSIndividuals* fourth,
 		 char const* name);
-Tuple_Space_World_SVarieties_SSIndividuals State_loadFP(FILE* file, char const* name);
+Tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64 State_loadFP(char const* name, FILE* file, UInt64 line);
 void State_loadFP_(Space* first, World* second, SVarieties* third, SSIndividuals* fourth,
-		   FILE* file, char const* name);
+		   FILE** fifth, UInt64* sixth,
+		   char const* name, FILE* file, UInt64 line);
 
 Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
 (Space space, World world, SVarieties svarieties, SSIndividuals ssindividuals);
@@ -129,12 +129,12 @@ void State_next_
  Thread thread);
 
 //
-Tuple_Float32_Float32_Float32_Float32 tuple_Float32_Float32_Float32_Float32
-(Float32 first, Float32 second, Float32 third, Float32 fourth);
 Tuple_World_SVarieties_SSIndividuals tuple_World_SVarieties_SSIndividuals
 (World first, SVarieties second, SSIndividuals third);
 Tuple_Space_World_SVarieties_SSIndividuals tuple_Space_World_SVarieties_SSIndividuals
 (Space first, World second, SVarieties third, SSIndividuals fourth);
+Tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64 tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64
+(Space first, World second, SVarieties third, SSIndividuals fourth, FILE* fifth, UInt64 sixth);
 Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
 tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
 (RWorld first, SRVarieties second, SSRIndividualsIn third, SSRIndividualsOut fourth);

@@ -1788,12 +1788,6 @@ void SSRIndividualsOut_end(SSRIndividualsOut const ssrindividualsout) {
 
 //---------------------------------------------------------------------------------------------------------------//
 // Tuples
-Tuple_Float32_Float32_Float32_Float32 tuple_Float32_Float32_Float32_Float32
-(Float32 const first, Float32 const second, Float32 const third, Float32 const fourth) {
-  Tuple_Float32_Float32_Float32_Float32 const value =
-    { .first = first, .second = second, .third = third, .fourth = fourth };
-  return value;
-}
 Tuple_World_SVarieties_SSIndividuals tuple_World_SVarieties_SSIndividuals
 (World const first, SVarieties const second, SSIndividuals const third) {
   Tuple_World_SVarieties_SSIndividuals const value = { .first = first, .second = second, .third = third };
@@ -1804,6 +1798,14 @@ Tuple_Space_World_SVarieties_SSIndividuals tuple_Space_World_SVarieties_SSIndivi
 (Space const first, World const second, SVarieties const third, SSIndividuals const fourth) {
   Tuple_Space_World_SVarieties_SSIndividuals const value =
     { .first = first, .second = second, .third = third, .fourth = fourth };
+  return value;
+};
+
+Tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64 tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64
+(Space const first, World const second, SVarieties const third, SSIndividuals const fourth,
+ FILE* const fifth, UInt64 const sixth) {
+  Tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64 const value =
+    { .first = first, .second = second, .third = third, .fourth = fourth, .fifth = fifth, .sixth = sixth };
   return value;
 };
 
@@ -1822,20 +1824,22 @@ tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
 //
 // Create/truncate the given file name and serialize the given space to it.
 //
-void State_save(char const* const name, Space const space,
-		World const world, SVarieties const svarieties, SSIndividuals const ssindividuals) {
+void State_save(Space const space,
+		World const world, SVarieties const svarieties, SSIndividuals const ssindividuals,
+		char const* const name) {
   // Wrap file handle based routine with opening and close details
   FILE* file;
 
   if ( !(file = fopen(name,"w")) )
     Error_dieErrNo(1, "unable to create/truncate \"%s\" for writing", name);
-  State_saveFP(file, name, space, world, svarieties, ssindividuals);
+  file = State_saveFP(space, world, svarieties, ssindividuals, name, file);
   if (fclose(file))
     Error_dieErrNo(1, "unable to close \"%s\"", name);
 }
 
-void State_saveFP(FILE* const file, char const* const name, Space const space,
-		  World const world, SVarieties const svarieties, SSIndividuals const ssindividuals) {
+FILE* State_saveFP(Space const space,
+		   World const world, SVarieties const svarieties, SSIndividuals const ssindividuals,
+		   char const* const name, FILE* file) {
   // Save space
   if ( fprintf(file, "SPACE %u %u %g %g\n",
 	       space.periodic_x, space.periodic_y,
@@ -1843,9 +1847,10 @@ void State_saveFP(FILE* const file, char const* const name, Space const space,
     Error_dieErrNo(1, "an error occured while writing to \"%s\"", name);
 
   // Save world
-  if ( fprintf(file, "WORLD %"PRIu32"\n",
-	       world.year) < 0 )
+  if ( fprintf(file, "WORLD ") < 0 )
     Error_dieErrNo(1, "an error occured while writing to \"%s\"", name);
+
+  file = World_saveFP(space, world, name, file);
 
   // Save varieties
   UInt const varieties_number = ( svarieties->number <= ssindividuals->number ?
@@ -1857,15 +1862,10 @@ void State_saveFP(FILE* const file, char const* const name, Space const space,
     SIndividuals const sindividuals = ssindividuals->sindividuals[varieties_index];
 
     // Save variety
-    if ( fprintf(file, "VARIETY %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-                 variety.height_mature, variety.height_maximum,
-                 variety.growth_rate, variety.growth_competition_lower, variety.growth_competition_higher,
-                 variety.mortality_initial, variety.mortality_decay, variety.mortality_intrinsic,
-                 variety.fecundity_maximum,
-                 variety.masting_time, variety.masting_phase,
-                 variety.dispersal_probability_short, variety.dispersal_mode_short, variety.dispersal_mode_long)
-         < 0 )
+    if ( fprintf(file, "VARIETY ") < 0 )
       Error_dieErrNo(1, "an error occured while writing to \"%s\"", name);
+
+    file = Variety_saveFP(space, world, variety, name, file);
 
     // Save individuals
     for ( IIndividuals iindividuals = IIndividuals_first(sindividuals);
@@ -1875,12 +1875,14 @@ void State_saveFP(FILE* const file, char const* const name, Space const space,
       Individual const individual = IIndividuals_individual(iindividuals);
 
       // Save individual
-      if ( fprintf(file, "INDIVIDUAL %g %g %g\n",
-                   individual.x, individual.y,
-                   individual.height) < 0 )
+      if ( fprintf(file, "INDIVIDUAL ")  < 0 )
         Error_dieErrNo(1, "an error occured while writing to \"%s\"", name);
+
+      file = Individual_saveFP(space, world, variety, individual, name, file);
     }
   }
+
+  return file;
 }
 
 
@@ -1898,131 +1900,139 @@ void State_load_(Space* const first, World* const second, SVarieties* const thir
   *fourth = value.fourth;
 }
 Tuple_Space_World_SVarieties_SSIndividuals State_load(char const* const name) {
-  Tuple_Space_World_SVarieties_SSIndividuals value;
   FILE* file;
+  UInt64 line;
+  Space space;
+  World world;
+  SVarieties svarieties;
+  SSIndividuals ssindividuals;
 
   if ( !(file = fopen(name,"r")) )
     Error_dieErrNo(1, "unable to open \"%s\" for reading", name);
-  value = State_loadFP(file, name);
+  line = 1;
+
+  State_loadFP_(&space, &world, &svarieties, &ssindividuals, &file, &line, name, file, line);
+
   if (fclose(file))
     Error_dieErrNo(1, "unable to close \"%s\"", name);
 
-  return value;
+  return tuple_Space_World_SVarieties_SSIndividuals(space, world, svarieties, ssindividuals);
 }
 
 
 void State_loadFP_(Space* const first, World* const second, SVarieties* const third, SSIndividuals* const fourth,
-		  FILE* const file, char const* const name) {
-  Tuple_Space_World_SVarieties_SSIndividuals const value = State_loadFP(file, name);
+		   FILE** fifth, UInt64* sixth,
+		   char const* const name, FILE* file, UInt64 line) {
+  Tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64 const value = State_loadFP(name, file, line);
   *first = value.first;
   *second = value.second;
   *third = value.third;
   *fourth = value.fourth;
+  *fifth = value.fifth;
+  *sixth = value.sixth;
 }
-Tuple_Space_World_SVarieties_SSIndividuals State_loadFP(FILE* const file, char const* const name) {
-  UInt64 line = 1;
+Tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64
+State_loadFP(char const* const name, FILE* file, UInt64 line) {
+  char type[11];
   int records;
 
+  // Load type (should be SPACE)
+  records = fscanf(file, "%10s", type);
+  if ( ferror(file) )
+    Error_dieErrNo(1, "an error occured while reading from \"%s\"", name);
+  if ( records == EOF || records < 1 )
+    Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting \"SPACE\"", name, line);
+  
   // Load space data
   Space space;
   UInt periodic_x, periodic_y;
 
-  records = fscanf(file, "SPACE %u %u %g %g\n",
+  if ( strcmp(type, "SPACE") != 0 )
+    Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting \"SPACE\"", name, line);
+
+  records = fscanf(file, "%u %u %g %g\n",
                    &periodic_x, &periodic_y,
                    &space.size_x, &space.size_y);
   if ( ferror(file) )
     Error_dieErrNo(1, "an error occured while reading from \"%s\"", name);
   if ( records < 4 )
-    Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting \"SPACE\" "
+    Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting "
 	      "PERIODIC_X PERIODIC_Y "
 	      "SIZE_X SIZE_Y", name, line);
-  else
-    line += 1;
+  line += 1;
 
   space.scale = 0x1p32/fmax(space.size_x,space.size_y);
   space.periodic_x = periodic_x;
   space.periodic_y = periodic_y;
 
+  // Load next type (should be WORLD)
+  records = fscanf(file, "%10s", type);
+  if ( ferror(file) )
+    Error_dieErrNo(1, "an error occured while reading from \"%s\"", name);
+  if ( records == EOF || records < 1 )
+    Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting \"WORLD\"", name, line);
+  
   // Load world data
   World world;
 
-  records = fscanf(file, "WORLD %"SCNu32"\n",
-                   &world.year);
+  if ( strcmp(type, "WORLD") != 0 )
+    Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting \"WORLD\"", name, line);
+
+  World_loadFP_(&world, &file, &line, space, name, file, line);
+
+  // Load type (should be VARIETY or nothing)
+  records = fscanf(file, "%10s", type);
   if ( ferror(file) )
     Error_dieErrNo(1, "an error occured while reading from \"%s\"", name);
-  if ( records < 4 )
-    Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting \"WORLD\" "
-	      "YEAR", name, line);
-  else
-    line += 1;
+  if ( records != EOF && records < 1 )
+    Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting \"VARIETY\" or nothing", name, line);
 
   // Load varieties
   AVarieties avarieties = AVarieties_begin();
   ASIndividuals asindividuals = ASIndividuals_begin();
 
-  while (1) {
+  while (records != EOF) {
     // Load variety
     Variety variety;
 
-    records = fscanf(file, "VARIETY %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-                     &variety.height_mature, &variety.height_maximum,
-                     &variety.growth_rate, &variety.growth_competition_lower, &variety.growth_competition_higher,
-                     &variety.mortality_initial, &variety.mortality_decay, &variety.mortality_intrinsic,
-                     &variety.fecundity_maximum,
-                     &variety.masting_time, &variety.masting_phase,
-                     &variety.dispersal_probability_short,
-                     &variety.dispersal_mode_short, &variety.dispersal_mode_long);
-    if ( ferror(file) )
-      Error_dieErrNo(1, "an error occured while reading from \"%s\"", name);
-    else if (records == 0 || records == EOF)
-      break;
-    else if (records < 14)
-      Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting \"VARIETY\" "
-		"HEIGHT_MATURE HEIGHT_MAXIMUM "
-		"GROWTH_RATE VARIETY_GROWTH_COMPETITION_LOWER VARIETY_GROWTH_COMPETITION_HIGHER "
-		"MORTALITY_INITIAL MORTALITY_DECAY MORTALITY_INTRINSIC "
-		"FECUNDITY_MAXIMUM "
-		"MASTING_TIME MASTING_PHASE "
-		"DISPERSAL_PROBABILITY_SHORT DISPERSAL_MODE_SHORT DISPERSAL_MODE_LONG", name, line);
-    else
-      line += 1;
+    if ( strcmp(type, "VARIETY") != 0 )
+      Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting \"VARIETY\" or nothing", name, line);
+
+    Variety_loadFP_(&variety, &file, &line, space, world, name, file, line);
 
     // Add variety to varieties
     avarieties = AVarieties_append(avarieties, variety);
 
+    // Load type (should be VARIETY, INDIVIDUAL, or nothing)
+    records = fscanf(file, "%10s", type);
+    if ( ferror(file) )
+      Error_dieErrNo(1, "an error occured while reading from \"%s\"", name);
+    if ( records != EOF && records < 1 )
+      Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting "
+		"\"VARIETY\", \"INDIVIDUAL\", or nothing", name, line);
+
     // Load variety individuals
     AIndividuals aindividuals = AIndividuals_begin();
 
-    while (1) {
+    while (records != EOF) {
       // Load individual
       Individual individual;
 
-      records = fscanf(file, "INDIVIDUAL %g %g %g\n",
-                       &individual.x, &individual.y, &individual.height);
-      if ( ferror(file) )
-        Error_dieErrNo(1, "an error occured while reading from \"%s\"", name);
-      else if (records == 0 || records == EOF)
-        break;
-      else if (records < 3)
-        Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting \"INDIVIDUAL\" "
-		  "X Y "
-		  "HEIGHT", name, line);
-      else if (individual.x < 0 || individual.x >= space.size_x)
-        Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting \"INDIVIDUAL\" "
-		  "the constraint 0 <= X=%g < SIZE_X=%g does not hold", name, line,
-		  individual.x, space.size_x);
-      else if (individual.y < 0 || individual.y >= space.size_y)
-        Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting \"INDIVIDUAL\" "
-		  "the constraint 0 <= Y=%g < SIZE_Y=%g does not hold", name, line,
-		  individual.y, space.size_y);
-      else if (individual.height < 0)
-        Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting \"INDIVIDUAL\" "
-		  "the constraint 0 <= HEIGHT=%g", name, line, individual.height);
-      else
-        line += 1;
+      if ( strcmp(type, "INDIVIDUAL") != 0 )
+	break;
+    
+      Individual_loadFP_(&individual, &file, &line, space, world, variety, name, file, line);
 
       // Add individual to individuals
       aindividuals = AIndividuals_append(aindividuals, individual, Z_xy(individual.x, individual.y, space.scale));
+
+      // Load type (should be VARIETY, INDIVIDUAL, or nothing)
+      records = fscanf(file, "%10s", type);
+      if ( ferror(file) )
+	Error_dieErrNo(1, "an error occured while reading from \"%s\"", name);
+      if ( records != EOF && records < 1 )
+	Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting "
+		  "\"VARIETY\", \"INDIVIDUAL\", or nothing", name, line);
     }
     
     // Add individuals to vairety individuals
@@ -2035,7 +2045,8 @@ Tuple_Space_World_SVarieties_SSIndividuals State_loadFP(FILE* const file, char c
   SVarieties const svarieties = AVarieties_end(avarieties);
   SSIndividuals const ssindividuals = ASIndividuals_end(asindividuals);
 
-  return tuple_Space_World_SVarieties_SSIndividuals(space, world, svarieties, ssindividuals);
+  return
+    tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64(space, world, svarieties, ssindividuals, file, line);
 }
 
 
