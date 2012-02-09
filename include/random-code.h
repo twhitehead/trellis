@@ -215,9 +215,9 @@ MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwister,
   // Calculate parameter constants (caching these can speed things up)
   Float32 r,q, nr,nrq;
   Float32 s,a, f0;
-  UInt32 med;
   Float32 x_left,x_med,x_right, l_left,l_right;
   Float32 c, prob1,prob2,prob3,prob4;
+  UInt32 med;
 
   r = fmin(p, 1.0-p);
   q = 1.0-r;
@@ -227,7 +227,7 @@ MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwister,
   a = s*(n+1.0);
   f0 = powf(q,n);
 
-  if(nr >= 10.0){
+  if(nr >= 10.0) {
     Float32 temp1,temp2;
 
     nrq = nr*q;
@@ -277,18 +277,16 @@ MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwister,
     unpack_MersenneTwister_Float32( &mersennetwister,&v,
                                     Random_uniform_Float32(mersennetwister) );
 
-    // This region falls under the scaled PDF
+    // This region falls under the scaled PDF (see diagram in paper)
     if (u <= prob1) {
       // Region 1 -- triangular
       y = (UInt32)floor(x_med-prob1*v+u);
     }
-    // These regions may not fall under the scaled PDF
+    // These regions may not fall under the scaled PDF (see diagram in paper)
     else {
       // Region 2 -- parallelograms
       if (u <= prob2) {
-        Float32 x;
-
-        x = x_left+(u-prob1)/c;
+        Float32 const x = x_left+(u-prob1)/c;
         v = v*c+1.0-fabs(med-x+0.5)/prob1;
         if (v > 1.0)
           return Random_binomial_UInt32(mersennetwister, n, p);
@@ -296,32 +294,34 @@ MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwister,
       }
       // Region 3 -- left exponential tail
       else if (u <= prob3) {
-        y = (UInt32)floorf(x_left+logf(v)/l_left);
-        if (y < 0)
+        Float32 const x = x_left+logf(v)/l_left;
+        if (x < 0)
           return Random_binomial_UInt32(mersennetwister, n, p);
         v *= (u-prob2)*l_left;
+        y = (UInt32)floorf(x);
+
       }
       // Region 4 -- right exponential tail
       else {
-        y = (UInt32)floorf(x_right-logf(v)/l_right);
-        if (y > n)
+        Float32 const x = x_right-logf(v)/l_right;
+        if (x > n+1.0)
           return Random_binomial_UInt32(mersennetwister, n, p);
         v *= (u-prob3)*l_right;
+        y = (UInt32)floorf(x);
       }
 
       // Accept/reject tests
-      Float32 ydiff = fabs(y-med);
+      Float32 const ydiff = fabs(y-med);
 
       if (ydiff <= 20 || ydiff >= nrq/2.0-1.0) {
         // Evaluate f(y) via f(y) = f(y-1)(a/x-s) starting at the mode
         Float32 f = 1.0;
-        UInt i;
 
         if (med < y)
-          for (i = med+1; i <= y; ++i)
+          for (UInt32 i = med+1; i <= y; ++i)
             f *= a/i-s;
         else if (med > y)
-          for (i = y+1; i <= med; ++i)
+          for (UInt32 i = y+1; i <= med; ++i)
             f /= a/i-s;
 
         if (v > f)
@@ -329,18 +329,18 @@ MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwister,
       }
       else {
         // Check the value of ln(v) against upper and lower bounds of ln(f(y))
-        Float32 bound = (ydiff/nrq)*((ydiff*(ydiff/3.0+0.625)+1.0/6.0)/nrq+0.5);
-        Float32 y2norm = -ydiff*ydiff/(2.0*nrq);
-        Float32 vln = logf(v);
+        Float32 const bound = (ydiff/nrq)*((ydiff*(ydiff/3.0+0.625)+1.0/6.0)/nrq+0.5);
+        Float32 const y2norm = -ydiff*ydiff/(2.0*nrq);
+        Float32 const vln = logf(v);
 
         if (vln > y2norm+bound)
           return Random_binomial_UInt32(mersennetwister, n, p);
         if (vln >= y2norm-bound) {
           // Stirling's approximation (within machine accuracy)
-          Float32 y1 = y+1, y2 = y1*y1;
-          Float32 f1 = med+1, f2 = f1*f1;
-          Float32 z1 = n+1-med, z2 = z1*z1;
-          Float32 w1 = n-y+1, w2 = w1*w1;
+          Float32 const y1 = y+1, y2 = y1*y1;
+          Float32 const f1 = med+1, f2 = f1*f1;
+          Float32 const z1 = n+1-med, z2 = z1*z1;
+          Float32 const w1 = n-y+1, w2 = w1*w1;
 
           if (vln > (x_med*logf(f1/y1)+(n-med+0.5)*logf(z1/w1)+(y-med)*logf(w1*r/(y1*q))
 		     +(13860.0-(462.0-(132.0-(99.0-140.0/f2)/f2)/f2)/f2)/f1/166320.0
