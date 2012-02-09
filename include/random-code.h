@@ -366,11 +366,10 @@ MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwister,
 //
 MersenneTwister_Float32 Random_uniform_Float32(MersenneTwister mersennetwister) {
   // Shift in bits after the decimal place until mantissa is filled
-  Float32 x;
-  UInt p;
+  Float32 x, p;
 
   x = 0.0;
-  p = 0;
+  p = 1.0;
 
   do {
     // Shift 32b into bottom of floating point number
@@ -378,8 +377,8 @@ MersenneTwister_Float32 Random_uniform_Float32(MersenneTwister mersennetwister) 
 
     unpack_MersenneTwister_UInt32( &mersennetwister, &u,
                                    MersenneTwister_extract_UInt32(mersennetwister) );
-    p -= 32;
-    x += u*powf(2.0,p);
+    p *= 0x1p-32;
+    x += u*p;
   } while (x+p/2.0 != x);
 
   return pack_MersenneTwister_Float32(mersennetwister, x);
