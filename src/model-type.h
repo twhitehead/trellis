@@ -29,10 +29,10 @@ typedef struct _RVariety RVariety;
 typedef struct _RIndividualIn RIndividualIn;
 typedef struct _RIndividualOut RIndividualOut;
 
-typedef struct _Tuple_World_FILE_UInt64 Tuple_World_FILE_UInt64;
-typedef struct _Tuple_Variety_FILE_UInt64 Tuple_Variety_FILE_UInt64;
-typedef struct _Tuple_Individual_FILE_UInt64 Tuple_Individual_FILE_UInt64;
-typedef struct _Tuple_Float32_Float32_Float32_Float32 Tuple_Float32_Float32_Float32_Float32;
+typedef struct _World_FILE_UInt64 World_FILE_UInt64;
+typedef struct _Variety_FILE_UInt64 Variety_FILE_UInt64;
+typedef struct _Individual_FILE_UInt64 Individual_FILE_UInt64;
+typedef struct _Float32_Float32_Float32_Float32 Float32_Float32_Float32_Float32;
 
 //---------------------------------------------------------------------------------------------------------------//
 

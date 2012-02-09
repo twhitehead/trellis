@@ -1788,33 +1788,73 @@ void SSRIndividualsOut_end(SSRIndividualsOut const ssrindividualsout) {
 
 //---------------------------------------------------------------------------------------------------------------//
 // Tuples
-Tuple_World_SVarieties_SSIndividuals tuple_World_SVarieties_SSIndividuals
+World_SVarieties_SSIndividuals pack_World_SVarieties_SSIndividuals
 (World const first, SVarieties const second, SSIndividuals const third) {
-  Tuple_World_SVarieties_SSIndividuals const value = { .first = first, .second = second, .third = third };
+  World_SVarieties_SSIndividuals const value = { .first = first, .second = second, .third = third };
   return value;
 }
 
-Tuple_Space_World_SVarieties_SSIndividuals tuple_Space_World_SVarieties_SSIndividuals
+Space_World_SVarieties_SSIndividuals pack_Space_World_SVarieties_SSIndividuals
 (Space const first, World const second, SVarieties const third, SSIndividuals const fourth) {
-  Tuple_Space_World_SVarieties_SSIndividuals const value =
+  Space_World_SVarieties_SSIndividuals const value =
     { .first = first, .second = second, .third = third, .fourth = fourth };
   return value;
 };
 
-Tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64 tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64
+Space_World_SVarieties_SSIndividuals_FILE_UInt64 pack_Space_World_SVarieties_SSIndividuals_FILE_UInt64
 (Space const first, World const second, SVarieties const third, SSIndividuals const fourth,
  FILE* const fifth, UInt64 const sixth) {
-  Tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64 const value =
+  Space_World_SVarieties_SSIndividuals_FILE_UInt64 const value =
     { .first = first, .second = second, .third = third, .fourth = fourth, .fifth = fifth, .sixth = sixth };
   return value;
 };
 
-Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
-tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
-(RWorld first, SRVarieties second, SSRIndividualsIn third, SSRIndividualsOut fourth) {
-  Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut const value =
+RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
+pack_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
+(RWorld const first, SRVarieties const second, SSRIndividualsIn const third, SSRIndividualsOut const fourth) {
+  RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut const value =
     { .first = first, .second = second, .third = third, .fourth = fourth };
   return value;
+}
+
+
+//
+void unpack_World_SVarieties_SSIndividuals
+(World* const first, SVarieties* const second, SSIndividuals* const third,
+ World_SVarieties_SSIndividuals const tuple) {
+  *first = tuple.first;
+  *second = tuple.second;
+  *third = tuple.third;
+}
+
+void unpack_Space_World_SVarieties_SSIndividuals
+(Space* const first, World* const second, SVarieties* const third, SSIndividuals* const fourth,
+ Space_World_SVarieties_SSIndividuals const tuple) {
+  *first = tuple.first;
+  *second = tuple.second;
+  *third = tuple.third;
+  *fourth = tuple.fourth;
+};
+
+void unpack_Space_World_SVarieties_SSIndividuals_FILE_UInt64
+(Space* const first, World* const second, SVarieties* const third, SSIndividuals* const fourth,
+ FILE** const fifth, UInt64* const sixth,
+ Space_World_SVarieties_SSIndividuals_FILE_UInt64 const tuple) {
+  *first = tuple.first;
+  *second = tuple.second;
+  *third = tuple.third;
+  *fourth = tuple.fourth;
+  *fifth = tuple.fifth;
+  *sixth = tuple.sixth;
+};
+
+void unpack_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
+(RWorld* const first, SRVarieties* const second, SSRIndividualsIn* const third, SSRIndividualsOut* const fourth,
+ RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut const tuple) {
+  *first = tuple.first;
+  *second = tuple.second;
+  *third = tuple.third;
+  *fourth = tuple.fourth;
 }
 
 
@@ -1891,15 +1931,7 @@ FILE* State_saveFP(Space const space,
 //
 // Read the given file and restore a serialized forest from it.
 //
-void State_load_(Space* const first, World* const second, SVarieties* const third, SSIndividuals* const fourth,
-		 char const* const name) {
-  Tuple_Space_World_SVarieties_SSIndividuals const value = State_load(name);
-  *first = value.first;
-  *second = value.second;
-  *third = value.third;
-  *fourth = value.fourth;
-}
-Tuple_Space_World_SVarieties_SSIndividuals State_load(char const* const name) {
+Space_World_SVarieties_SSIndividuals State_load(char const* const name) {
   FILE* file;
   UInt64 line;
   Space space;
@@ -1911,27 +1943,18 @@ Tuple_Space_World_SVarieties_SSIndividuals State_load(char const* const name) {
     Error_dieErrNo(1, "unable to open \"%s\" for reading", name);
   line = 1;
 
-  State_loadFP_(&space, &world, &svarieties, &ssindividuals, &file, &line, name, file, line);
+  unpack_Space_World_SVarieties_SSIndividuals_FILE_UInt64
+    ( &space, &world, &svarieties, &ssindividuals, &file, &line,
+      State_loadFP(name, file, line) );
 
   if (fclose(file))
     Error_dieErrNo(1, "unable to close \"%s\"", name);
 
-  return tuple_Space_World_SVarieties_SSIndividuals(space, world, svarieties, ssindividuals);
+  return pack_Space_World_SVarieties_SSIndividuals(space, world, svarieties, ssindividuals);
 }
 
 
-void State_loadFP_(Space* const first, World* const second, SVarieties* const third, SSIndividuals* const fourth,
-		   FILE** fifth, UInt64* sixth,
-		   char const* const name, FILE* file, UInt64 line) {
-  Tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64 const value = State_loadFP(name, file, line);
-  *first = value.first;
-  *second = value.second;
-  *third = value.third;
-  *fourth = value.fourth;
-  *fifth = value.fifth;
-  *sixth = value.sixth;
-}
-Tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64
+Space_World_SVarieties_SSIndividuals_FILE_UInt64
 State_loadFP(char const* const name, FILE* file, UInt64 line) {
   char type[11];
   int records;
@@ -1978,7 +2001,8 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
   if ( strcmp(type, "WORLD") != 0 )
     Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting \"WORLD\"", name, line);
 
-  World_loadFP_(&world, &file, &line, space, name, file, line);
+  unpack_World_FILE_UInt64( &world, &file, &line,
+                            World_loadFP(space, name, file, line) );
 
   // Load type (should be VARIETY or nothing)
   records = fscanf(file, "%10s", type);
@@ -1998,7 +2022,8 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
     if ( strcmp(type, "VARIETY") != 0 )
       Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting \"VARIETY\" or nothing", name, line);
 
-    Variety_loadFP_(&variety, &file, &line, space, world, name, file, line);
+    unpack_Variety_FILE_UInt64( &variety, &file, &line,
+                                Variety_loadFP(space, world, name, file, line) );
 
     // Add variety to varieties
     avarieties = AVarieties_append(avarieties, variety);
@@ -2021,7 +2046,8 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
       if ( strcmp(type, "INDIVIDUAL") != 0 )
 	break;
     
-      Individual_loadFP_(&individual, &file, &line, space, world, variety, name, file, line);
+      unpack_Individual_FILE_UInt64( &individual, &file, &line,
+                                     Individual_loadFP(space, world, variety, name, file, line) );
 
       // Add individual to individuals
       aindividuals = AIndividuals_append(aindividuals, individual, Z_xy(individual.x, individual.y, space.scale));
@@ -2046,7 +2072,7 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
   SSIndividuals const ssindividuals = ASIndividuals_end(asindividuals);
 
   return
-    tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64(space, world, svarieties, ssindividuals, file, line);
+    pack_Space_World_SVarieties_SSIndividuals_FILE_UInt64(space, world, svarieties, ssindividuals, file, line);
 }
 
 
@@ -2187,18 +2213,7 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
 //
 // Expressing the folds as loops this becomes the following code.
 //
-void State_reduce_(RWorld* const first, SRVarieties* const second,
-		   SSRIndividualsIn* const third, SSRIndividualsOut* const fourth,
-		   Space const space, World const world, SVarieties const svarieties,
-		   SSIndividuals const ssindividuals) {
-  Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut const value =
-    State_reduce(space, world, svarieties, ssindividuals);
-  *first = value.first;
-  *second = value.second;
-  *third = value.third;
-  *fourth = value.fourth;
-}
-Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
+RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
 (Space const space, World const world, SVarieties const svarieties, SSIndividuals const ssindividuals) {
   // Reduction setup
   RWorld rworld = RWorld_first(world);
@@ -2238,8 +2253,9 @@ Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
 
         // Reduction inner loop over individuals in in loop
 	Float32 box_in_ul_x,box_in_ul_y, box_in_lr_x,box_in_lr_y;
-	RIndividualIn_bound_(&box_in_ul_x,&box_in_ul_y, &box_in_lr_x,&box_in_lr_y,
-			     world, variety0,individual0, variety1);
+        unpack_Float32_Float32_Float32_Float32( &box_in_ul_x,&box_in_ul_y, &box_in_lr_x,&box_in_lr_y,
+                                                RIndividualIn_bound(world, variety0,individual0, variety1) );
+
         UInt64 const box_in_ul_z = Z_xy(box_in_ul_x, box_in_ul_y, space.scale);
         UInt64 const box_in_lr_z = Z_xy(box_in_lr_x, box_in_lr_y, space.scale);
 
@@ -2259,8 +2275,9 @@ Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
 
         // Reduction inner loop over individuals in out loop
 	Float32 box_out_ul_x,box_out_ul_y, box_out_lr_x,box_out_lr_y;
-        RIndividualOut_bound_(&box_out_ul_x,&box_out_ul_y, &box_out_lr_x,&box_out_lr_y,
-			      world, variety0,individual0, variety1);
+        unpack_Float32_Float32_Float32_Float32( &box_out_ul_x,&box_out_ul_y, &box_out_lr_x,&box_out_lr_y,
+                                                RIndividualOut_bound(world, variety0,individual0, variety1) );
+
         UInt64 const box_out_ul_z = Z_xy(box_out_ul_x, box_out_ul_y, space.scale);
         UInt64 const box_out_lr_z = Z_xy(box_out_lr_x, box_out_lr_y, space.scale);
 
@@ -2287,8 +2304,8 @@ Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
     }
   }
 
-  return tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut(rworld, srvarieties,
-								     ssrindividualsin, ssrindividualsout);
+  return pack_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut(rworld, srvarieties,
+                                                                    ssrindividualsin, ssrindividualsout);
 }
 
 
@@ -2340,19 +2357,7 @@ Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
 //
 // Expressing the folds as loops this becomes the following code.
 //
-void State_next_
-(World* const first, SVarieties* const second, SSIndividuals* const third,
- Space const space, World const world, SVarieties const svarieties, SSIndividuals const ssindividuals,
- RWorld const rworld, SRVarieties const srvarieties,
- SSRIndividualsIn const ssrindividualsin, SSRIndividualsOut const ssrindividualsout, Thread const thread) {
-  Tuple_World_SVarieties_SSIndividuals value =
-    State_next(space, world, svarieties, ssindividuals,
-	       rworld, srvarieties, ssrindividualsin, ssrindividualsout, thread);
-  *first = value.first;
-  *second = value.second;
-  *third = value.third;
-}
-Tuple_World_SVarieties_SSIndividuals State_next
+World_SVarieties_SSIndividuals State_next
 (Space const space, World const world, SVarieties const svarieties, SSIndividuals const ssindividuals,
  RWorld const rworld, SRVarieties const srvarieties,
  SSRIndividualsIn const ssrindividualsin, SSRIndividualsOut const ssrindividualsout, Thread const thread) {
@@ -2411,7 +2416,7 @@ Tuple_World_SVarieties_SSIndividuals State_next
   SVarieties const svarieties_new = AVarieties_end(avarieties);
   SSIndividuals const ssindividuals_new = ASIndividuals_end(asindividuals);
 
-  return tuple_World_SVarieties_SSIndividuals(world_new, svarieties_new, ssindividuals_new);
+  return pack_World_SVarieties_SSIndividuals(world_new, svarieties_new, ssindividuals_new);
 }
 
 

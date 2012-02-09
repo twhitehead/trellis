@@ -167,13 +167,7 @@ MersenneTwister MersenneTwister_next(MersenneTwister const mersennetwister) {
 //
 // and advance to next bit of state (generating more if requried).
 //
-void MersenneTwister_extract_UInt32_(MersenneTwister* const first, UInt32* const second,
-				     MersenneTwister const mersennetwister) {
-  Tuple_MersenneTwister_UInt32 const value = MersenneTwister_extract_UInt32(mersennetwister);
-  *first = value.first;
-  *second = value.second;
-}
-Tuple_MersenneTwister_UInt32 MersenneTwister_extract_UInt32(MersenneTwister mersennetwister) {
+MersenneTwister_UInt32 MersenneTwister_extract_UInt32(MersenneTwister mersennetwister) {
   // Remix the state if we've used it all
   if (mersennetwister->index >= MERSENNETWISTER_N)
     mersennetwister = MersenneTwister_next(mersennetwister);
@@ -189,7 +183,7 @@ Tuple_MersenneTwister_UInt32 MersenneTwister_extract_UInt32(MersenneTwister mers
   value ^= value<<MERSENNETWISTER_T & MERSENNETWISTER_C;
   value ^= value>>MERSENNETWISTER_L;
   
-  return tuple_MersenneTwister_UInt32(mersennetwister, value);
+  return pack_MersenneTwister_UInt32(mersennetwister, value);
 }
 
 
@@ -198,22 +192,17 @@ Tuple_MersenneTwister_UInt32 MersenneTwister_extract_UInt32(MersenneTwister mers
 //
 // Uniform random integer on [0,n) (via rejecting last tail and clipping to range)
 //
-void Random_uniform_UInt32_(MersenneTwister* const first, UInt32* const second,
-			    MersenneTwister const mersennetwister, UInt32 const n) {
-  Tuple_MersenneTwister_UInt32 value = Random_uniform_UInt32(mersennetwister, n);
-  *first = value.first;
-  *second = value.second;
-}
-Tuple_MersenneTwister_UInt32 Random_uniform_UInt32(MersenneTwister mersennetwister, UInt32 const n) {
+MersenneTwister_UInt32 Random_uniform_UInt32(MersenneTwister mersennetwister, UInt32 const n) {
   UInt32 value;
 
   do
-    MersenneTwister_extract_UInt32_(&mersennetwister, &value, mersennetwister);
+    unpack_MersenneTwister_UInt32( &mersennetwister, &value, 
+                                   MersenneTwister_extract_UInt32(mersennetwister) );
   while (value/n >= UINT32_MAX/n);
 
   value %= n;
 
-  return tuple_MersenneTwister_UInt32(mersennetwister, value);
+  return pack_MersenneTwister_UInt32(mersennetwister, value);
 }
 
 
@@ -221,13 +210,7 @@ Tuple_MersenneTwister_UInt32 Random_uniform_UInt32(MersenneTwister mersennetwist
 //
 // A binomial integer on [0,n] (via Kachitvichyanukul and Schmesier's accept/reject criteria)[4]
 //
-void Random_binomial_UInt32_(MersenneTwister* const first, UInt32* const second,
-			     MersenneTwister const mersennetwister, UInt32 const n, Float32 const p) {
-  Tuple_MersenneTwister_UInt32 value = Random_binomial_UInt32(mersennetwister, n, p);
-  *first = value.first;
-  *second = value.second;
-}
-Tuple_MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwister,
+MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwister,
 						    UInt32 const n, Float32 const p) {
   // Calculate parameter constants (caching these can speed things up)
   Float32 r,q, nr,nrq;
@@ -275,7 +258,8 @@ Tuple_MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwis
     Float32 u;
     Float32 prob = f0;
 
-    Random_uniform_Float32_(&mersennetwister, &u, mersennetwister);
+    unpack_MersenneTwister_Float32( &mersennetwister, &u,
+                                    Random_uniform_Float32(mersennetwister) );
 
     for (y = 0; u > prob && y < n; ++y){
       u -= prob;
@@ -287,9 +271,11 @@ Tuple_MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwis
     Float32 u;
     Float32 v;
 
-    Random_uniform_Float32_(&mersennetwister,&u, mersennetwister);
+    unpack_MersenneTwister_Float32( &mersennetwister,&u,
+                                    Random_uniform_Float32(mersennetwister) );
     u *= prob4;
-    Random_uniform_Float32_(&mersennetwister,&v, mersennetwister);
+    unpack_MersenneTwister_Float32( &mersennetwister,&v,
+                                    Random_uniform_Float32(mersennetwister) );
 
     // This region falls under the scaled PDF
     if (u <= prob1) {
@@ -370,7 +356,7 @@ Tuple_MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwis
   if (p > 0.5)
     y = n-y;
 
-  return tuple_MersenneTwister_UInt32(mersennetwister, y);
+  return pack_MersenneTwister_UInt32(mersennetwister, y);
 }
 
 
@@ -378,13 +364,7 @@ Tuple_MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwis
 //
 // Uniform random floating point number on [0,1) (by shifting in uniform integer to precision).
 //
-void Random_uniform_Float32_(MersenneTwister* const first, Float32* const second,
-			     MersenneTwister const mersennetwister) {
-  Tuple_MersenneTwister_Float32 value = Random_uniform_Float32(mersennetwister);
-  *first = value.first;
-  *second = value.second;
-}
-Tuple_MersenneTwister_Float32 Random_uniform_Float32(MersenneTwister mersennetwister) {
+MersenneTwister_Float32 Random_uniform_Float32(MersenneTwister mersennetwister) {
   // Shift in bits after the decimal place until mantissa is filled
   Float32 x;
   UInt p;
@@ -396,12 +376,13 @@ Tuple_MersenneTwister_Float32 Random_uniform_Float32(MersenneTwister mersennetwi
     // Shift 32b into bottom of floating point number
     UInt32 u;
 
-    MersenneTwister_extract_UInt32_(&mersennetwister, &u, mersennetwister);
+    unpack_MersenneTwister_UInt32( &mersennetwister, &u,
+                                   MersenneTwister_extract_UInt32(mersennetwister) );
     p -= 32;
     x += u*powf(2.0,p);
   } while (x+p/2.0 != x);
 
-  return tuple_MersenneTwister_Float32(mersennetwister, x);
+  return pack_MersenneTwister_Float32(mersennetwister, x);
 }
 
 
@@ -409,20 +390,15 @@ Tuple_MersenneTwister_Float32 Random_uniform_Float32(MersenneTwister mersennetwi
 //
 // Two floating point N(0,1) numbers (via the polar Box-Muller transformation).
 //
-void Random_normal2_Float32_(MersenneTwister* first, Float32* second, Float32* third,
-			     MersenneTwister mersennetwister) {
-  Tuple_MersenneTwister_Float32_Float32 value = Random_normal2_Float32(mersennetwister);
-  *first = value.first;
-  *second = value.second;
-  *third = value.third;
-}
-Tuple_MersenneTwister_Float32_Float32 Random_normal2_Float32(MersenneTwister mersennetwister) {
+MersenneTwister_Float32_Float32 Random_normal2_Float32(MersenneTwister mersennetwister) {
   // Generate a uniform draw on an open unit circle (excluding the origin)
   Float32 x,y, r;
 
   do {
-    Random_uniform_Float32_(&mersennetwister, &x, mersennetwister);
-    Random_uniform_Float32_(&mersennetwister, &y, mersennetwister);
+    unpack_MersenneTwister_Float32( &mersennetwister, &x,
+                                    Random_uniform_Float32(mersennetwister) );
+    unpack_MersenneTwister_Float32( &mersennetwister, &y,
+                                    Random_uniform_Float32(mersennetwister) );
 
     x = 2.0*x-1.0;
     y = 2.0*y-1.0;
@@ -433,26 +409,48 @@ Tuple_MersenneTwister_Float32_Float32 Random_normal2_Float32(MersenneTwister mer
   // Convert into two N(0,1) numbers
   r = sqrtf(-2.0*logf(r)/r);
 
-  return tuple_MersenneTwister_Float32_Float32(mersennetwister, x*r,y*r);
+  return pack_MersenneTwister_Float32_Float32(mersennetwister, x*r,y*r);
 }
 
 
 //---------------------------------------------------------------------------------------------------------------//
 // Tuples
-Tuple_MersenneTwister_UInt32 tuple_MersenneTwister_UInt32(MersenneTwister const first, UInt32 const second) {
-  Tuple_MersenneTwister_UInt32 const value = { .first = first, .second = second };
+MersenneTwister_UInt32 pack_MersenneTwister_UInt32(MersenneTwister const first, UInt32 const second) {
+  MersenneTwister_UInt32 const value = { .first = first, .second = second };
   return value;
 }
 
-Tuple_MersenneTwister_Float32 tuple_MersenneTwister_Float32(MersenneTwister const first, Float32 const second) {
-  Tuple_MersenneTwister_Float32 const value = { .first = first, .second = second };
+MersenneTwister_Float32 pack_MersenneTwister_Float32(MersenneTwister const first, Float32 const second) {
+  MersenneTwister_Float32 const value = { .first = first, .second = second };
   return value;
 }
 
-Tuple_MersenneTwister_Float32_Float32 tuple_MersenneTwister_Float32_Float32
+MersenneTwister_Float32_Float32 pack_MersenneTwister_Float32_Float32
 (MersenneTwister const first, Float32 const second, Float32 const third) {
-  Tuple_MersenneTwister_Float32_Float32 const value = { .first = first, .second = second, .third = third };
+  MersenneTwister_Float32_Float32 const value = { .first = first, .second = second, .third = third };
   return value;
+}
+
+
+//
+void unpack_MersenneTwister_UInt32(MersenneTwister* const first, UInt32* const second,
+                                   MersenneTwister_UInt32 const tuple) {
+  *first = tuple.first;
+  *second = tuple.second;
+}
+
+void unpack_MersenneTwister_Float32(MersenneTwister* const first, Float32* const second,
+                                    MersenneTwister_Float32 const tuple) {
+  *first = tuple.first;
+  *second = tuple.second;
+}
+
+void unpack_MersenneTwister_Float32_Float32(MersenneTwister* const first, Float32* const second,
+                                            Float32* const third,
+                                            MersenneTwister_Float32_Float32 const tuple) {
+  *first = tuple.first;
+  *second = tuple.second;
+  *third = tuple.third;
 }
 
 

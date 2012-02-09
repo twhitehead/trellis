@@ -58,17 +58,17 @@ struct _MersenneTwister{
 
 //---------------------------------------------------------------------------------------------------------------//
 // Tuples
-struct _Tuple_MersenneTwister_UInt32 {
+struct _MersenneTwister_UInt32 {
   MersenneTwister first;
   UInt32 second;
 };
 
-struct _Tuple_MersenneTwister_Float32 {
+struct _MersenneTwister_Float32 {
   MersenneTwister first;
   Float32 second;
 };
 
-struct _Tuple_MersenneTwister_Float32_Float32 {
+struct _MersenneTwister_Float32_Float32 {
   MersenneTwister first;
   Float32 second;
   Float32 third;

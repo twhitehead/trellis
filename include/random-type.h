@@ -21,9 +21,9 @@
 
 typedef struct _MersenneTwister* MersenneTwister;
 
-typedef struct _Tuple_MersenneTwister_UInt32 Tuple_MersenneTwister_UInt32;
-typedef struct _Tuple_MersenneTwister_Float32 Tuple_MersenneTwister_Float32;
-typedef struct _Tuple_MersenneTwister_Float32_Float32 Tuple_MersenneTwister_Float32_Float32;
+typedef struct _MersenneTwister_UInt32 MersenneTwister_UInt32;
+typedef struct _MersenneTwister_Float32 MersenneTwister_Float32;
+typedef struct _MersenneTwister_Float32_Float32 MersenneTwister_Float32_Float32;
 
 
 //---------------------------------------------------------------------------------------------------------------//

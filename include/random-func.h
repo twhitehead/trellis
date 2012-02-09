@@ -30,30 +30,26 @@ MersenneTwister MersenneTwister_seed(MersenneTwister mersennetwister, UInt32 see
 
 MersenneTwister MersenneTwister_next(MersenneTwister mersennetwister);
 
-Tuple_MersenneTwister_UInt32 MersenneTwister_extract_UInt32(MersenneTwister mersennetwister);
-void MersenneTwister_extract_(MersenneTwister* first, UInt32* second,
-			      MersenneTwister mersennetwsiter);
+MersenneTwister_UInt32 MersenneTwister_extract_UInt32(MersenneTwister mersennetwister);
 
 //
-Tuple_MersenneTwister_UInt32 Random_uniform_UInt32(MersenneTwister mersennetwister, UInt32 n);
-Tuple_MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwister, UInt32 n, Float32 p);
-Tuple_MersenneTwister_Float32 Random_uniform_Float32(MersenneTwister mersennetwister);
-Tuple_MersenneTwister_Float32_Float32 Random_normal2_Float32(MersenneTwister mersennetwister);
-
-void Random_uniform_UInt32_(MersenneTwister* first, UInt32* second,
-			    MersenneTwister mersennetwister, UInt32 n);
-void Random_binomial_UInt32_(MersenneTwister* first, UInt32* second,
-			     MersenneTwister mersennetwister, UInt32 n, Float32 p);
-void Random_uniform_Float32_(MersenneTwister* first, Float32* second,
-			     MersenneTwister mersennetwister);
-void Random_normal2_Float32_(MersenneTwister* first, Float32* second, Float32* third,
-			     MersenneTwister mersennetwister);
+MersenneTwister_UInt32 Random_uniform_UInt32(MersenneTwister mersennetwister, UInt32 n);
+MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwister, UInt32 n, Float32 p);
+MersenneTwister_Float32 Random_uniform_Float32(MersenneTwister mersennetwister);
+MersenneTwister_Float32_Float32 Random_normal2_Float32(MersenneTwister mersennetwister);
 
 //
-Tuple_MersenneTwister_UInt32 tuple_MersenneTwister_UInt32(MersenneTwister first, UInt32 second);
-Tuple_MersenneTwister_Float32 tuple_MersenneTwister_Float32(MersenneTwister first, Float32 second);
-Tuple_MersenneTwister_Float32_Float32 tuple_MersenneTwister_Float32_Float32
+MersenneTwister_UInt32 pack_MersenneTwister_UInt32(MersenneTwister first, UInt32 second);
+MersenneTwister_Float32 pack_MersenneTwister_Float32(MersenneTwister first, Float32 second);
+MersenneTwister_Float32_Float32 pack_MersenneTwister_Float32_Float32
 (MersenneTwister first, Float32 second, Float32 third);
+
+void unpack_MersenneTwister_UInt32(MersenneTwister* first, UInt32* second,
+                                   MersenneTwister_UInt32 tuple);
+void unpack_MersenneTwister_Float32(MersenneTwister* first, Float32* second,
+                                    MersenneTwister_Float32 tuple);
+void unpack_MersenneTwister_Float32_Float32(MersenneTwister* first, Float32* second, Float32* third,
+                                            MersenneTwister_Float32_Float32 tuple);
 
 
 //---------------------------------------------------------------------------------------------------------------//

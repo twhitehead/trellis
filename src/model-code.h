@@ -37,17 +37,8 @@ FILE* World_saveFP(Space const space, World const world,
 }
 
 
-void World_loadFP_(World* const first, FILE** const second, UInt64* const third,
-		   Space const space,
-		   char const* const name, FILE* const file, UInt64 const line) {
-  Tuple_World_FILE_UInt64 const value =
-    World_loadFP(space, name, file, line);
-  *first = value.first;
-  *second = value.second;
-  *third = value.third;
-}
-Tuple_World_FILE_UInt64 World_loadFP(Space const space,
-				     char const* const name, FILE* file, UInt64 const line) {
+World_FILE_UInt64 World_loadFP(Space const space,
+                               char const* const name, FILE* file, UInt64 const line) {
   World world;
   Int records;
 
@@ -59,7 +50,7 @@ Tuple_World_FILE_UInt64 World_loadFP(Space const space,
     Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting "
 	      "YEAR", name, line);
 
-  return tuple_World_FILE_UInt64(world, file, line+1);
+  return pack_World_FILE_UInt64(world, file, line+1);
 }
 
 
@@ -81,16 +72,7 @@ FILE* Variety_saveFP(Space const space, World const world, Variety const variety
 }
 
 
-void Variety_loadFP_(Variety* const first, FILE** const second, UInt64* const third,
-		     Space const space, World const world,
-		     char const* const name, FILE* const file, UInt64 const line) {
-  Tuple_Variety_FILE_UInt64 const value =
-    Variety_loadFP(space, world, name, file, line);
-  *first = value.first;
-  *second = value.second;
-  *third = value.third;
-}
-Tuple_Variety_FILE_UInt64 Variety_loadFP(Space const space, World const world,
+Variety_FILE_UInt64 Variety_loadFP(Space const space, World const world,
 					 char const* const name, FILE* file, UInt64 const line) {
   Variety variety;
   Int records;
@@ -114,7 +96,7 @@ Tuple_Variety_FILE_UInt64 Variety_loadFP(Space const space, World const world,
 	      "MASTING_TIME MASTING_PHASE "
 	      "DISPERSAL_PROBABILITY_SHORT DISPERSAL_MODE_SHORT DISPERSAL_MODE_LONG", name, line);
 
-  return tuple_Variety_FILE_UInt64(variety, file, line+1);
+  return pack_Variety_FILE_UInt64(variety, file, line+1);
 }
 
 
@@ -131,16 +113,7 @@ FILE* Individual_saveFP(Space const space, World const world, Variety const vari
 }
 
 
-void Individual_loadFP_(Individual* const first, FILE** const second, UInt64* const third,
-			Space const space, World const world, Variety const variety,
-			char const* const name, FILE* const file, UInt64 const line) {
-  Tuple_Individual_FILE_UInt64 const value =
-    Individual_loadFP(space, world, variety, name, file, line);
-  *first = value.first;
-  *second = value.second;
-  *third = value.third;
-}
-Tuple_Individual_FILE_UInt64 Individual_loadFP(Space const space, World const world, Variety const variety,
+Individual_FILE_UInt64 Individual_loadFP(Space const space, World const world, Variety const variety,
 					       char const* const name, FILE* file, UInt64 const line) {
   Individual individual;
   Int records;
@@ -165,7 +138,7 @@ Tuple_Individual_FILE_UInt64 Individual_loadFP(Space const space, World const wo
     Error_die(1, "problem parsing \"%s\":%"PRIu64": "
 	      "the constraint 0 <= HEIGHT=%g", name, line, individual.height);
 
-  return tuple_Individual_FILE_UInt64(individual, file, line+1);
+  return pack_Individual_FILE_UInt64(individual, file, line+1);
 }
 
 
@@ -201,38 +174,16 @@ RVariety RVariety_merge(RVariety const rvariety0, RVariety const rvariety1) {
 }
 
 
-void RIndividualIn_bound_(Float32* const first, Float32* const second, Float32* const third,
-			  Float32* const fourth,
-			  World const world, Variety const variety0, Individual const individual0,
-			  Variety const variety1) {
-  Tuple_Float32_Float32_Float32_Float32 value =
-    RIndividualIn_bound(world, variety0, individual0, variety1);
-  *first = value.first;
-  *second = value.second;
-  *third = value.third;
-  *fourth = value.fourth;
-}
-Tuple_Float32_Float32_Float32_Float32 RIndividualIn_bound(World const world,
-							  Variety const variety0, Individual const individual0,
-							  Variety const variety1) {
-  Tuple_Float32_Float32_Float32_Float32 box = { };
+Float32_Float32_Float32_Float32 RIndividualIn_bound(World const world,
+                                                    Variety const variety0, Individual const individual0,
+                                                    Variety const variety1) {
+  Float32_Float32_Float32_Float32 box = { };
   return box;
 }
-void RIndividualOut_bound_(Float32* const first, Float32* const second, Float32* const third,
-			   Float32* const fourth,
-			   World const world, Variety const variety0, Individual const individual1, 
-			   Variety const variety1) {
-  Tuple_Float32_Float32_Float32_Float32 value =
-    RIndividualOut_bound(world, variety0, individual1, variety1);
-  *first = value.first;
-  *second = value.second;
-  *third = value.third;
-  *fourth = value.fourth;
-}
-Tuple_Float32_Float32_Float32_Float32 RIndividualOut_bound(World const world,
-							   Variety const variety0, Individual const individual1, 
-							   Variety const variety1) {
-  Tuple_Float32_Float32_Float32_Float32 box = { };
+Float32_Float32_Float32_Float32 RIndividualOut_bound(World const world,
+                                                     Variety const variety0, Individual const individual1,
+                                                     Variety const variety1) {
+  Float32_Float32_Float32_Float32 box = { };
   return box;
 }
 
@@ -301,32 +252,64 @@ AIndividuals Individual_next(AIndividuals const aindividuals, Space const space,
 
 //---------------------------------------------------------------------------------------------------------------//
 // Tuples
-Tuple_Float32_Float32_Float32_Float32 tuple_Float32_Float32_Float32_Float32
+Float32_Float32_Float32_Float32 pack_Float32_Float32_Float32_Float32
 (Float32 const first, Float32 const second, Float32 const third, Float32 const fourth) {
-  Tuple_Float32_Float32_Float32_Float32 const value =
+  Float32_Float32_Float32_Float32 const value =
     { .first = first, .second = second, .third = third, .fourth = fourth };
   return value;
 }
 
-Tuple_World_FILE_UInt64 tuple_World_FILE_UInt64
+World_FILE_UInt64 pack_World_FILE_UInt64
 (World const first, FILE* const second, UInt64 const third) {
-  Tuple_World_FILE_UInt64 const value =
+  World_FILE_UInt64 const value =
     { .first = first, .second = second, .third = third };
   return value;
 }
 
-Tuple_Variety_FILE_UInt64 tuple_Variety_FILE_UInt64
+Variety_FILE_UInt64 pack_Variety_FILE_UInt64
 (Variety const first, FILE* const second, UInt64 const third) {
-  Tuple_Variety_FILE_UInt64 const value =
+  Variety_FILE_UInt64 const value =
     { .first = first, .second = second, .third = third };
   return value;
 }
 
-Tuple_Individual_FILE_UInt64 tuple_Individual_FILE_UInt64
+Individual_FILE_UInt64 pack_Individual_FILE_UInt64
 (Individual const first, FILE* const second, UInt64 const third) {
-  Tuple_Individual_FILE_UInt64 const value =
+  Individual_FILE_UInt64 const value =
     { .first = first, .second = second, .third = third };
   return value;
+}
+
+
+//
+void unpack_Float32_Float32_Float32_Float32(Float32* const first, Float32* const second,
+                                            Float32* const third, Float32* const fourth,
+                                            Float32_Float32_Float32_Float32 const tuple) {
+  *first = tuple.first;
+  *second = tuple.second;
+  *third = tuple.third;
+  *fourth = tuple.fourth;
+}
+
+void unpack_World_FILE_UInt64(World* const first, FILE** const second, UInt64* const third,
+                              World_FILE_UInt64 const tuple) {
+  *first = tuple.first;
+  *second = tuple.second;
+  *third = tuple.third;
+}
+
+void unpack_Variety_FILE_UInt64(Variety* const first, FILE** const second, UInt64* const third,
+                                Variety_FILE_UInt64 const tuple) {
+  *first = tuple.first;
+  *second = tuple.second;
+  *third = tuple.third;
+}
+
+void unpack_Individual_FILE_UInt64(Individual* const first, FILE** const second, UInt64* const third,
+                                   Individual_FILE_UInt64 const tuple) {
+  *first = tuple.first;
+  *second = tuple.second;
+  *third = tuple.third;
 }
 
 

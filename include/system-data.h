@@ -157,20 +157,20 @@ struct _AIndividuals {
 
 //---------------------------------------------------------------------------------------------------------------//
 // Tuples
-struct _Tuple_World_SVarieties_SSIndividuals {
+struct _World_SVarieties_SSIndividuals {
   World first;
   SVarieties second;
   SSIndividuals third;
 };
 
-struct _Tuple_Space_World_SVarieties_SSIndividuals {
+struct _Space_World_SVarieties_SSIndividuals {
   Space first;
   World second;
   SVarieties third;
   SSIndividuals fourth;
 };
 
-struct _Tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64 {
+struct _Space_World_SVarieties_SSIndividuals_FILE_UInt64 {
   Space first;
   World second;
   SVarieties third;
@@ -179,7 +179,7 @@ struct _Tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64 {
   UInt64 sixth;
 };
 
-struct _Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut {
+struct _RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut {
   RWorld first;
   SRVarieties second;
   SSRIndividualsIn third;

@@ -61,12 +61,12 @@ typedef struct _SVarieties* AVarieties;
 typedef struct _SSIndividuals* ASIndividuals;
 typedef struct _AIndividuals AIndividuals;
 
-typedef struct _Tuple_World_SVarieties_SSIndividuals Tuple_World_SVarieties_SSIndividuals;
-typedef struct _Tuple_Space_World_SVarieties_SSIndividuals Tuple_Space_World_SVarieties_SSIndividuals;
-typedef struct _Tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64
-Tuple_Space_World_SVarieties_SSIndividuals_FILE_UInt64;
-typedef struct _Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
-Tuple_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut;
+typedef struct _World_SVarieties_SSIndividuals World_SVarieties_SSIndividuals;
+typedef struct _Space_World_SVarieties_SSIndividuals Space_World_SVarieties_SSIndividuals;
+typedef struct _Space_World_SVarieties_SSIndividuals_FILE_UInt64 
+Space_World_SVarieties_SSIndividuals_FILE_UInt64;
+typedef struct _RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
+RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut;
 
 
 //---------------------------------------------------------------------------------------------------------------//

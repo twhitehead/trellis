@@ -25,22 +25,16 @@
 //---------------------------------------------------------------------------------------------------------------//
 //
 FILE* World_saveFP(Space space, World world, char const* name, FILE* file);
-Tuple_World_FILE_UInt64 World_loadFP(Space space, char const* name, FILE* file, UInt64 line);
-void World_loadFP_(World* first, FILE** second, UInt64* third,
-		   Space space, char const* name, FILE* file, UInt64 line);
+World_FILE_UInt64 World_loadFP(Space space, char const* name, FILE* file, UInt64 line);
 
 FILE* Variety_saveFP(Space space, World world, Variety variety, char const* name, FILE* file);
-Tuple_Variety_FILE_UInt64 Variety_loadFP(Space space, World world,
-					 char const* name, FILE* file, UInt64 line);
-void Variety_loadFP_(Variety* first, FILE** second, UInt64* third,
-		     Space space, World world, char const* name, FILE* file, UInt64 line);
+Variety_FILE_UInt64 Variety_loadFP(Space space, World world,
+                                   char const* name, FILE* file, UInt64 line);
 
 FILE* Individual_saveFP(Space space, World world, Variety variety, Individual individual,
 			char const* name, FILE* file);
-Tuple_Individual_FILE_UInt64 Individual_loadFP(Space space, World const world, Variety variety,
-					       char const* name, FILE* file, UInt64 line);
-void Individual_loadFP_(Individual* first, FILE** second, UInt64* third,
-			Space space, World world, Variety variety, char const* name, FILE* file, UInt64 line);
+Individual_FILE_UInt64 Individual_loadFP(Space space, World const world, Variety variety,
+                                         char const* name, FILE* file, UInt64 line);
 
 //
 RWorld RWorld_first(World world);
@@ -53,10 +47,8 @@ RVariety RVariety_rest(World world, Variety variety, Individual individual);
 RVariety RVariety_merge(RVariety rvariety0, RVariety rvariety1);
 
 //
-Tuple_Float32_Float32_Float32_Float32
+Float32_Float32_Float32_Float32
 RIndividualIn_bound(World world, Variety variety0, Individual individual0, Variety variety1);
-void RIndividualIn_bound_(Float32* first, Float32* second, Float32* third, Float32* fourth,
-			  World world, Variety variety0, Individual individual0, Variety variety1);
 Bool RIndividualIn_filter(World world, Variety variety0, Individual individual0,
 			  Variety variety1, Individual individual1);
 
@@ -66,10 +58,8 @@ RIndividualIn RIndividualIn_rest(World world, Variety variety0, Individual indiv
 RIndividualIn RIndividualIn_merge(RIndividualIn rindividualin0, RIndividualIn rindividualin1);
 
 //
-Tuple_Float32_Float32_Float32_Float32
+Float32_Float32_Float32_Float32
 RIndividualOut_bound(World world, Variety variety0, Individual individual0, Variety variety1);
-void RIndividualOut_bound_(Float32* first, Float32* second, Float32* third, Float32* fourth,
-			   World world, Variety variety0, Individual individual0, Variety variety1);
 Bool RIndividualOut_filter(World world, Variety variety0, Individual individual0,
 			   Variety variety1, Individual individual1);
 
@@ -90,12 +80,20 @@ AIndividuals Individual_next(AIndividuals aindividuals, Space space,
 			     Thread thread);
 
 //
-Tuple_World_FILE_UInt64 tuple_World_FILE_UInt64(World first, FILE* second, UInt64 third);
-Tuple_Variety_FILE_UInt64 tuple_Variety_FILE_UInt64(Variety first, FILE* second, UInt64 third);
-Tuple_Individual_FILE_UInt64 tuple_Individual_FILE_UInt64(Individual first, FILE* second, UInt64 third);
+World_FILE_UInt64 pack_World_FILE_UInt64(World first, FILE* second, UInt64 third);
+Variety_FILE_UInt64 pack_Variety_FILE_UInt64(Variety first, FILE* second, UInt64 third);
+Individual_FILE_UInt64 pack_Individual_FILE_UInt64(Individual first, FILE* second, UInt64 third);
 
-Tuple_Float32_Float32_Float32_Float32 tuple_Float32_Float32_Float32_Float32
+Float32_Float32_Float32_Float32 pack_Float32_Float32_Float32_Float32
 (Float32 first, Float32 second, Float32 third, Float32 fourth);
+
+void unpack_World_FILE_UInt64(World* first, FILE** second, UInt64* third, World_FILE_UInt64 tuple);
+void unpack_Variety_FILE_UInt64(Variety* first, FILE** second, UInt64* third, Variety_FILE_UInt64 tuple);
+void unpack_Individual_FILE_UInt64(Individual* first, FILE** second, UInt64* third,
+                                   Individual_FILE_UInt64 tuple);
+
+void unpack_Float32_Float32_Float32_Float32(Float32* first, Float32* second, Float32* third, Float32* fourth,
+                                            Float32_Float32_Float32_Float32 tuple);
 
 
 //---------------------------------------------------------------------------------------------------------------//
