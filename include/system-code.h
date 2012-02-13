@@ -720,7 +720,7 @@ IIndividuals IIndividuals_firstZ(SIndividuals const sindividuals, IZ const iz) {
   }
 
   // Return IIndividuals for located individual
-  return IIndividuals_valid(sindividuals.number, index, sindividuals_,sindividuals_.sindividuals1);
+  return IIndividuals_valid(sindividuals.number, index, sindividuals.sindividuals_,sindividuals_.sindividuals1);
 }
 
 
@@ -800,7 +800,7 @@ IIndividuals IIndividuals_nextZ(IIndividuals const iindividuals, IZ const iz) {
     return IIndividuals_invalid();
 
   // Find interval containing suitable individuals (bits below bit are 1)
-  SIndividuals_ sindividuals_ = iindividuals.sindividuals_;
+  SIndividuals_ sindividuals_ = { .sindividuals1 = iindividuals.sindividuals1 };
   UInt64 const* right_z = iindividuals.sindividuals1->z;
   UInt64 index = iindividuals.index;
   UInt bit = 0;
