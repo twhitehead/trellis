@@ -34,8 +34,8 @@
 //
 // The X & Y values contained in the Z values can easily be compared by masking.
 
-#define X_MASK 0x5555555555555555u
-#define Y_MASK 0xaaaaaaaaaaaaaaaau
+#define X_MASK 0x5555555555555555
+#define Y_MASK 0xaaaaaaaaaaaaaaaa
 
 
 //---------------------------------------------------------------------------------------------------------------//
