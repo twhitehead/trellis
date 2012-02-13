@@ -93,8 +93,8 @@ SIndividuals_ AIndividuals_sortBoth(SIndividuals_ sindividuals_,
 UInt64 Z_xy(Float32 const x, Float32 const y, Float32 const scale) {
   Float32 const x_scaled = roundf(x*scale);
   Float32 const y_scaled = roundf(y*scale);
-  UInt32 const x_uint = x_scaled < 0 ? 0 : x_scaled > UINT64_MAX ? UINT64_MAX : x_scaled;
-  UInt32 const y_uint = y_scaled < 0 ? 0 : y_scaled > UINT64_MAX ? UINT64_MAX : y_scaled;
+  UInt32 const x_uint = x_scaled < 0 ? 0 : x_scaled > UINT32_MAX ? UINT32_MAX : x_scaled;
+  UInt32 const y_uint = y_scaled < 0 ? 0 : y_scaled > UINT32_MAX ? UINT32_MAX : y_scaled;
 
   uint8_t static const z_table[] = {
     [0x00]=0x00, [0x01]=0x01, [0x02]=0x04, [0x03]=0x05, [0x04]=0x10, [0x05]=0x11, [0x06]=0x14, [0x07]=0x15,
