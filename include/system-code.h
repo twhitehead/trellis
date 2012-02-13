@@ -807,7 +807,7 @@ IIndividuals IIndividuals_nextZ(IIndividuals const iindividuals, IZ const iz) {
 
   while (1) {
     // While on step size boundary, increase step size
-    while ((index & ((UInt64)1<<bit)) == 1) {
+    while ((index+1 & ((UInt64)1<<bit)) == 0) {
       bit += 1;
 
       if (bit%(64/DEPTH) == 0) {
