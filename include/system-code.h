@@ -191,6 +191,19 @@ UInt64 Indices_reverse(UInt64 const indices) {
 
 
 //---------------------------------------------------------------------------------------------------------------//
+// Space_raw: (Bool, Bool, Float32, Float32) -> (Space)
+//
+// Space with given parameters.
+//
+Space Space_raw(Bool const periodic_x, Bool const periodic_y, Float32 const size_x, Float32 const size_y) {
+  Space space = { .periodic_x = periodic_x, .periodic_y = periodic_y,
+                  .scale = 0x1p32/fmax(size_x, size_y),
+                  .size_x = size_x, .size_y = size_y };
+  return space;
+}
+
+
+//---------------------------------------------------------------------------------------------------------------//
 // SVarieties_end: (SVarieties*) -> ()
 //
 // Release resources associated with svarieties.

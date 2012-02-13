@@ -27,6 +27,9 @@
 UInt64 Z_xy(Float32 x, Float32 y, Float32 scale);
 
 //
+Space Space_raw(Bool periodic_x, Bool periodic_y, Float32 size_x, Float32 size_y);
+
+//
 void SVarieties_end(SVarieties svarieites);
 
 //
