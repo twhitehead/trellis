@@ -31,6 +31,43 @@
 
 
 //---------------------------------------------------------------------------------------------------------------//
+//
+UInt64 Indices_reverse(UInt64 indices);
+
+//
+SIndividuals SIndividuals_raw(UInt64 number, SIndividuals_ sindividuals_);
+SIndividuals SIndividuals_none();
+void SIndividuals_end(SIndividuals sindividuals);
+
+//
+SIndividuals_ SIndividuals__sindividuals_(SIndividuals_ sindividuals_, UInt64 index, UInt depth);
+SIndividuals1 SIndividuals__sindividuals1(SIndividuals_ sindividuals_, UInt64 index);
+
+//
+IZ IZ_valid(UInt64 z);
+IZ IZ_invalid();
+IZ IZ_zSet(IZ iz, UInt64 z);
+IZ IZ_nextBox(IZ iz, UInt64 box_ul_z,UInt64 box_lr_z);
+
+//
+IIndividuals IIndividuals_valid(UInt64 number, UInt64 index,
+                                SIndividuals_ sindividuals_, SIndividuals1 sindividuals1);
+IIndividuals IIndividuals_invalid();
+IIndividuals IIndividuals_indexSet(IIndividuals iindividuals, UInt64 index, SIndividuals1 sindividuals1);
+UInt64 IIndividuals_z(IIndividuals iindividuals);
+
+//
+SIndividuals_ AIndividuals_attach(SIndividuals_ sindividuals_, SIndividuals1 sindividuals1, UInt64 index);
+SIndividuals_ AIndividuals_cache(SIndividuals_ sindividuals_, UInt64 number);
+SIndividuals_ AIndividuals_sort(SIndividuals_ sindividuals_, UInt64 number, UInt64 pivot_z);
+SIndividuals_ AIndividuals_sortBoth(SIndividuals_ sindividuals_,
+				    SIndividuals1 left_sindividuals1_start,
+				    SIndividuals1 right_sindividuals1_start,
+				    UInt64 left_index_start, UInt64 right_index_start,
+				    UInt64 pivot_z);
+
+
+//---------------------------------------------------------------------------------------------------------------//
 // Z_xy: (Float32,Float32, Float32) -> (UInt64)
 //
 // Put given x and y values in Z format (scale, change to integer, and interleave bits -- y_n,x_n,...,y_0,x_0).

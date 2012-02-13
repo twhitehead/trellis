@@ -27,42 +27,22 @@
 UInt64 Z_xy(Float32 x, Float32 y, Float32 scale);
 
 //
-UInt64 Indices_reverse(UInt64 indices);
-
-//
 void SVarieties_end(SVarieties svarieites);
 
 //
 void SSIndividuals_end(SSIndividuals ssindividuals);
 
 //
-SIndividuals SIndividuals_raw(UInt64 number, SIndividuals_ sindividuals_);
-SIndividuals SIndividuals_none();
-void SIndividuals_end(SIndividuals sindividuals);
-
-//
-SIndividuals_ SIndividuals__sindividuals_(SIndividuals_ sindividuals_, UInt64 index, UInt depth);
-SIndividuals1 SIndividuals__sindividuals1(SIndividuals_ sindividuals_, UInt64 index);
-
-//
-IZ IZ_valid(UInt64 z);
-IZ IZ_invalid();
-IZ IZ_zSet(IZ iz, UInt64 z);
-IZ IZ_nextBox(IZ iz, UInt64 box_ul_z,UInt64 box_lr_z);
-
-//
-IIndividuals IIndividuals_valid(UInt64 number, UInt64 index,
-                                SIndividuals_ sindividuals_, SIndividuals1 sindividuals1);
-IIndividuals IIndividuals_invalid();
-IIndividuals IIndividuals_indexSet(IIndividuals iindividuals, UInt64 index, SIndividuals1 sindividuals1);
-UInt64 IIndividuals_z(IIndividuals iindividuals);
-Individual IIndividuals_individual(IIndividuals iindividuals);
 IIndividuals IIndividuals_first(SIndividuals sindividuals);
 IIndividuals IIndividuals_next(IIndividuals iindividuals);
+
 IIndividuals IIndividuals_firstZ(SIndividuals sindividuals, IZ iz);
 IIndividuals IIndividuals_nextZ(IIndividuals iindividuals, IZ iz);
+
 IIndividuals IIndividuals_firstBox(SIndividuals sindividuals, UInt64 box_ul_z,UInt64 box_lr_z);
 IIndividuals IIndividuals_nextBox(IIndividuals iindividuals, UInt64 box_ul_z,UInt64 box_lr_z);
+
+Individual IIndividuals_individual(IIndividuals iindividuals);
 
 //
 AVarieties AVarieties_begin();
@@ -75,15 +55,7 @@ SSIndividuals ASIndividuals_end(ASIndividuals asindividuals);
 
 AIndividuals AIndividuals_begin();
 AIndividuals AIndividuals_append(AIndividuals aindividuals, Individual individual, UInt64 z);
-SIndividuals_ AIndividuals_attach(SIndividuals_ sindividuals_, SIndividuals1 sindividuals1, UInt64 index);
 SIndividuals AIndividuals_end(AIndividuals aindividuals);
-SIndividuals_ AIndividuals_cache(SIndividuals_ sindividuals_, UInt64 number);
-SIndividuals_ AIndividuals_sort(SIndividuals_ sindividuals_, UInt64 number, UInt64 pivot_z);
-SIndividuals_ AIndividuals_sortBoth(SIndividuals_ sindividuals_,
-				    SIndividuals1 left_sindividuals1_start,
-				    SIndividuals1 right_sindividuals1_start,
-				    UInt64 left_index_start, UInt64 right_index_start,
-				    UInt64 pivot_z);
 
 //
 SRVarieties SRVarieties_begin(World world, SVarieties svarieties);
