@@ -501,12 +501,12 @@ IZ IZ_nextBox(IZ const iz, UInt64 const box_ul_z, UInt64 const box_lr_z) {
 
   while (1) {
     // While on step size boundary, increase step size
-    while ((z+1 & (3<<2*bit)) == 0)
+    while ((z+1 & ((UInt64)3<<2*bit)) == 0)
       bit += 1;
 
     // If previous box overlaps with target box, locate Z point in it
     UInt64 const ul_z = z+1;
-    UInt64 const lr_z = z+(1<<2*bit);
+    UInt64 const lr_z = z+((UInt64)1<<2*bit);
 
     if ( (ul_z&X_MASK) <= (box_lr_z&X_MASK) && (lr_z&X_MASK) >= (box_ul_z&X_MASK) &&
          (ul_z&Y_MASK) <= (box_lr_z&Y_MASK) && (lr_z&Y_MASK) >= (box_ul_z&Y_MASK) )
@@ -528,7 +528,7 @@ IZ IZ_nextBox(IZ const iz, UInt64 const box_ul_z, UInt64 const box_lr_z) {
     // While previous sub box doesn't overlap with target box, skip over it (could be unrolled to 3 checks)
     while (1) {
       UInt64 const ul_z = z+1;
-      UInt64 const lr_z = z+(1<<2*bit);
+      UInt64 const lr_z = z+((UInt64)1<<2*bit);
 
       if ( (ul_z&X_MASK) <= (box_lr_z&X_MASK) && (lr_z&X_MASK) >= (box_ul_z&X_MASK) &&
            (ul_z&Y_MASK) <= (box_lr_z&Y_MASK) && (lr_z&Y_MASK) >= (box_ul_z&Y_MASK) )
@@ -693,13 +693,13 @@ IIndividuals IIndividuals_firstZ(SIndividuals const sindividuals, IZ const iz) {
   SIndividuals_ sindividuals_ = sindividuals.sindividuals_;
   UInt64 const* right_z = sindividuals_.sindividuals0->right_z;
   UInt64 index = 0;
-  UInt64 bit = 63;
+  UInt bit = 63;
 
   while (1) {
     // Not in range [index,index+step), look in [index+step,number)
-    if (index+(1<<bit) < sindividuals.number &&
-        right_z[(index+(1<<bit)-1 >> bit/(64/DEPTH)*(64/DEPTH)) % CLUSTER] < iz.z)
-      index += (1<<bit);
+    if (index+((UInt64)1<<bit) < sindividuals.number &&
+        right_z[(index+((UInt64)1<<bit)-1 >> bit/(64/DEPTH)*(64/DEPTH)) % CLUSTER] < iz.z)
+      index += ((UInt64)1<<bit);
 
     // If at single individual, done
     if (bit == 0)
@@ -803,11 +803,11 @@ IIndividuals IIndividuals_nextZ(IIndividuals const iindividuals, IZ const iz) {
   SIndividuals_ sindividuals_ = iindividuals.sindividuals_;
   UInt64 const* right_z = iindividuals.sindividuals1->z;
   UInt64 index = iindividuals.index;
-  UInt64 bit = 0;
+  UInt bit = 0;
 
   while (1) {
     // While on step size boundary, increase step size
-    while ((index & (1<<bit)) == 1) {
+    while ((index & ((UInt64)1<<bit)) == 1) {
       bit += 1;
 
       if (bit%(64/DEPTH) == 0) {
@@ -817,12 +817,12 @@ IIndividuals IIndividuals_nextZ(IIndividuals const iindividuals, IZ const iz) {
     }
 
     // Interval [index+1,index+(1<<bit)+1) contains individual, locate individual in it
-    if (index+(1<<bit)+1 > iindividuals.number ||
-        right_z[(index+(1<<bit) >> bit/(64/DEPTH)*(64/DEPTH)) % CLUSTER] >= iz.z)
+    if (index+((UInt64)1<<bit)+1 > iindividuals.number ||
+        right_z[(index+((UInt64)1<<bit) >> bit/(64/DEPTH)*(64/DEPTH)) % CLUSTER] >= iz.z)
       break;
 
     // Interval [index+1,index+(1<<bit)+1) doesn't contain individual, skip over it
-    index += (1<<bit);
+    index += ((UInt64)1<<bit);
   }
 
   // Find first suitable individual in containing interval (bits below bit are 1)
@@ -845,8 +845,8 @@ IIndividuals IIndividuals_nextZ(IIndividuals const iindividuals, IZ const iz) {
     bit -= 1;
 
     // If interval [index+1,index+(1<<bit)+1) doesn't contain individual, skip over it
-    if (right_z[(index+(1<<bit) >> bit/(64/DEPTH)*(64/DEPTH)) % CLUSTER] > iz.z)
-      index += (1<<bit);
+    if (right_z[(index+((UInt64)1<<bit) >> bit/(64/DEPTH)*(64/DEPTH)) % CLUSTER] > iz.z)
+      index += ((UInt64)1<<bit);
   }
 
   // Next index wasn't skipped over
