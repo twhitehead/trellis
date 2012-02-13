@@ -697,7 +697,7 @@ IIndividuals IIndividuals_firstZ(SIndividuals const sindividuals, IZ const iz) {
 
   while (1) {
     // Not in range [index,index+step), look in [index+step,number)
-    if (index+((UInt64)1<<bit) < sindividuals.number &&
+    if (((UInt64)1<<bit) < sindividuals.number-index &&
         right_z[(index+((UInt64)1<<bit)-1 >> bit/(64/DEPTH)*(64/DEPTH)) % CLUSTER] < iz.z)
       index += ((UInt64)1<<bit);
 
@@ -817,7 +817,7 @@ IIndividuals IIndividuals_nextZ(IIndividuals const iindividuals, IZ const iz) {
     }
 
     // Interval [index+1,index+(1<<bit)+1) contains individual, locate individual in it
-    if (index+((UInt64)1<<bit)+1 > iindividuals.number ||
+    if (((UInt64)1<<bit) >= iindividuals.number-index-1 ||
         right_z[(index+((UInt64)1<<bit) >> bit/(64/DEPTH)*(64/DEPTH)) % CLUSTER] >= iz.z)
       break;
 
