@@ -2353,6 +2353,8 @@ RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
       // Write back reduction
       srindividualsin->rindividualin[iindividuals0.index] = rindividualin;
     }
+    // Write back reduction
+    srvarieties->rvariety[varieties0_index] = rvariety;
   }
 
   return pack_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut(rworld, srvarieties,
