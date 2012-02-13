@@ -845,7 +845,8 @@ IIndividuals IIndividuals_nextZ(IIndividuals const iindividuals, IZ const iz) {
     bit -= 1;
 
     // If interval [index+1,index+(1<<bit)+1) doesn't contain individual, skip over it
-    if (right_z[(index+((UInt64)1<<bit) >> bit/(64/DEPTH)*(64/DEPTH)) % CLUSTER] > iz.z)
+    if (((UInt64)1<<bit) < iindividuals.number-index-1 &&
+        right_z[(index+((UInt64)1<<bit) >> bit/(64/DEPTH)*(64/DEPTH)) % CLUSTER] < iz.z)
       index += ((UInt64)1<<bit);
   }
 
