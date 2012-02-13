@@ -660,7 +660,7 @@ IIndividuals IIndividuals_next(IIndividuals const iindividuals) {
 // IIndividuals_firstZ(sindividuals, z)
 //   // In range [0,number), look in [0,number)
 //   sindividuals.number > 0 && sindividuals.z[sindividuals.number-1] >= z:
-//     right_first_step(sindividuals, 0, 2^63, z)
+//     IIndividuals_firstZ_step(sindividuals, 0, 2^63, z)
 //   // Not in range [0,number), done
 //   otherwise:
 //     fail("no valid individuals")
@@ -671,15 +671,15 @@ IIndividuals IIndividuals_next(IIndividuals const iindividuals) {
 //     index
 //   // Not at a single point, divide into sub ranges
 //   otherwise:
-//     right_first_step(sindividuals, index, step/2, z)
+//     IIndividuals_firstZ_step(sindividuals, index, step/2, z)
 //
 // IIndividuals_firstZ_step(sindividuals, index, step, z)
 //   // Not in range [index,index+step), look in [index+step,number)
 //   index+step < sindividuals.number && sindividuals.z[index+step-1] < z:
-//     right_first_size(sindividuals, index+step, step, z)
+//     IIndividuals_firstZ_size(sindividuals, index+step, step, z)
 //   // In range [index,index+step), look in [index,index+step)
 //   otherwise:
-//     right_first_size(sindividuals, index, step, z)
+//     IIndividuals_firstZ_size(sindividuals, index, step, z)
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
