@@ -197,7 +197,7 @@ UInt64 Indices_reverse(UInt64 const indices) {
 //
 Space Space_raw(Bool const periodic_x, Bool const periodic_y, Float32 const size_x, Float32 const size_y) {
   Space space = { .periodic_x = periodic_x, .periodic_y = periodic_y,
-                  .scale = 0x1p32/fmax(size_x, size_y),
+                  .scale = 0x1p32/fmaxf(size_x, size_y),
                   .size_x = size_x, .size_y = size_y };
   return space;
 }
@@ -2035,7 +2035,7 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
               "SIZE_X SIZE_Y", name, line);
   line += 1;
 
-  space.scale = 0x1p32/fmax(space.size_x,space.size_y);
+  space.scale = 0x1p32/fmaxf(space.size_x,space.size_y);
   space.periodic_x = periodic_x;
   space.periodic_y = periodic_y;
 

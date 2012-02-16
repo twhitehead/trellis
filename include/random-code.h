@@ -219,7 +219,7 @@ MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwister,
   Float32 c, prob1,prob2,prob3,prob4;
   UInt32 med;
 
-  r = fmin(p, 1.0-p);
+  r = fminf(p, 1.0-p);
   q = 1.0-r;
   nr = n*r;
 
