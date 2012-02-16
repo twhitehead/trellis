@@ -38,7 +38,7 @@ MersenneTwister MersenneTwister_begin() {
   // Allocate space for state
   if ( !(mersennetwister = malloc(sizeof(struct _MersenneTwister))) )
     Error_dieErrNo(1, "unable to allocate %tu bytes for MersenneTwister", 
-		   sizeof(struct _MersenneTwister));
+                   sizeof(struct _MersenneTwister));
 
   // Initial state with /dev/urandom
   mersennetwister = MersenneTwister_urandom(mersennetwister);
@@ -73,7 +73,7 @@ MersenneTwister MersenneTwister_urandom(MersenneTwister const mersennetwister) {
     // Fill the state array
     if ( fread(mersennetwister->state, sizeof(UInt32), MERSENNETWISTER_N, file) != MERSENNETWISTER_N )
       Error_dieErrNo(1, "unable to read %tu bytes from /dev/urandom",
-		     sizeof(mersennetwister->state)/sizeof(mersennetwister->state[0]));
+                     sizeof(mersennetwister->state)/sizeof(mersennetwister->state[0]));
 
     // Find first non-zero entry (implies not all zero if it exists)
     for (index=0; index < MERSENNETWISTER_N && mersennetwister->state[index]==0; index+=1);
@@ -211,7 +211,7 @@ MersenneTwister_UInt32 Random_uniform_UInt32(MersenneTwister mersennetwister, UI
 // A binomial integer on [0,n] (via Kachitvichyanukul and Schmesier's accept/reject criteria)[4]
 //
 MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwister,
-						    UInt32 const n, Float32 const p) {
+                                                    UInt32 const n, Float32 const p) {
   // Calculate parameter constants (caching these can speed things up)
   Float32 r,q, nr,nrq;
   Float32 s,a, f0;
@@ -343,10 +343,10 @@ MersenneTwister_UInt32 Random_binomial_UInt32(MersenneTwister mersennetwister,
           Float32 const w1 = n-y+1, w2 = w1*w1;
 
           if (vln > (x_med*logf(f1/y1)+(n-med+0.5)*logf(z1/w1)+(y-med)*logf(w1*r/(y1*q))
-		     +(13860.0-(462.0-(132.0-(99.0-140.0/f2)/f2)/f2)/f2)/f1/166320.0
-		     +(13860.0-(462.0-(132.0-(99.0-140.0/z2)/z2)/z2)/z2)/z1/166320.0
-		     +(13860.0-(462.0-(132.0-(99.0-140.0/y2)/y2)/y2)/y2)/y1/166320.0
-		     +(13860.0-(462.0-(132.0-(99.0-140.0/w2)/w2)/w2)/w2)/w1/166320.0))
+                     +(13860.0-(462.0-(132.0-(99.0-140.0/f2)/f2)/f2)/f2)/f1/166320.0
+                     +(13860.0-(462.0-(132.0-(99.0-140.0/z2)/z2)/z2)/z2)/z1/166320.0
+                     +(13860.0-(462.0-(132.0-(99.0-140.0/y2)/y2)/y2)/y2)/y1/166320.0
+                     +(13860.0-(462.0-(132.0-(99.0-140.0/w2)/w2)/w2)/w2)/w1/166320.0))
             return Random_binomial_UInt32(mersennetwister, n, p);
         }
       }

@@ -32,7 +32,7 @@ Variety_FILE_UInt64 Variety_loadFP(Space space, World world,
                                    char const* name, FILE* file, UInt64 line);
 
 FILE* Individual_saveFP(Space space, World world, Variety variety, Individual individual,
-			char const* name, FILE* file);
+                        char const* name, FILE* file);
 Individual_FILE_UInt64 Individual_loadFP(Space space, World const world, Variety variety,
                                          char const* name, FILE* file, UInt64 line);
 
@@ -50,22 +50,22 @@ RVariety RVariety_merge(RVariety rvariety0, RVariety rvariety1);
 Float32_Float32_Float32_Float32
 RIndividualIn_bound(World world, Variety variety0, Individual individual0, Variety variety1);
 Bool RIndividualIn_filter(World world, Variety variety0, Individual individual0,
-			  Variety variety1, Individual individual1);
+                          Variety variety1, Individual individual1);
 
 RIndividualIn RIndividualIn_first(World world, Variety variety, Individual individual);
 RIndividualIn RIndividualIn_rest(World world, Variety variety0, Individual individual0,
-				 Variety variety1, Individual individual1);
+                                 Variety variety1, Individual individual1);
 RIndividualIn RIndividualIn_merge(RIndividualIn rindividualin0, RIndividualIn rindividualin1);
 
 //
 Float32_Float32_Float32_Float32
 RIndividualOut_bound(World world, Variety variety0, Individual individual0, Variety variety1);
 Bool RIndividualOut_filter(World world, Variety variety0, Individual individual0,
-			   Variety variety1, Individual individual1);
+                           Variety variety1, Individual individual1);
 
 RIndividualOut RIndividualOut_first(World world, Variety variety, Individual individual);
 RIndividualOut RIndividualOut_rest(World world, Variety variety0, Individual individual0,
-				   Variety variety1, Individual individual1);
+                                   Variety variety1, Individual individual1);
 RIndividualOut RIndividualOut_merge(RIndividualOut rindividualin0, RIndividualOut rindividualin1);
 
 //
@@ -74,10 +74,10 @@ World World_next(Space space, World world, RWorld rworld, Thread thread);
 Variety Variety_next(Space space, World world, Variety variety, RWorld rworld, RVariety rvariety, Thread thread);
 
 AIndividuals Individual_next(AIndividuals aindividuals, Space space,
-			     World world, Variety variety, Individual individual,
-			     RWorld rworld, RVariety rvariety,
-			     RIndividualIn rindividualin, RIndividualOut rindividualout,
-			     Thread thread);
+                             World world, Variety variety, Individual individual,
+                             RWorld rworld, RVariety rvariety,
+                             RIndividualIn rindividualin, RIndividualOut rindividualout,
+                             Thread thread);
 
 //
 World_FILE_UInt64 pack_World_FILE_UInt64(World first, FILE* second, UInt64 third);

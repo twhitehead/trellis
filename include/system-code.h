@@ -61,10 +61,10 @@ SIndividuals_ AIndividuals_attach(SIndividuals_ sindividuals_, SIndividuals1 sin
 SIndividuals_ AIndividuals_cache(SIndividuals_ sindividuals_, UInt64 number);
 SIndividuals_ AIndividuals_sort(SIndividuals_ sindividuals_, UInt64 number, UInt64 pivot_z);
 SIndividuals_ AIndividuals_sortBoth(SIndividuals_ sindividuals_,
-				    SIndividuals1 left_sindividuals1_start,
-				    SIndividuals1 right_sindividuals1_start,
-				    UInt64 left_index_start, UInt64 right_index_start,
-				    UInt64 pivot_z);
+                                    SIndividuals1 left_sindividuals1_start,
+                                    SIndividuals1 right_sindividuals1_start,
+                                    UInt64 left_index_start, UInt64 right_index_start,
+                                    UInt64 pivot_z);
 
 
 //---------------------------------------------------------------------------------------------------------------//
@@ -348,7 +348,7 @@ void SIndividuals_end(SIndividuals const sindividuals) {
 // Flattening the recursive calls with loops this becomes the following code.
 //
 SIndividuals_ SIndividuals__sindividuals_(SIndividuals_ const sindividuals_,
-					  UInt64 const index, UInt const depth) {
+                                          UInt64 const index, UInt const depth) {
   // Traverse each level up to the requested depth
   UInt64 indices = Indices_reverse(index);
   SIndividuals_ sindividuals__next = sindividuals_;
@@ -551,7 +551,7 @@ IZ IZ_nextBox(IZ const iz, UInt64 const box_ul_z, UInt64 const box_lr_z) {
 IIndividuals IIndividuals_valid(UInt64 const number, UInt64 const index,
                                 SIndividuals_ const sindividuals_, SIndividuals1 const sindividuals1) {
   IIndividuals const iindividuals = { .valid = true, .number = number, .index = index,
-				      .sindividuals_ = sindividuals_, .sindividuals1 = sindividuals1 };
+                                      .sindividuals_ = sindividuals_, .sindividuals1 = sindividuals1 };
 
   return iindividuals;
 }
@@ -573,7 +573,7 @@ IIndividuals IIndividuals_invalid() {
 // Duplicate of original IIndividuals with index and SIndividuals1 set index and sindividuals1.
 //
 IIndividuals IIndividuals_indexSet(IIndividuals const iindividuals,
-				   UInt64 const index, SIndividuals1 const sindividuals1) {
+                                   UInt64 const index, SIndividuals1 const sindividuals1) {
   // Invalid iindividuals, done
   if (!iindividuals.valid)
     return iindividuals;
@@ -889,7 +889,7 @@ IIndividuals IIndividuals_nextZ(IIndividuals const iindividuals, IZ const iz) {
 // Flattening the recursive calls with loops this becomes the following code.
 //
 IIndividuals IIndividuals_firstBox(SIndividuals const sindividuals,
-				   UInt64 const box_ul_z, UInt64 const box_lr_z) {
+                                   UInt64 const box_ul_z, UInt64 const box_lr_z) {
   // Start with first individual after upper-left hand side of box
   IIndividuals iindividuals_new = IIndividuals_firstZ(sindividuals, IZ_valid(box_ul_z));
 
@@ -950,7 +950,7 @@ IIndividuals IIndividuals_firstBox(SIndividuals const sindividuals,
 // Flattening the recursive calls with loops this becomes the following code.
 //
 IIndividuals IIndividuals_nextBox(IIndividuals const iindividuals,
-				  UInt64 const box_ul_z, UInt64 const box_lr_z) {
+                                  UInt64 const box_ul_z, UInt64 const box_lr_z) {
   // Start with next individual
   IIndividuals iindividuals_new = IIndividuals_next(iindividuals);
 
@@ -986,7 +986,7 @@ AVarieties AVarieties_begin() {
   // Start with enough space for one
   if ( !(avarieties = malloc(sizeof(struct _SVarieties) + sizeof(Variety))) )
     Error_dieErrNo(1, "unable to allocate %tu bytes for AVarieties", 
-		   sizeof(struct _SVarieties) + sizeof(Variety));
+                   sizeof(struct _SVarieties) + sizeof(Variety));
 
   // No entries
   avarieties->number = 0;
@@ -1007,7 +1007,7 @@ AVarieties AVarieties_append(AVarieties const avarieties, Variety const variety)
     if ( !(avarieties_new = realloc(avarieties,
                                     sizeof(struct _SVarieties) + sizeof(Variety)*(avarieties->number*2))) )
       Error_dieErrNo(1, "unable to grow Avarieties allocation to %tu bytes",
-		     sizeof(struct _SVarieties) + sizeof(Variety)*(avarieties->number*2));
+                     sizeof(struct _SVarieties) + sizeof(Variety)*(avarieties->number*2));
   }
   else
     avarieties_new = avarieties;
@@ -1031,7 +1031,7 @@ SVarieties AVarieties_end(AVarieties const avarieties) {
   if ( !(avarieties_new = realloc(avarieties,
                                   sizeof(struct _SVarieties) + sizeof(Variety)*avarieties->number)) )
     Error_dieErrNo(1, "unable to shrink AVarieties allocation to %tu bytes",
-		   sizeof(struct _SVarieties) + sizeof(Variety)*avarieties->number);
+                   sizeof(struct _SVarieties) + sizeof(Variety)*avarieties->number);
 
   return avarieties_new;
 }
@@ -1048,7 +1048,7 @@ ASIndividuals ASIndividuals_begin() {
   // Start with enough space for one
   if ( !(asindividuals = malloc(sizeof(struct _SSIndividuals) + sizeof(SIndividuals))) )
     Error_dieErrNo(1, "unable to allocate %tu bytes for ASIndividuals", 
-		   sizeof(struct _SSIndividuals) + sizeof(SIndividuals));
+                   sizeof(struct _SSIndividuals) + sizeof(SIndividuals));
 
   // No entries
   asindividuals->number = 0;
@@ -1070,7 +1070,7 @@ ASIndividuals ASIndividuals_append(ASIndividuals const asindividuals, SIndividua
                                        sizeof(struct _SSIndividuals) + 
                                        sizeof(SIndividuals)*(asindividuals->number*2))) )
       Error_dieErrNo(1, "unable to grow ASindividuals allocation to %tu bytes",
-		     sizeof(struct _SSIndividuals) + sizeof(SIndividuals)*(asindividuals->number*2));
+                     sizeof(struct _SSIndividuals) + sizeof(SIndividuals)*(asindividuals->number*2));
   }
   else
     asindividuals_new = asindividuals;
@@ -1095,7 +1095,7 @@ SSIndividuals ASIndividuals_end(ASIndividuals const asindividuals) {
                                      sizeof(struct _SSIndividuals) +
                                      sizeof(SIndividuals)*asindividuals->number)) )
     Error_dieErrNo(1, "unable to shrink ASIndividuals allocation to %tu bytes",
-		   sizeof(struct _SSIndividuals) + sizeof(SIndividuals)*asindividuals->number);
+                   sizeof(struct _SSIndividuals) + sizeof(SIndividuals)*asindividuals->number);
 
   return asindividuals_new;
 }
@@ -1153,7 +1153,7 @@ AIndividuals AIndividuals_begin() {
 // This becomes the following code.
 //
 AIndividuals AIndividuals_append(AIndividuals const aindividuals,
-				 Individual const individual, UInt64 const z) {
+                                 Individual const individual, UInt64 const z) {
   AIndividuals aindividuals_new = aindividuals;
 
   // New bottom level required, create one to add individual to
@@ -1226,7 +1226,7 @@ AIndividuals AIndividuals_append(AIndividuals const aindividuals,
 // Flattening the recursive calls with loops this becomes the following code.
 //
 SIndividuals_ AIndividuals_attach(SIndividuals_ const sindividuals_,
-				  SIndividuals1 const sindividuals1, UInt64 const index) {
+                                  SIndividuals1 const sindividuals1, UInt64 const index) {
   UInt64 indices = Indices_reverse(index);
   SIndividuals_ sindividuals__new = sindividuals_;
   SIndividuals_* sindividuals__link = &sindividuals__new;
@@ -1500,10 +1500,10 @@ SIndividuals_ AIndividuals_sort(SIndividuals_ const sindividuals_, UInt64 const 
   // Individuals, pivot sort
   if (number > 0)
     return AIndividuals_sortBoth(sindividuals_,
-				 SIndividuals__sindividuals1(sindividuals_, 0),
-				 SIndividuals__sindividuals1(sindividuals_, number-1),
-				 0, number-1,
-				 pivot_z);
+                                 SIndividuals__sindividuals1(sindividuals_, 0),
+                                 SIndividuals__sindividuals1(sindividuals_, number-1),
+                                 0, number-1,
+                                 pivot_z);
   // No individuals, done
   else
     return sindividuals_;
@@ -1511,10 +1511,10 @@ SIndividuals_ AIndividuals_sort(SIndividuals_ const sindividuals_, UInt64 const 
 
 
 SIndividuals_ AIndividuals_sortBoth(SIndividuals_ const sindividuals_,
-				    SIndividuals1 const left_sindividuals1_start,
-				    SIndividuals1 const right_sindividuals1_start,
-				    UInt64 const left_index_start, UInt64 const right_index_start,
-				    UInt64 const pivot_z) {
+                                    SIndividuals1 const left_sindividuals1_start,
+                                    SIndividuals1 const right_sindividuals1_start,
+                                    UInt64 const left_index_start, UInt64 const right_index_start,
+                                    UInt64 const pivot_z) {
   SIndividuals1 left_sindividuals1_current = left_sindividuals1_start;
   UInt64 left_index_current = left_index_start;
   UInt64 left_z_min = UINT64_MAX;
@@ -1589,14 +1589,14 @@ SIndividuals_ AIndividuals_sortBoth(SIndividuals_ const sindividuals_,
   // Sort new left <= pivot and right > pivot subsets
   if (left_z_min  < left_z_max)
     AIndividuals_sortBoth(sindividuals_,
-			  left_sindividuals1_start,  right_sindividuals1_current,
-			  left_index_start,          right_index_current,
-			  left_z_min /2+left_z_max /2 + (left_z_min %2+left_z_max %2)/2);
+                          left_sindividuals1_start,  right_sindividuals1_current,
+                          left_index_start,          right_index_current,
+                          left_z_min /2+left_z_max /2 + (left_z_min %2+left_z_max %2)/2);
   if (right_z_min < right_z_max)
     AIndividuals_sortBoth(sindividuals_,
-			  left_sindividuals1_current,right_sindividuals1_start,
-			  left_index_current,        right_index_start,
-			  right_z_min/2+right_z_max/2 + (right_z_min%2+right_z_max%2)/2);
+                          left_sindividuals1_current,right_sindividuals1_start,
+                          left_index_current,        right_index_start,
+                          right_z_min/2+right_z_max/2 + (right_z_min%2+right_z_max%2)/2);
 
   return sindividuals_;
 }
@@ -1614,7 +1614,7 @@ SRVarieties SRVarieties_begin(World const world, SVarieties const svarieties) {
   if ( !(srvarieties = malloc(sizeof(struct _SRVarieties) +
                               sizeof(struct _RVariety)*svarieties->number) ) )
     Error_dieErrNo(1, "unable to allocate %tu bytes for SRVarieties",
-		   sizeof(struct _SRVarieties)+sizeof(struct _RVariety)*svarieties->number);
+                   sizeof(struct _SRVarieties)+sizeof(struct _RVariety)*svarieties->number);
 
   // Initialize each RVariety with RVariety_first
   for (UInt index=0; index<svarieties->number; index+=1) {
@@ -1649,14 +1649,14 @@ void SRVarieties_end(SRVarieties srvarieties) {
 // SRIndividualsIn prepared for reduction of sindividuals (initialized with RIndividualIn_first).
 //
 SRIndividualsIn SRIndividualsIn_begin(World const world, Variety const variety,
-				      SIndividuals const sindividuals) {
+                                      SIndividuals const sindividuals) {
   SRIndividualsIn srindividualsin;
 
   // Create a RIndividualIn for each Individual in sindividuals
   if ( !(srindividualsin = malloc(sizeof(struct _SRIndividualsIn)+
-				  sizeof(RIndividualIn)*sindividuals.number) ) )
+                                  sizeof(RIndividualIn)*sindividuals.number) ) )
     Error_dieErrNo(1, "unable to allocate %tu bytes for SRIndividualsIn",
-		   sizeof(struct _SRIndividualsIn)+sizeof(RIndividualIn)*sindividuals.number);
+                   sizeof(struct _SRIndividualsIn)+sizeof(RIndividualIn)*sindividuals.number);
 
   // Initialize each RIndividualIn with RIndividualIn_first
   for ( IIndividuals iindividuals = IIndividuals_first(sindividuals);
@@ -1692,14 +1692,14 @@ void SRIndividualsIn_end(SRIndividualsIn const srindividualsin) {
 // SEIndividualsOut prepared for reduction of sindividuals (initialized with RIndividualOut_first).
 //
 SRIndividualsOut SRIndividualsOut_begin(World const world, Variety const variety,
-					SIndividuals const sindividuals) {
+                                        SIndividuals const sindividuals) {
   SRIndividualsOut srindividualsout;
 
   // Create a RIndividualsOut for each Individual
   if ( !(srindividualsout = malloc(sizeof(struct _SRIndividualsOut)+
-				   sizeof(RIndividualOut)*sindividuals.number) ) )
+                                   sizeof(RIndividualOut)*sindividuals.number) ) )
     Error_dieErrNo(1, "unable to allocate %tu bytes for SRIndividualsOut",
-		   sizeof(struct _SRIndividualsOut)+sizeof(RIndividualOut)*sindividuals.number);
+                   sizeof(struct _SRIndividualsOut)+sizeof(RIndividualOut)*sindividuals.number);
 
   // Initialize each RIndividualsOut with RIndividualOut_first
   for ( IIndividuals iindividuals = IIndividuals_first(sindividuals);
@@ -1736,15 +1736,15 @@ void SRIndividualsOut_end(SRIndividualsOut const srindividualsout) {
 // SSRIndividualsIn prepared for reduction of ssindividuals (initialized with RIndividualIn_first).
 //
 SSRIndividualsIn SSRIndividualsIn_begin(World const world, SVarieties const svarieties,
-					SSIndividuals const ssindividuals) {
+                                        SSIndividuals const ssindividuals) {
   UInt number = svarieties->number <= ssindividuals->number ? svarieties->number : ssindividuals->number;
   SSRIndividualsIn ssrindividualsin;
 
   // Create a SRIndivdiualsIn for each (Variety,SIndividuals) pair
   if ( !(ssrindividualsin = malloc(sizeof(struct _SSRIndividualsIn) +
-				   sizeof(SRIndividualsIn)*number) ) )
+                                   sizeof(SRIndividualsIn)*number) ) )
     Error_dieErrNo(1, "unable to allocate %tu bytes for SSRIndividualsIn",
-		   sizeof(struct _SSRIndividualsIn)+sizeof(SRIndividualsIn)*number);
+                   sizeof(struct _SSRIndividualsIn)+sizeof(SRIndividualsIn)*number);
 
   // Initialize each SRIndividualsIn with SRIndividualsIn_begin (uses RIndividualIn_first)
   for (UInt index=0; index<number; index+=1) {
@@ -1789,15 +1789,15 @@ void SSRIndividualsIn_end(SSRIndividualsIn const ssrindividualsin) {
 // SSRIndividualsOut prepared for reduction of ssindividuals (initialized with RIndividualOut_first).
 //
 SSRIndividualsOut SSRIndividualsOut_begin(World const world, SVarieties const svarieties,
-					  SSIndividuals const ssindividuals) {
+                                          SSIndividuals const ssindividuals) {
   UInt const number = svarieties->number <= ssindividuals->number ? svarieties->number : ssindividuals->number;
   SSRIndividualsOut ssrindividualsout;
 
   // Create a SRIndivdiualsOut for each (Variety,SIndividuals) pair
   if ( !(ssrindividualsout = malloc(sizeof(struct _SSRIndividualsOut) +
-				    sizeof(SRIndividualsOut)*number) ) )
+                                    sizeof(SRIndividualsOut)*number) ) )
     Error_dieErrNo(1, "unable to allocate %tu bytes for SSRIndividualsOut",
-		   sizeof(struct _SSRIndividualsOut)+sizeof(SRIndividualsOut)*number);
+                   sizeof(struct _SSRIndividualsOut)+sizeof(SRIndividualsOut)*number);
 
   // Initialize each SRIndividualsOut with SRIndividualsOut_begin (uses RIndividualOut_first)
   for (UInt index=0; index<number; index+=1) {
@@ -1916,8 +1916,8 @@ void unpack_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
 // Create/truncate the given file name and serialize the given space to it.
 //
 void State_save(Space const space,
-		World const world, SVarieties const svarieties, SSIndividuals const ssindividuals,
-		char const* const name) {
+                World const world, SVarieties const svarieties, SSIndividuals const ssindividuals,
+                char const* const name) {
   // Wrap file handle based routine with opening and close details
   FILE* file;
 
@@ -1929,12 +1929,12 @@ void State_save(Space const space,
 }
 
 FILE* State_saveFP(Space const space,
-		   World const world, SVarieties const svarieties, SSIndividuals const ssindividuals,
-		   char const* const name, FILE* file) {
+                   World const world, SVarieties const svarieties, SSIndividuals const ssindividuals,
+                   char const* const name, FILE* file) {
   // Save space
   if ( fprintf(file, "SPACE %u %u %g %g\n",
-	       space.periodic_x, space.periodic_y,
-	       space.size_x, space.size_y) < 0 )
+               space.periodic_x, space.periodic_y,
+               space.size_x, space.size_y) < 0 )
     Error_dieErrNo(1, "an error occured while writing to \"%s\"", name);
 
   // Save world
@@ -1945,7 +1945,7 @@ FILE* State_saveFP(Space const space,
 
   // Save varieties
   UInt const varieties_number = ( svarieties->number <= ssindividuals->number ?
-				  svarieties->number : ssindividuals->number );
+                                  svarieties->number : ssindividuals->number );
 
   for (UInt varieties_index = 0; varieties_index<varieties_number; varieties_index+=1) {
     // Break out variety components
@@ -2031,8 +2031,8 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
     Error_dieErrNo(1, "an error occured while reading from \"%s\"", name);
   if ( records < 4 )
     Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting "
-	      "PERIODIC_X PERIODIC_Y "
-	      "SIZE_X SIZE_Y", name, line);
+              "PERIODIC_X PERIODIC_Y "
+              "SIZE_X SIZE_Y", name, line);
   line += 1;
 
   space.scale = 0x1p32/fmax(space.size_x,space.size_y);
@@ -2085,7 +2085,7 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
       Error_dieErrNo(1, "an error occured while reading from \"%s\"", name);
     if ( records != EOF && records < 1 )
       Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting "
-		"\"VARIETY\", \"INDIVIDUAL\", or nothing", name, line);
+                "\"VARIETY\", \"INDIVIDUAL\", or nothing", name, line);
 
     // Load variety individuals
     AIndividuals aindividuals = AIndividuals_begin();
@@ -2095,7 +2095,7 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
       Individual individual;
 
       if ( strcmp(type, "INDIVIDUAL") != 0 )
-	break;
+        break;
     
       unpack_Individual_FILE_UInt64( &individual, &file, &line,
                                      Individual_loadFP(space, world, variety, name, file, line) );
@@ -2106,10 +2106,10 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
       // Load type (should be VARIETY, INDIVIDUAL, or nothing)
       records = fscanf(file, "%10s", type);
       if ( ferror(file) )
-	Error_dieErrNo(1, "an error occured while reading from \"%s\"", name);
+        Error_dieErrNo(1, "an error occured while reading from \"%s\"", name);
       if ( records != EOF && records < 1 )
-	Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting "
-		  "\"VARIETY\", \"INDIVIDUAL\", or nothing", name, line);
+        Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting "
+                  "\"VARIETY\", \"INDIVIDUAL\", or nothing", name, line);
     }
     
     // Add individuals to vairety individuals
@@ -2274,7 +2274,7 @@ RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
 
   // Reduction outer loop over varieties
   UInt const varieties_number = ( svarieties->number <= ssindividuals->number ?
-				  svarieties->number : ssindividuals->number );
+                                  svarieties->number : ssindividuals->number );
 
   for (UInt varieties0_index=0; varieties0_index<varieties_number; varieties0_index+=1) {
     // Break out outer variety components
@@ -2303,7 +2303,7 @@ RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
         SRIndividualsOut const srindividualsout = ssrindividualsout->srindividualsout[varieties1_index];
 
         // Reduction inner loop over individuals in in loop
-	Float32 box_in_ul_x,box_in_ul_y, box_in_lr_x,box_in_lr_y;
+        Float32 box_in_ul_x,box_in_ul_y, box_in_lr_x,box_in_lr_y;
         unpack_Float32_Float32_Float32_Float32( &box_in_ul_x,&box_in_ul_y, &box_in_lr_x,&box_in_lr_y,
                                                 RIndividualIn_bound(world, variety0,individual0, variety1) );
 
@@ -2320,12 +2320,12 @@ RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
           if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index) &&
                RIndividualIn_filter(world, variety0,individual0, variety1,individual1) )
             rindividualin = RIndividualIn_merge(rindividualin,
-						RIndividualIn_rest(world, variety0,individual0,
-								   variety1,individual1));
+                                                RIndividualIn_rest(world, variety0,individual0,
+                                                                   variety1,individual1));
         }
 
         // Reduction inner loop over individuals in out loop
-	Float32 box_out_ul_x,box_out_ul_y, box_out_lr_x,box_out_lr_y;
+        Float32 box_out_ul_x,box_out_ul_y, box_out_lr_x,box_out_lr_y;
         unpack_Float32_Float32_Float32_Float32( &box_out_ul_x,&box_out_ul_y, &box_out_lr_x,&box_out_lr_y,
                                                 RIndividualOut_bound(world, variety0,individual0, variety1) );
 
@@ -2343,8 +2343,8 @@ RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
           if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index) &&
                RIndividualOut_filter(world, variety0,individual0, variety1,individual1) )
             rindividualout = RIndividualOut_merge(rindividualout,
-						  RIndividualOut_rest(world, variety0,individual0,
-								      variety1,individual1));
+                                                  RIndividualOut_rest(world, variety0,individual0,
+                                                                      variety1,individual1));
 
           // Write back reduction
           srindividualsout->rindividualout[iindividuals1.index] = rindividualout;

@@ -79,7 +79,7 @@ void SSRIndividualsOut_end(SSRIndividualsOut ssrindividualsout);
 //
 void State_save(Space space, World world, SVarieties svarieties, SSIndividuals ssindividuals, char const* name);
 FILE* State_saveFP(Space space, World world, SVarieties svarieties, SSIndividuals ssindividuals,
-		   char const* name, FILE* file);
+                   char const* name, FILE* file);
 
 Space_World_SVarieties_SSIndividuals State_load(char const* name);
 Space_World_SVarieties_SSIndividuals_FILE_UInt64 State_loadFP(char const* name, FILE* file, UInt64 line);

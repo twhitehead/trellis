@@ -26,7 +26,7 @@ void (__attribute__((format (printf,2,3))) Error_dieErrNo)(int value, char const
 void Error_vdieErrNo(int value, char const* format, va_list args);
 
 void (__attribute__((format (printf,3,4))) Error_dieErrNoExplict)(int errno_original, int value, 
-								  char const* format, ...);
+                                                                  char const* format, ...);
 void Error_vdieErrNoExplict(int errno_original, int value, char const* format, va_list args);
 
 void (__attribute__((format (printf,2,3))) Error_die)(int value, char const* format, ...);

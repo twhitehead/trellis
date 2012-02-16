@@ -28,9 +28,9 @@
 //---------------------------------------------------------------------------------------------------------------//
 //
 FILE* World_saveFP(Space const space, World const world,
-		   char const* const name, FILE* file) {
+                   char const* const name, FILE* file) {
   if ( fprintf(file, "%"PRIu32"\n",
-	       world.year) < 0 )
+               world.year) < 0 )
     Error_dieErrNo(1, "an error occured while writing to \"%s\"", name);
 
   return file;
@@ -48,7 +48,7 @@ World_FILE_UInt64 World_loadFP(Space const space,
     Error_dieErrNo(1, "an error occured while reading from \"%s\"", name);
   if ( records == EOF || records < 1 )
     Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting "
-	      "YEAR", name, line);
+              "YEAR", name, line);
 
   return pack_World_FILE_UInt64(world, file, line+1);
 }
@@ -57,14 +57,14 @@ World_FILE_UInt64 World_loadFP(Space const space,
 //---------------------------------------------------------------------------------------------------------------//
 //
 FILE* Variety_saveFP(Space const space, World const world, Variety const variety,
-		     char const* const name, FILE* file) {
+                     char const* const name, FILE* file) {
   if ( fprintf(file, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-	       variety.height_mature, variety.height_maximum,
-	       variety.growth_rate, variety.growth_competition_lower, variety.growth_competition_higher,
-	       variety.mortality_initial, variety.mortality_decay, variety.mortality_intrinsic,
-	       variety.fecundity_maximum,
-	       variety.masting_time, variety.masting_phase,
-	       variety.dispersal_probability_short, variety.dispersal_mode_short, variety.dispersal_mode_long)
+               variety.height_mature, variety.height_maximum,
+               variety.growth_rate, variety.growth_competition_lower, variety.growth_competition_higher,
+               variety.mortality_initial, variety.mortality_decay, variety.mortality_intrinsic,
+               variety.fecundity_maximum,
+               variety.masting_time, variety.masting_phase,
+               variety.dispersal_probability_short, variety.dispersal_mode_short, variety.dispersal_mode_long)
        < 0 )
     Error_dieErrNo(1, "an error occured while writing to \"%s\"", name);
 
@@ -73,28 +73,28 @@ FILE* Variety_saveFP(Space const space, World const world, Variety const variety
 
 
 Variety_FILE_UInt64 Variety_loadFP(Space const space, World const world,
-					 char const* const name, FILE* file, UInt64 const line) {
+                                         char const* const name, FILE* file, UInt64 const line) {
   Variety variety;
   Int records;
 
   records = fscanf(file, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-		   &variety.height_mature, &variety.height_maximum,
-		   &variety.growth_rate, &variety.growth_competition_lower, &variety.growth_competition_higher,
-		   &variety.mortality_initial, &variety.mortality_decay, &variety.mortality_intrinsic,
-		   &variety.fecundity_maximum,
-		   &variety.masting_time, &variety.masting_phase,
-		   &variety.dispersal_probability_short,
-		   &variety.dispersal_mode_short, &variety.dispersal_mode_long);
+                   &variety.height_mature, &variety.height_maximum,
+                   &variety.growth_rate, &variety.growth_competition_lower, &variety.growth_competition_higher,
+                   &variety.mortality_initial, &variety.mortality_decay, &variety.mortality_intrinsic,
+                   &variety.fecundity_maximum,
+                   &variety.masting_time, &variety.masting_phase,
+                   &variety.dispersal_probability_short,
+                   &variety.dispersal_mode_short, &variety.dispersal_mode_long);
   if ( ferror(file) )
     Error_dieErrNo(1, "an error occured while reading from \"%s\"", name);
   if ( records == EOF || records < 14 )
     Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting "
-	      "HEIGHT_MATURE HEIGHT_MAXIMUM "
-	      "GROWTH_RATE VARIETY_GROWTH_COMPETITION_LOWER VARIETY_GROWTH_COMPETITION_HIGHER "
-	      "MORTALITY_INITIAL MORTALITY_DECAY MORTALITY_INTRINSIC "
-	      "FECUNDITY_MAXIMUM "
-	      "MASTING_TIME MASTING_PHASE "
-	      "DISPERSAL_PROBABILITY_SHORT DISPERSAL_MODE_SHORT DISPERSAL_MODE_LONG", name, line);
+              "HEIGHT_MATURE HEIGHT_MAXIMUM "
+              "GROWTH_RATE VARIETY_GROWTH_COMPETITION_LOWER VARIETY_GROWTH_COMPETITION_HIGHER "
+              "MORTALITY_INITIAL MORTALITY_DECAY MORTALITY_INTRINSIC "
+              "FECUNDITY_MAXIMUM "
+              "MASTING_TIME MASTING_PHASE "
+              "DISPERSAL_PROBABILITY_SHORT DISPERSAL_MODE_SHORT DISPERSAL_MODE_LONG", name, line);
 
   return pack_Variety_FILE_UInt64(variety, file, line+1);
 }
@@ -103,10 +103,10 @@ Variety_FILE_UInt64 Variety_loadFP(Space const space, World const world,
 //---------------------------------------------------------------------------------------------------------------//
 //
 FILE* Individual_saveFP(Space const space, World const world, Variety const variety, Individual const individual,
-			char const* const name, FILE* file) {
+                        char const* const name, FILE* file) {
   if ( fprintf(file, "%g %g %g\n",
-	       individual.x, individual.y,
-	       individual.height) < 0 )
+               individual.x, individual.y,
+               individual.height) < 0 )
     Error_dieErrNo(1, "an error occured while writing to \"%s\"", name);
 
   return file;
@@ -114,29 +114,29 @@ FILE* Individual_saveFP(Space const space, World const world, Variety const vari
 
 
 Individual_FILE_UInt64 Individual_loadFP(Space const space, World const world, Variety const variety,
-					       char const* const name, FILE* file, UInt64 const line) {
+                                               char const* const name, FILE* file, UInt64 const line) {
   Individual individual;
   Int records;
 
   records = fscanf(file, "%g %g %g\n",
-		   &individual.x, &individual.y, &individual.height);
+                   &individual.x, &individual.y, &individual.height);
   if ( ferror(file) )
     Error_dieErrNo(1, "an error occured while reading from \"%s\"", name);
   if ( records == EOF || records < 3 )
     Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting "
-	      "X Y "
-	      "HEIGHT", name, line);
+              "X Y "
+              "HEIGHT", name, line);
   if (individual.x < 0 || individual.x >= space.size_x)
     Error_die(1, "problem parsing \"%s\":%"PRIu64": "
-	      "the constraint 0 <= X=%g < SIZE_X=%g does not hold", name, line,
-	      individual.x, space.size_x);
+              "the constraint 0 <= X=%g < SIZE_X=%g does not hold", name, line,
+              individual.x, space.size_x);
   if (individual.y < 0 || individual.y >= space.size_y)
     Error_die(1, "problem parsing \"%s\":%"PRIu64": "
-	      "the constraint 0 <= Y=%g < SIZE_Y=%g does not hold", name, line,
-	      individual.y, space.size_y);
+              "the constraint 0 <= Y=%g < SIZE_Y=%g does not hold", name, line,
+              individual.y, space.size_y);
   if (individual.height < 0)
     Error_die(1, "problem parsing \"%s\":%"PRIu64": "
-	      "the constraint 0 <= HEIGHT=%g", name, line, individual.height);
+              "the constraint 0 <= HEIGHT=%g", name, line, individual.height);
 
   return pack_Individual_FILE_UInt64(individual, file, line+1);
 }
@@ -189,12 +189,12 @@ Float32_Float32_Float32_Float32 RIndividualOut_bound(World const world,
 
 
 Bool RIndividualIn_filter(World const world, Variety const variety0, Individual const individual0,
-			  Variety const variety1, Individual const individual1) {
+                          Variety const variety1, Individual const individual1) {
   return true;
 }
 
 Bool RIndividualOut_filter(World const world, Variety const variety0, Individual const individual0,
-			   Variety const variety1, Individual const individual1) {
+                           Variety const variety1, Individual const individual1) {
   return true;
 }
 
@@ -204,7 +204,7 @@ RIndividualIn RIndividualIn_first(World const world, Variety const variety, Indi
   return rindividualin;
 }
 RIndividualIn RIndividualIn_rest(World const world, Variety const variety0, Individual const individual0,
-				 Variety const variety1, Individual const individual1) {
+                                 Variety const variety1, Individual const individual1) {
   RIndividualIn rindividualin = { };
   return rindividualin;
 }
@@ -219,7 +219,7 @@ RIndividualOut RIndividualOut_first(World const world, Variety const variety, In
   return rindividualin;
 }
 RIndividualOut RIndividualOut_rest(World const world, Variety const variety0, Individual const individual0,
-				   Variety const variety1, Individual const individual1) {
+                                   Variety const variety1, Individual const individual1) {
   RIndividualOut rindividualin = { };
   return rindividualin;
 }
@@ -236,8 +236,8 @@ World World_next(Space const space, World const world, RWorld const rworld, Thre
 }
 
 Variety Variety_next(Space const space, World const world, Variety const variety,
-		     RWorld const rworld, RVariety const rvariety,
-		     Thread const thread) {
+                     RWorld const rworld, RVariety const rvariety,
+                     Thread const thread) {
   return variety;
 }
 
