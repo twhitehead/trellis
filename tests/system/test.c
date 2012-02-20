@@ -90,7 +90,8 @@ void reduce(Space const space, World const world, SVarieties const svarieties, S
               Individual const individual1 = IIndividuals_individual(iindividuals1);
 
               // Perform reduction if in in range
-              if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index) &&
+              if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index ||
+                    mirror_in_x != 0 || mirror_in_y != 0) &&
                    RIndividualIn_filter(mirror_in_x, mirror_in_y, space, world, 
                                         variety0, individual0, variety1, individual1) )
                 rindividualin_check = RIndividualIn_merge( rindividualin_check,
@@ -123,7 +124,8 @@ void reduce(Space const space, World const world, SVarieties const svarieties, S
           for (Int mirror_out_x = mirror_out_ul_x; mirror_out_x <= mirror_out_lr_x; mirror_out_x += 1) {
             for (Int mirror_out_y = mirror_out_ul_y; mirror_out_y <= mirror_out_lr_y; mirror_out_y += 1) {
               // Perform reduction if in out range
-              if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index) &&
+              if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index ||
+                    mirror_out_x != 0 || mirror_out_y != 0) &&
                    RIndividualOut_filter(mirror_out_x, mirror_out_y, space, world,
                                          variety1, individual1, variety0, individual0) )
                 rindividualout_check = RIndividualOut_merge( rindividualout_check,

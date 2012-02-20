@@ -2369,7 +2369,8 @@ RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
               Individual const individual1 = IIndividuals_individual(iindividuals1);
 
               // Inner level reductions (individual to self is special case done in reduction setup)
-              if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index) &&
+              if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index ||
+                    mirror_in_x != 0 || mirror_in_y != 0) &&
                    RIndividualIn_filter(mirror_in_x, mirror_in_y, space, world,
                                         variety0,individual0, variety1,individual1) )
                 rindividualin = RIndividualIn_merge(rindividualin,
@@ -2409,7 +2410,8 @@ RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
               RIndividualOut rindividualout = srindividualsout->rindividualout[iindividuals1.index];
 
               // Inner level reductions (individual to self is special case done in reduction setup)
-              if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index) &&
+              if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index ||
+                    mirror_out_x != 0 || mirror_out_y != 0) &&
                    RIndividualOut_filter(mirror_out_x, mirror_out_y, space, world,
                                          variety0,individual0, variety1,individual1) )
                 rindividualout = RIndividualOut_merge(rindividualout,
