@@ -372,14 +372,20 @@ MersenneTwister_Float32 Random_uniform_Float32(MersenneTwister mersennetwister) 
   p = 1.0;
 
   do {
-    // Shift 32b into bottom of floating point number
+    // Generate random 32b
     UInt32 u;
 
     unpack_MersenneTwister_UInt32( &mersennetwister, &u,
                                    MersenneTwister_extract_UInt32(mersennetwister) );
-    p *= 0x1p-32;
-    x += u*p;
-  } while (x+p/2.0 != x);
+
+    // Shift in leading 23b (this fills all the bits in the mantissa)
+    p *= 0x1p-23;
+    x += ( u >> 9 & (1<<23)-1 )*p;
+
+    // Shift in next 9b (exponent will absorbs leading zeros leaving room for more)
+    p *= 0x1p-9;
+    x += ( u >> 0 & (1<<9)-1 )*p;
+  } while ( x + p*0x1p-1 != x );
 
   return pack_MersenneTwister_Float32(mersennetwister, x);
 }
