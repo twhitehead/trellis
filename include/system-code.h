@@ -1611,7 +1611,7 @@ SIndividuals_ AIndividuals_sortBoth(SIndividuals_ const sindividuals_,
 //
 // SRVarieties prepared for reduction of svarities (initialized with Reduce_variety_inital).
 //
-SRVarieties SRVarieties_begin(World const world, SVarieties const svarieties) {
+SRVarieties SRVarieties_begin(Space const space, World const world, SVarieties const svarieties) {
   SRVarieties srvarieties;
 
   // Create a RVariety for each Variety
@@ -1626,7 +1626,7 @@ SRVarieties SRVarieties_begin(World const world, SVarieties const svarieties) {
     Variety const variety = svarieties->variety[index];
 
     // Initialize RVariety
-    RVariety const rvariety = RVariety_first(world, variety);
+    RVariety const rvariety = RVariety_first(space, world, variety);
 
     srvarieties->rvariety[index] = rvariety;
   }
@@ -1648,11 +1648,11 @@ void SRVarieties_end(SRVarieties srvarieties) {
 
 
 //---------------------------------------------------------------------------------------------------------------//
-// SRIndividualsIn_begin: (World, Variety, SIndividuals) -> (SRIndividualsIn)
+// SRIndividualsIn_begin: (Space, World, Variety, SIndividuals) -> (SRIndividualsIn)
 //
 // SRIndividualsIn prepared for reduction of sindividuals (initialized with RIndividualIn_first).
 //
-SRIndividualsIn SRIndividualsIn_begin(World const world, Variety const variety,
+SRIndividualsIn SRIndividualsIn_begin(Space const space, World const world, Variety const variety,
                                       SIndividuals const sindividuals) {
   SRIndividualsIn srindividualsin;
 
@@ -1670,7 +1670,7 @@ SRIndividualsIn SRIndividualsIn_begin(World const world, Variety const variety,
     Individual const individual = IIndividuals_individual(iindividuals);
 
     // Initialize RIndividualIn
-    RIndividualIn const rindividualin = RIndividualIn_first(world, variety, individual);
+    RIndividualIn const rindividualin = RIndividualIn_first(space, world, variety, individual);
 
     srindividualsin->rindividualin[iindividuals.index] = rindividualin;
   }
@@ -1695,7 +1695,7 @@ void SRIndividualsIn_end(SRIndividualsIn const srindividualsin) {
 //
 // SEIndividualsOut prepared for reduction of sindividuals (initialized with RIndividualOut_first).
 //
-SRIndividualsOut SRIndividualsOut_begin(World const world, Variety const variety,
+SRIndividualsOut SRIndividualsOut_begin(Space const space, World const world, Variety const variety,
                                         SIndividuals const sindividuals) {
   SRIndividualsOut srindividualsout;
 
@@ -1713,7 +1713,7 @@ SRIndividualsOut SRIndividualsOut_begin(World const world, Variety const variety
     Individual const individual = IIndividuals_individual(iindividuals);
 
     // Initialize RIndividualOut
-    RIndividualOut const rindividualout = RIndividualOut_first(world, variety, individual);
+    RIndividualOut const rindividualout = RIndividualOut_first(space, world, variety, individual);
 
     srindividualsout->rindividualout[iindividuals.index] = rindividualout;
   }
@@ -1735,11 +1735,11 @@ void SRIndividualsOut_end(SRIndividualsOut const srindividualsout) {
 
 
 //---------------------------------------------------------------------------------------------------------------//
-// SSRIndividualsIn_begin: (World, SVarieties) -> (SSRIndividualsIn)
+// SSRIndividualsIn_begin: (Space, World, SVarieties) -> (SSRIndividualsIn)
 //
 // SSRIndividualsIn prepared for reduction of ssindividuals (initialized with RIndividualIn_first).
 //
-SSRIndividualsIn SSRIndividualsIn_begin(World const world, SVarieties const svarieties,
+SSRIndividualsIn SSRIndividualsIn_begin(Space const space, World const world, SVarieties const svarieties,
                                         SSIndividuals const ssindividuals) {
   UInt number = svarieties->number <= ssindividuals->number ? svarieties->number : ssindividuals->number;
   SSRIndividualsIn ssrindividualsin;
@@ -1757,7 +1757,7 @@ SSRIndividualsIn SSRIndividualsIn_begin(World const world, SVarieties const svar
     SIndividuals const sindividuals = ssindividuals->sindividuals[index];
 
     // Initialize SRIndividualsIn
-    SRIndividualsIn const srindividualsin = SRIndividualsIn_begin(world, variety, sindividuals);
+    SRIndividualsIn const srindividualsin = SRIndividualsIn_begin(space, world, variety, sindividuals);
 
     ssrindividualsin->srindividualsin[index] = srindividualsin;
   }
@@ -1792,7 +1792,7 @@ void SSRIndividualsIn_end(SSRIndividualsIn const ssrindividualsin) {
 //
 // SSRIndividualsOut prepared for reduction of ssindividuals (initialized with RIndividualOut_first).
 //
-SSRIndividualsOut SSRIndividualsOut_begin(World const world, SVarieties const svarieties,
+SSRIndividualsOut SSRIndividualsOut_begin(Space const space, World const world, SVarieties const svarieties,
                                           SSIndividuals const ssindividuals) {
   UInt const number = svarieties->number <= ssindividuals->number ? svarieties->number : ssindividuals->number;
   SSRIndividualsOut ssrindividualsout;
@@ -1810,7 +1810,7 @@ SSRIndividualsOut SSRIndividualsOut_begin(World const world, SVarieties const sv
     SIndividuals const sindividuals = ssindividuals->sindividuals[index];
 
     // Initialize SRIndividualsOut
-    SRIndividualsOut const srindividualsout = SRIndividualsOut_begin(world, variety, sindividuals);
+    SRIndividualsOut const srindividualsout = SRIndividualsOut_begin(space, world, variety, sindividuals);
 
     ssrindividualsout->srindividualsout[index] = srindividualsout;
   }
@@ -2144,7 +2144,7 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
 //                       (variety1,individual1) not equal to and in out range of (variety0,individual0)
 //
 // The initial value of the reduction spaces are given by the R*_first functions mapped across the tuples
-// indicates above.  These are then folded with the values given by R*_next functions mapped across the the fold
+// indicates above.  These are then folded with the values given by R*_rest functions mapped across the the fold
 // tuples above via the R*_merge functions.
 //
 // The individiuals in the in and out ranges are determined in two stages for efficiency.  First the
@@ -2158,20 +2158,27 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
 //
 // State_reduce: (World, SVarieties, SSIndividuals) -> (RWorld, SRVarieties, SSRIndividualsIn, SSRIndividualsOut)
 //
-// State_reduce(world, svarieties, ssindividuals)
+// Box_clip:   ((Float32, Float32, Float32, Float32), (Float32, Float32, Float32, Float32))
+//               -> (Float32, Float32, Float32, Float32)
+// Box_offset: ((Float32, Float32, Float32, Float32), (Float32, Float32))
+//               -> (Float32, Float32, Float32, Float32)
+// Box_grid:   ((Bool, Bool), (Float32, Float32, Float32, Float32), (Float32, Float32))
+//               -> (Int32, Int32, Int32, Int32)
+//
+// State_reduce(space, world, svarieties, ssindividuals)
 //   let // Initial World reduction
-//       rworld = RWorld_first(world)
+//       rworld = RWorld_first(space, world)
 //
 //       // Initial Individual (value individual) reduction code
 //       State_reduce_individual((variety), individual)
 //         // RIndividualIn and RIndividualOut initialization
-//         (RIndividualIn_first(world, variety, individual),
-//          RIndividualOut_first(world, variety, individual))
+//         (RIndividualIn_first(space, world, variety, individual),
+//          RIndividualOut_first(space, world, variety, individual))
 //
 //       // Initial Variety (value variety) reduction code
 //       State_reduce_variety((), (variety, sindividuals))
 //         let // RVariety initialization
-//             rvariety = RVariety_first(world, variety)
+//             rvariety = RVariety_first(space, world, variety)
 //             // Initial Individual (value individual) reduction map
 //             (srindividualsin, srindividualsout) = map(State_reduce_individual, (variety), sindividuals)
 //         (rvariety, srindividualsin, srindividualsout)
@@ -2182,15 +2189,15 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
 //
 //
 //       // Inner Individual (index i1) in reduction code
-//       State_reduce_individual1In((ssrindividualsin, v0, i0, v1), i1)
+//       State_reduce_individual1In((ssrindividualsin, x, y, v0, i0, v1), i1)
 //         // First individual is not second individual and second is in in range, reduce second to first
-//         (v0 /= v1 || i0 /= i1) && RIndividualIn_filter(world,
+//         (v0 /= v1 || i0 /= i1) && RIndividualIn_filter(x, y, world,
 //                                                        svarieties[v0], ssindividuals[v0][i0],
 //                                                        svarieties[v0], ssindividuals[v1][i1]):
 //           // Inner level SSRIndividualsIn reduction
 //           (ssrindividualsin[v0][i0] =
 //              RIndividualIn_merge(ssrindividualsin[v0][i0],
-//                                  RIndividualIn_next(world,
+//                                  RIndividualIn_rest(x, y, space, world,
 //                                                     svarieties[v0], ssindividuals[v0][i0],
 //                                                     svarieties[v0], ssindividuals[v1][i1])),
 //            v0, i0, v1)
@@ -2199,7 +2206,7 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
 //           (ssrindividualin, v0, i0, v1)
 //
 //       // Inner Individual (index i1) out reduction code
-//       State_reduce_individual1Out((ssrindividualsout, v0, i0, v1), i1)
+//       State_reduce_individual1Out((ssrindividualsout, x, y, v0, i0, v1), i1)
 //         // First individual in not second individual and second is in out range, reduce first to second
 //         (v0 /= v1 || i0 /= i1) && RIndividualOut_filter(world,
 //                                                         svarieties[v0], ssindividuals[v0][i0],
@@ -2207,7 +2214,7 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
 //           // Inner level SSRIndividualsOut reduction
 //           (ssrindividualsout[v1][i1] =
 //              RIndividualOut_merge(ssrindividualsout[v1][i1],
-//                                   RIndividualOut_next(world,
+//                                   RIndividualOut_rest(x, y, space, world,
 //                                                       svarieties[v0], ssindividuals[v0][i0],
 //                                                       svarieties[v1], ssindividuals[v1][i1])),
 //            v0, i0, v1)
@@ -2215,34 +2222,48 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
 //         otherwise:
 //           ssrindividualsout
 //
+//       // Periodic in reduction code
+//       State_reduce_periodicIn((ssrindividualsin, v0, i0, v1), (x,y))
+//         let // Inner Individual (index i1) reduction fold
+//             bound = Box_clip(Box_offset(RIndividualIn_bound(x, y, world, svarieties[v0],
+//                                                             ssindividuals[v0][i0], svarieties[v1]),
+//                                         (x*space.size_x, y*space.size_y))
+//                              (0, 0, space.size_x, space.size_y))
+//             ssrindividualsin = fold(State_reduce_individual1In, (ssrindividualsin, x, y, v0, i0, v1),
+//                                     Indicies_filterBox(ssindividuals[v1], bound))
+//         (ssrindividualsin, v0, i0, v1)
+//
+//       // Periodic out reduction code
+//       State_reduce_periodicOut((ssrindividualsout, v0, i0, v1), (x,y))
+//         let // Inner Individual (index i1) reduction fold
+//             bound = Box_clip(Box_offset(RIndividualOut_bound(x, y, world, svarieties[v0],
+//                                                              ssindividuals[v0][i0], svarieties[v1]),
+//                                         (x*space.size_x, y*space.size_y)),
+//                              (0, 0, space.size_x, space.size_y))
+//             ssrindividualsout =  fold(State_reduce_individual1Out, (ssrindividualsout, x, y, v0, i0, v1),
+//                                       Indicies_filterBox(ssindividuals[v1], bound))
+//         (ssrindividualsout, v0, i0, v1)
+//
 //       // Inner Variety (index v1) reduction code
 //       State_reduce_variety1((ssrindividualsin, ssrindividualsout, v0, i0), v1)
-//         let // Inner Individual (index i1) reduction fold
-//             ssrindividualsin =
-//               fold(State_reduce_individual1In,
-//                    (ssrindividualsin, v0, i0, v1),
-//                    Indicies_filterBox(ssindividuals[v1],
-//                                       RIndividualIn_bound(world,
-//                                                           svarieties[v0], ssindividuals[v0][i0],
-//                                                           svarieties[v1])))
-//             // Inner Individual (index i1) reduction fold
-//             ssrindividualsout =
-//               fold(State_reduce_individual1Out,
-//                    (ssrindividualsout, v0, i0, v1),
-//                    Indicies_filterBox(ssindividuals[v1],
-//                                       RIndividualOut_bound(world,
-//                                                            svarieties[v0], ssindividuals[v0][i0],
-//                                                            svarieties[v1])))
+//         let // Periodic in reduction code
+//             bound = RIndividualIn_bound(world, svarieties[v0], ssindividuals[v0][i0], svarieties[v1])
+//             indicies = Indicies_box((space.periodic_x, space.periodic_y), bound, (space.size_x, space.size_y))
+//             ssrindividualsin = fold(State_reduce_periodicIn, (ssrindividualsin, v0, i0, v1), indicies)
+//             // Periodic out out reduction code
+//             bound = RIndividualOut_bound(world, svarieties[v0], ssindividuals[v0][i0], svarieties[v1])
+//             indicies = Indicies_box((space.periodic_x, space.periodic_y), bound, (space.size_x, space.size_y))
+//             ssrindividualsout = fold(State_reduce_periodicOut, (ssrindividualsout, v0, i0, v1), indicies)
 //         (ssrindividualsin, ssrindividualsout, v0, i0)
 //
 //       // Outer Individual (index i0) reduction code
 //       State_reduce_individual0((rworld, srvarieties, ssrindividualsin, ssrindividualsout, v0), i0)
 //         let // Outer level RWorld and SRVariety reductions
 //             rworld = RWorld_merge(rworld,
-//                                   RWorld_rest(world, svarieties[v0], ssindividuals[v0][i0]))
+//                                   RWorld_rest(space, world, svarieties[v0], ssindividuals[v0][i0]))
 //             srvarieties[v0] =
 //               RVariety_merge(srvarieties[v0],
-//                              RVariety_rest(world, svarieties[v0], ssindividuals[v0][i0]))
+//                              RVariety_rest(space, world, svarieties[v0], ssindividuals[v0][i0]))
 //             // Outer Individual (index i0) reduction fold
 //             (ssrindividualsin, ssrindividualsout) =
 //               fold(State_reduce_individual0,
@@ -2266,15 +2287,29 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
 //
 //   (rworld, srvarieties, ssrindividualsin, ssrindividualsout)
 //
+// Box_clip((box0_ul_x, box0_ul_y, box0_lr_x, box0_lr_y), (box1_ul_x, box1_ul_y, box1_lr_x, box1_lr_y))
+//   // Intersection between box0 and box1 (assumes overlap)
+//   (max(box0_ul_x, box1_ul_x), max(box0_ul_y, box1_ul_y),
+//    min(box0_lr_x, box1_lr_x), min(box0_lr_y, box1_lr_y))
+//
+// Box_offset((box_ul_x, box_ul_y, box_lr_x, box_lr_y), (offset_x, offset_y))
+//   // Shift box by offset
+//   (box_ul_x+offset_x, box_ul_y+offset_y, box_lr_x+offset_x, box_lr_y+offset_y)
+//
+// Box_grid((periodic_x,periodic_y), (box_ul_x, box_ul_y, box_lr_x, box_lr_y), (size_x, size_y))
+//   // Grid coverage of box, where grid components are of size and optionally periodic
+//   (if(periodic_x, floor(box_ul_x/size_x), 0), if(periodic_y, floor(box_ul_y/size_y), 0),
+//    if(periodic_x, floor(box_lr_x/size_y), 0), if(periodic_y, floor(box_lr_y/size_y), 0))
+//
 // Expressing the folds as loops this becomes the following code.
 //
 RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
 (Space const space, World const world, SVarieties const svarieties, SSIndividuals const ssindividuals) {
   // Reduction setup
-  RWorld rworld = RWorld_first(world);
-  SRVarieties const srvarieties = SRVarieties_begin(world, svarieties);
-  SSRIndividualsIn const ssrindividualsin = SSRIndividualsIn_begin(world, svarieties, ssindividuals);
-  SSRIndividualsOut const ssrindividualsout = SSRIndividualsOut_begin(world, svarieties, ssindividuals);
+  RWorld rworld = RWorld_first(space, world);
+  SRVarieties const srvarieties = SRVarieties_begin(space, world, svarieties);
+  SSRIndividualsIn const ssrindividualsin = SSRIndividualsIn_begin(space, world, svarieties, ssindividuals);
+  SSRIndividualsOut const ssrindividualsout = SSRIndividualsOut_begin(space, world, svarieties, ssindividuals);
 
   // Reduction outer loop over varieties
   UInt const varieties_number = ( svarieties->number <= ssindividuals->number ?
@@ -2296,8 +2331,8 @@ RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
       RIndividualIn rindividualin = srindividualsin->rindividualin[iindividuals0.index];
 
       // Outer level reductions
-      rworld = RWorld_merge(rworld, RWorld_rest(world,variety0,individual0));
-      rvariety = RVariety_merge(rvariety, RVariety_rest(world,variety0,individual0));
+      rworld = RWorld_merge(rworld, RWorld_rest(space, world,variety0,individual0));
+      rvariety = RVariety_merge(rvariety, RVariety_rest(space, world,variety0,individual0));
 
       // Reduction inner loop over varieties
       for (UInt varieties1_index=0; varieties1_index<varieties_number; varieties1_index+=1) {
@@ -2306,52 +2341,86 @@ RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
         SIndividuals const sindividuals1 = ssindividuals->sindividuals[varieties1_index];
         SRIndividualsOut const srindividualsout = ssrindividualsout->srindividualsout[varieties1_index];
 
-        // Reduction inner loop over individuals in in loop
-        Float32 box_in_ul_x,box_in_ul_y, box_in_lr_x,box_in_lr_y;
-        unpack_Float32_Float32_Float32_Float32( &box_in_ul_x,&box_in_ul_y, &box_in_lr_x,&box_in_lr_y,
-                                                RIndividualIn_bound(world, variety0,individual0, variety1) );
+        // Periodic loops for individuals in in loop
+        Float32 bound_in_ul_x,bound_in_ul_y, bound_in_lr_x,bound_in_lr_y;
+        unpack_Float32_Float32_Float32_Float32
+          ( &bound_in_ul_x,&bound_in_ul_y, &bound_in_lr_x,&bound_in_lr_y,
+            RIndividualIn_bound(space, world, variety0,individual0, variety1) );
 
-        UInt64 const box_in_ul_z = Z_xy(box_in_ul_x, box_in_ul_y, space.scale);
-        UInt64 const box_in_lr_z = Z_xy(box_in_lr_x, box_in_lr_y, space.scale);
+        Int const mirror_in_ul_x = space.periodic_x ? floorf(bound_in_ul_x/space.size_x) : 0;
+        Int const mirror_in_ul_y = space.periodic_y ? floorf(bound_in_ul_y/space.size_y) : 0;
+        Int const mirror_in_lr_x = space.periodic_x ? floorf(bound_in_lr_x/space.size_x) : 0;
+        Int const mirror_in_lr_y = space.periodic_y ? floorf(bound_in_lr_y/space.size_y) : 0;
 
-        for ( IIndividuals iindividuals1 = IIndividuals_firstBox(sindividuals1, box_in_ul_z,box_in_lr_z);
-              iindividuals1.valid;
-              iindividuals1 = IIndividuals_nextBox(iindividuals1, box_in_ul_z,box_in_lr_z) ) {
-          // Break out inner individual components
-          Individual const individual1 = IIndividuals_individual(iindividuals1);
+        for (Int mirror_in_x = mirror_in_ul_x; mirror_in_x <= mirror_in_lr_x; mirror_in_x +=1 ) {
+          for (Int mirror_in_y = mirror_in_ul_y; mirror_in_y <= mirror_in_lr_y; mirror_in_y += 1 ) {
+            // Reduction inner loop over individuals in in loop in current mirror
+            UInt64 const bound_in_ul_z = Z_xy(fmaxf(0.0, bound_in_ul_x - mirror_in_x*space.size_x),
+                                              fmaxf(0.0, bound_in_ul_y - mirror_in_y*space.size_y),
+                                              space.scale);
+            UInt64 const bound_in_lr_z = Z_xy(fminf(bound_in_lr_x - mirror_in_x*space.size_x, space.size_x),
+                                              fminf(bound_in_lr_y - mirror_in_y*space.size_y, space.size_y),
+                                              space.scale);
 
-          // Inner level reductions (individual to self is special case done in reduction setup)
-          if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index) &&
-               RIndividualIn_filter(world, variety0,individual0, variety1,individual1) )
-            rindividualin = RIndividualIn_merge(rindividualin,
-                                                RIndividualIn_rest(world, variety0,individual0,
-                                                                   variety1,individual1));
+            for ( IIndividuals iindividuals1 = IIndividuals_firstBox(sindividuals1, bound_in_ul_z,bound_in_lr_z);
+                  iindividuals1.valid;
+                  iindividuals1 = IIndividuals_nextBox(iindividuals1, bound_in_ul_z,bound_in_lr_z) ) {
+              // Break out inner individual components
+              Individual const individual1 = IIndividuals_individual(iindividuals1);
+
+              // Inner level reductions (individual to self is special case done in reduction setup)
+              if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index) &&
+                   RIndividualIn_filter(mirror_in_x, mirror_in_y, space, world,
+                                        variety0,individual0, variety1,individual1) )
+                rindividualin = RIndividualIn_merge(rindividualin,
+                                                    RIndividualIn_rest(mirror_in_x, mirror_in_y, space, world,
+                                                                       variety0,individual0,
+                                                                       variety1,individual1));
+            }
+          }
         }
 
-        // Reduction inner loop over individuals in out loop
-        Float32 box_out_ul_x,box_out_ul_y, box_out_lr_x,box_out_lr_y;
-        unpack_Float32_Float32_Float32_Float32( &box_out_ul_x,&box_out_ul_y, &box_out_lr_x,&box_out_lr_y,
-                                                RIndividualOut_bound(world, variety0,individual0, variety1) );
+        // Periodic loops for for individuals in out loop
+        Float32 bound_out_ul_x,bound_out_ul_y, bound_out_lr_x,bound_out_lr_y;
+        unpack_Float32_Float32_Float32_Float32
+          ( &bound_out_ul_x,&bound_out_ul_y, &bound_out_lr_x,&bound_out_lr_y,
+            RIndividualOut_bound(space, world, variety0,individual0, variety1) );
 
-        UInt64 const box_out_ul_z = Z_xy(box_out_ul_x, box_out_ul_y, space.scale);
-        UInt64 const box_out_lr_z = Z_xy(box_out_lr_x, box_out_lr_y, space.scale);
+        Int const mirror_out_ul_x = space.periodic_x ? floorf(bound_out_ul_x/space.size_x) : 0;
+        Int const mirror_out_ul_y = space.periodic_y ? floorf(bound_out_ul_y/space.size_y) : 0;
+        Int const mirror_out_lr_x = space.periodic_x ? floorf(bound_out_lr_x/space.size_x) : 0;
+        Int const mirror_out_lr_y = space.periodic_y ? floorf(bound_out_lr_y/space.size_y) : 0;
 
-        for ( IIndividuals iindividuals1 = IIndividuals_firstBox(sindividuals1, box_out_ul_z,box_out_lr_z);
-              iindividuals1.valid;
-              iindividuals1 = IIndividuals_nextBox(iindividuals1, box_out_ul_z,box_out_lr_z) ) {
-          // Break out inner individual level components
-          Individual const individual1 = IIndividuals_individual(iindividuals1);
-          RIndividualOut rindividualout = srindividualsout->rindividualout[iindividuals1.index];
+        for (Int mirror_out_x = mirror_out_ul_x; mirror_out_x <= mirror_out_lr_x; mirror_out_x +=1 ) {
+          for (Int mirror_out_y = mirror_out_ul_y; mirror_out_y <= mirror_out_lr_y; mirror_out_y += 1 ) {
+            // Reduction inner loop over individuals in out loop
+            UInt64 const bound_out_ul_z = Z_xy(fmaxf(0.0, bound_out_ul_x - mirror_out_x*space.size_x),
+                                               fmaxf(0.0, bound_out_ul_y - mirror_out_y*space.size_y),
+                                               space.scale);
+            UInt64 const bound_out_lr_z = Z_xy(fminf(bound_out_lr_x - mirror_out_x*space.size_x, space.size_x),
+                                               fminf(bound_out_lr_y - mirror_out_y*space.size_y, space.size_y),
+                                               space.scale);
 
-          // Inner level reductions (individual to self is special case done in reduction setup)
-          if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index) &&
-               RIndividualOut_filter(world, variety0,individual0, variety1,individual1) )
-            rindividualout = RIndividualOut_merge(rindividualout,
-                                                  RIndividualOut_rest(world, variety0,individual0,
-                                                                      variety1,individual1));
+            for ( IIndividuals iindividuals1 = IIndividuals_firstBox(sindividuals1, bound_out_ul_z,bound_out_lr_z);
+                  iindividuals1.valid;
+                  iindividuals1 = IIndividuals_nextBox(iindividuals1, bound_out_ul_z,bound_out_lr_z) ) {
+              // Break out inner individual level components
+              Individual const individual1 = IIndividuals_individual(iindividuals1);
+              RIndividualOut rindividualout = srindividualsout->rindividualout[iindividuals1.index];
 
-          // Write back reduction
-          srindividualsout->rindividualout[iindividuals1.index] = rindividualout;
+              // Inner level reductions (individual to self is special case done in reduction setup)
+              if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index) &&
+                   RIndividualOut_filter(mirror_out_x, mirror_out_y, space, world,
+                                         variety0,individual0, variety1,individual1) )
+                rindividualout = RIndividualOut_merge(rindividualout,
+                                                      RIndividualOut_rest(mirror_out_x, mirror_out_y, space, world,
+                                                                          variety0,individual0,
+                                                                          variety1,individual1));
+
+              // Write back reduction
+              srindividualsout->rindividualout[iindividuals1.index] = rindividualout;
+            }
+          }
         }
       }
       // Write back reduction

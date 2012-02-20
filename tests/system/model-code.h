@@ -175,10 +175,10 @@ RWorld RWorld_raw(UInt32 const ids) {
 
 
 //
-RWorld RWorld_first(World const world) {
+RWorld RWorld_first(Space const space, World const world) {
   return RWorld_raw(world.id);
 }
-RWorld RWorld_rest(World const world, Variety const variety, Individual const individual) {
+RWorld RWorld_rest(Space const space, World const world, Variety const variety, Individual const individual) {
   return RWorld_raw(individual.id);
 }
 RWorld RWorld_merge(RWorld const rworld0, RWorld const rworld1) {
@@ -195,10 +195,10 @@ RVariety RVariety_raw(UInt32 const ids) {
 
 
 //
-RVariety RVariety_first(World const world, Variety const variety) {
+RVariety RVariety_first(Space const space, World const world, Variety const variety) {
   return RVariety_raw(variety.id);
 }
-RVariety RVariety_rest(World const world, Variety const variety, Individual const individual) {
+RVariety RVariety_rest(Space const space, World const world, Variety const variety, Individual const individual) {
   return RVariety_raw(individual.id);
 }
 RVariety RVariety_merge(RVariety const rvariety0, RVariety const rvariety1) {
@@ -215,27 +215,30 @@ RIndividualIn RIndividualIn_raw(UInt32 const ids) {
 
 
 //
-Float32_Float32_Float32_Float32 RIndividualIn_bound(World const world,
+Float32_Float32_Float32_Float32 RIndividualIn_bound(Space const space, World const world,
                                                     Variety const variety0, Individual const individual0,
                                                     Variety const variety1) {
   return pack_Float32_Float32_Float32_Float32(individual0.x-individual0.in, individual0.y-individual0.in,
                                               individual0.x+individual0.in, individual0.y+individual0.in);
 }
 
-Bool RIndividualIn_filter(World const world, Variety const variety0, Individual const individual0,
+Bool RIndividualIn_filter(Int const mirror_x, Int const mirror_y, Space const space, World const world,
+                          Variety const variety0, Individual const individual0,
                           Variety const variety1, Individual const individual1) {
-  return ( (individual1.x-individual0.x)*(individual1.x-individual0.x) +
-           (individual1.y-individual0.y)*(individual1.y-individual0.y) <
-           individual0.in*individual0.in );
+  Float32 const delta_x = individual1.x+mirror_x*space.size_x-individual0.x;
+  Float32 const delta_y = individual1.y+mirror_y*space.size_y-individual0.y;
+  return delta_x*delta_x + delta_y*delta_y < individual0.in*individual0.in;
 }
 
 
 //
-RIndividualIn RIndividualIn_first(World const world, Variety const variety0, Individual const individual0) {
+RIndividualIn RIndividualIn_first(Space space, World const world,
+                                  Variety const variety0, Individual const individual0) {
   return RIndividualIn_raw(individual0.id);
 }
 
-RIndividualIn RIndividualIn_rest(World const world, Variety const variety0, Individual const individual0,
+RIndividualIn RIndividualIn_rest(Int const mirror_x, Int const mirror_y, Space const space, World const world,
+                                 Variety const variety0, Individual const individual0,
                                  Variety const variety1, Individual const individual1) {
   return RIndividualIn_raw(individual1.id);
 }
@@ -253,26 +256,29 @@ RIndividualOut RIndividualOut_raw(UInt32 const ids) {
 
 
 //
-Float32_Float32_Float32_Float32 RIndividualOut_bound(World const world,
+Float32_Float32_Float32_Float32 RIndividualOut_bound(Space const space, World const world,
                                                      Variety const variety0, Individual const individual0,
                                                      Variety const variety1) {
   return pack_Float32_Float32_Float32_Float32(individual0.x-individual0.out, individual0.y-individual0.out,
                                               individual0.x+individual0.out, individual0.y+individual0.out);
 }
 
-Bool RIndividualOut_filter(World const world, Variety const variety0, Individual const individual0,
+Bool RIndividualOut_filter(Int const mirror_x, Int const mirror_y, Space const space, World const world,
+                           Variety const variety0, Individual const individual0,
                            Variety const variety1, Individual const individual1) {
-  return ( (individual1.x-individual0.x)*(individual1.x-individual0.x) +
-           (individual1.y-individual0.y)*(individual1.y-individual0.y) <
-           individual0.out*individual0.out );
+  Float32 const delta_x = individual1.x+mirror_x*space.size_x-individual0.x;
+  Float32 const delta_y = individual1.y+mirror_y*space.size_y-individual0.y;
+  return delta_x*delta_x + delta_y*delta_y < individual0.out*individual0.out;
 }
 
 
 //
-RIndividualOut RIndividualOut_first(World const world, Variety const variety1, Individual const individual1) {
+RIndividualOut RIndividualOut_first(Space const space, World const world,
+                                    Variety const variety1, Individual const individual1) {
   return RIndividualOut_raw(individual1.id);
 }
-RIndividualOut RIndividualOut_rest(World const world, Variety const variety0, Individual const individual0,
+RIndividualOut RIndividualOut_rest(Int const mirror_x, Int const mirror_y, Space const space, World const world,
+                                   Variety const variety0, Individual const individual0,
                                    Variety const variety1, Individual const individual1) {
   return RIndividualOut_raw(individual0.id);
 }

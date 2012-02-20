@@ -61,19 +61,21 @@ AIndividuals AIndividuals_append(AIndividuals aindividuals, Individual individua
 SIndividuals AIndividuals_end(AIndividuals aindividuals);
 
 //
-SRVarieties SRVarieties_begin(World world, SVarieties svarieties);
+SRVarieties SRVarieties_begin(Space space, World world, SVarieties svarieties);
 void SRVarieties_end(SRVarieties srvarieties);
 
-SRIndividualsIn SRIndividualsIn_begin(World world, Variety variety, SIndividuals sindividuals);
+SRIndividualsIn SRIndividualsIn_begin(Space space, World world, Variety variety, SIndividuals sindividuals);
 void SRIndividualsIn_end(SRIndividualsIn srindividualsin);
 
-SRIndividualsOut SRIndividualsOut_begin(World world, Variety variety, SIndividuals sindividuals);
+SRIndividualsOut SRIndividualsOut_begin(Space space, World world, Variety variety, SIndividuals sindividuals);
 void SRIndividualsOut_end(SRIndividualsOut srindividualsout);
 
-SSRIndividualsIn SSRIndividualsIn_begin(World world, SVarieties svarieties, SSIndividuals ssindividuals);
+SSRIndividualsIn SSRIndividualsIn_begin(Space space, World world,
+                                        SVarieties svarieties, SSIndividuals ssindividuals);
 void SSRIndividualsIn_end(SSRIndividualsIn ssrindividualsin);
 
-SSRIndividualsOut SSRIndividualsOut_begin(World world, SVarieties svarieties, SSIndividuals ssindividuals);
+SSRIndividualsOut SSRIndividualsOut_begin(Space space, World world,
+                                          SVarieties svarieties, SSIndividuals ssindividuals);
 void SSRIndividualsOut_end(SSRIndividualsOut ssrindividualsout);
 
 //

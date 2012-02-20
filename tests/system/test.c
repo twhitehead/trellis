@@ -24,7 +24,7 @@ void reduce(Space const space, World const world, SVarieties const svarieties, S
             RWorld const rworld, SRVarieties const srvarieties,
             SSRIndividualsIn const ssrindividualsin, SSRIndividualsOut const ssrindividualsout) {
   // Outer variety loop
-  RWorld rworld_check = RWorld_first(world);
+  RWorld rworld_check = RWorld_first(space, world);
 
   if ( svarieties->number != srvarieties->number ||
        svarieties->number != ssindividuals->number ||
@@ -42,7 +42,7 @@ void reduce(Space const space, World const world, SVarieties const svarieties, S
     SRIndividualsOut const srindividualsout = ssrindividualsout->srindividualsout[varieties0_index];
 
     // Outer individual loop
-    RVariety rvariety_check = RVariety_first(world, variety0);
+    RVariety rvariety_check = RVariety_first(space, world, variety0);
 
     if ( sindividuals0.number != srindividualsin->number ||
          sindividuals0.number != srindividualsout->number )
@@ -57,31 +57,49 @@ void reduce(Space const space, World const world, SVarieties const svarieties, S
       RIndividualOut const rindividualout = srindividualsout->rindividualout[iindividuals0.index];
 
       // Perform reductions
-      rvariety_check = RVariety_merge(rvariety_check, RVariety_rest(world, variety0, individual0));
-      rworld_check = RWorld_merge(rworld_check, RWorld_rest(world, variety0, individual0));
+      rvariety_check = RVariety_merge(rvariety_check, RVariety_rest(space, world, variety0, individual0));
+      rworld_check = RWorld_merge(rworld_check, RWorld_rest(space, world, variety0, individual0));
 
       // Inner variety loop
-      RIndividualIn rindividualin_check = RIndividualIn_first(world, variety0, individual0);
-      RIndividualOut rindividualout_check = RIndividualOut_first(world, variety0, individual0);
+      RIndividualIn rindividualin_check = RIndividualIn_first(space, world, variety0, individual0);
+      RIndividualOut rindividualout_check = RIndividualOut_first(space, world, variety0, individual0);
 
       for (UInt varieties1_index = 0; varieties1_index < varieties_number; varieties1_index += 1) {
         // Break out variety components
         Variety const variety1 = svarieties->variety[varieties1_index];
         SIndividuals const sindividuals1 = ssindividuals->sindividuals[varieties1_index];
 
-        // Inner individual in loop
-        for ( IIndividuals iindividuals1 = IIndividuals_first(sindividuals1);
-              iindividuals1.valid;
-              iindividuals1 = IIndividuals_next(iindividuals1) ) {
-          // Break out individual components
-          Individual const individual1 = IIndividuals_individual(iindividuals1);
+        // Periodic in loops
+        Float32 box_in_ul_x, box_in_ul_y, box_in_lr_x, box_in_lr_y;
+        unpack_Float32_Float32_Float32_Float32
+          ( &box_in_ul_x, &box_in_ul_y, &box_in_lr_x, &box_in_lr_y,
+            RIndividualIn_bound(space, world, variety0, individual0, variety1) );
 
-          // Perform reduction if in in range
-          if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index) &&
-              RIndividualIn_filter(world, variety0, individual0, variety1, individual1) )
-            rindividualin_check = RIndividualIn_merge( rindividualin_check,
-                                                       RIndividualIn_rest(world, variety0, individual0,
-                                                                          variety1, individual1) );
+        Int const mirror_in_ul_x = space.periodic_x ? floorf(box_in_ul_x/space.size_x) : 0;
+        Int const mirror_in_ul_y = space.periodic_y ? floorf(box_in_ul_y/space.size_y) : 0;
+        Int const mirror_in_lr_x = space.periodic_x ? floorf(box_in_lr_x/space.size_x) : 0;
+        Int const mirror_in_lr_y = space.periodic_y ? floorf(box_in_lr_y/space.size_y) : 0;
+
+        for (Int mirror_in_x = mirror_in_ul_x; mirror_in_x <= mirror_in_lr_x; mirror_in_x += 1) {
+          for (Int mirror_in_y = mirror_in_ul_y; mirror_in_y <= mirror_in_lr_y; mirror_in_y += 1) {
+            // Inner individual in loop
+            for ( IIndividuals iindividuals1 = IIndividuals_first(sindividuals1);
+                  iindividuals1.valid;
+                  iindividuals1 = IIndividuals_next(iindividuals1) ) {
+              // Break out individual components
+              Individual const individual1 = IIndividuals_individual(iindividuals1);
+
+              // Perform reduction if in in range
+              if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index) &&
+                   RIndividualIn_filter(mirror_in_x, mirror_in_y, space, world, 
+                                        variety0, individual0, variety1, individual1) )
+                rindividualin_check = RIndividualIn_merge( rindividualin_check,
+                                                           RIndividualIn_rest(mirror_in_x, mirror_in_y,
+                                                                              space, world,
+                                                                              variety0, individual0,
+                                                                              variety1, individual1) );
+            }
+          }
         }
 
         // Inner individual out loop (order is reversed for reduction components)
@@ -91,12 +109,30 @@ void reduce(Space const space, World const world, SVarieties const svarieties, S
           // Break out individual components
           Individual const individual1 = IIndividuals_individual(iindividuals1);
 
-          // Perform reduction if in out range
-          if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index) &&
-               RIndividualOut_filter(world, variety1, individual1, variety0, individual0) )
-            rindividualout_check = RIndividualOut_merge( rindividualout_check,
-                                                         RIndividualOut_rest(world, variety1, individual1,
-                                                                             variety0, individual0) );
+          // Periodic out loops
+          Float32 box_out_ul_x, box_out_ul_y, box_out_lr_x, box_out_lr_y;
+          unpack_Float32_Float32_Float32_Float32
+            ( &box_out_ul_x, &box_out_ul_y, &box_out_lr_x, &box_out_lr_y,
+              RIndividualOut_bound(space, world, variety1, individual1, variety0) );
+
+          Int const mirror_out_ul_x = space.periodic_x ? floorf(box_out_ul_x/space.size_x) : 0;
+          Int const mirror_out_ul_y = space.periodic_y ? floorf(box_out_ul_y/space.size_y) : 0;
+          Int const mirror_out_lr_x = space.periodic_x ? floorf(box_out_lr_x/space.size_x) : 0;
+          Int const mirror_out_lr_y = space.periodic_y ? floorf(box_out_lr_y/space.size_y) : 0;
+
+          for (Int mirror_out_x = mirror_out_ul_x; mirror_out_x <= mirror_out_lr_x; mirror_out_x += 1) {
+            for (Int mirror_out_y = mirror_out_ul_y; mirror_out_y <= mirror_out_lr_y; mirror_out_y += 1) {
+              // Perform reduction if in out range
+              if ( (varieties0_index != varieties1_index || iindividuals0.index != iindividuals1.index) &&
+                   RIndividualOut_filter(mirror_out_x, mirror_out_y, space, world,
+                                         variety1, individual1, variety0, individual0) )
+                rindividualout_check = RIndividualOut_merge( rindividualout_check,
+                                                             RIndividualOut_rest(mirror_out_x, mirror_out_y,
+                                                                                 space, world,
+                                                                                 variety1, individual1,
+                                                                                 variety0, individual0) );
+            }
+          }
         }
       }
 
@@ -125,7 +161,7 @@ void reduce(Space const space, World const world, SVarieties const svarieties, S
 //
 int main() {
   MersenneTwister mersennetwister = MersenneTwister_begin();
-  Space const space = Space_raw(false,false, 30.0, 30.0);
+  Space const space = Space_raw(true,true, 30.0, 30.0);
 
   // Generate a new world with a random id
   printf("Generating state...\n");
@@ -167,7 +203,7 @@ int main() {
       in = fabs(in);
       out = fabs(out);
 
-      Individual const individual = Individual_raw(id, x, y, in, out);
+      Individual const individual = Individual_raw(variety_iterator*900+individual_iterator, x, y, in, out);
 
       aindividuals = AIndividuals_append(aindividuals, individual, Z_xy(x, y, space.scale));
     }

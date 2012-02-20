@@ -51,27 +51,28 @@ AIndividuals Individual_next(AIndividuals aindividuals, Space space,
 //
 RWorld RWorld_raw(UInt32 ids);
 
-RWorld RWorld_first(World world);
-RWorld RWorld_rest(World world, Variety variety, Individual individual);
+RWorld RWorld_first(Space space, World world);
+RWorld RWorld_rest(Space space, World world, Variety variety, Individual individual);
 RWorld RWorld_merge(RWorld rworld0, RWorld rworld1);
 
 //
 RVariety RVariety_raw(UInt32 ids);
 
-RVariety RVariety_first(World world, Variety variety);
-RVariety RVariety_rest(World world, Variety variety, Individual individual);
+RVariety RVariety_first(Space space, World world, Variety variety);
+RVariety RVariety_rest(Space space, World world, Variety variety, Individual individual);
 RVariety RVariety_merge(RVariety rvariety0, RVariety rvariety1);
 
 //
 RIndividualIn RIndividualIn_raw(UInt32 ids);
 
 Float32_Float32_Float32_Float32
-RIndividualIn_bound(World world, Variety variety0, Individual individual0, Variety variety1);
-Bool RIndividualIn_filter(World world, Variety variety0, Individual individual0,
-                          Variety variety1, Individual individual1);
+RIndividualIn_bound(Space space, World world, Variety variety0, Individual individual0, Variety variety1);
+Bool RIndividualIn_filter(Int mirror_x, Int mirror_y, Space space, World world,
+                          Variety variety0, Individual individual0, Variety variety1, Individual individual1);
 
-RIndividualIn RIndividualIn_first(World world, Variety variety0, Individual individual0);
-RIndividualIn RIndividualIn_rest(World world, Variety variety0, Individual individual0,
+RIndividualIn RIndividualIn_first(Space space, World world, Variety variety0, Individual individual0);
+RIndividualIn RIndividualIn_rest(Int mirror_x, Int mirror_y, Space space, World world,
+                                 Variety variety0, Individual individual0, 
                                  Variety variety1, Individual individual1);
 RIndividualIn RIndividualIn_merge(RIndividualIn rindividualin0, RIndividualIn rindividualin1);
 
@@ -79,12 +80,13 @@ RIndividualIn RIndividualIn_merge(RIndividualIn rindividualin0, RIndividualIn ri
 RIndividualOut RIndividualOut_raw(UInt32 ids);
 
 Float32_Float32_Float32_Float32
-RIndividualOut_bound(World world, Variety variety0, Individual individual0, Variety variety1);
-Bool RIndividualOut_filter(World world, Variety variety0, Individual individual0,
-                           Variety variety1, Individual individual1);
+RIndividualOut_bound(Space space, World world, Variety variety0, Individual individual0, Variety variety1);
+Bool RIndividualOut_filter(Int mirror_x, Int mirror_y, Space space, World world,
+                           Variety variety0, Individual individual0, Variety variety1, Individual individual1);
 
-RIndividualOut RIndividualOut_first(World world, Variety variety1, Individual individual1);
-RIndividualOut RIndividualOut_rest(World world, Variety variety0, Individual individual0,
+RIndividualOut RIndividualOut_first(Space space, World world, Variety variety1, Individual individual1);
+RIndividualOut RIndividualOut_rest(Int mirror_x, Int mirror_y, Space space, World world,
+                                   Variety variety0, Individual individual0,
                                    Variety variety1, Individual individual1);
 RIndividualOut RIndividualOut_merge(RIndividualOut rindividualout0, RIndividualOut rindividualout1);
 
