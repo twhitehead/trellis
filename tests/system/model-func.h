@@ -42,11 +42,12 @@ FILE* Individual_saveFP(Space space, World world, Variety variety, Individual in
                         char const* name, FILE* file);
 Individual_FILE_UInt64 Individual_loadFP(Space space, World const world, Variety variety,
                                          char const* name, FILE* file, UInt64 line);
-AIndividuals Individual_next(AIndividuals aindividuals, Space space,
+AIndividuals Individual_new(AIndividuals aindividuals, Space space,
+                            World world, Variety variety, RWorld rworld, RVariety rvariety, Thread thread);
+AIndividuals Individual_next(AIndividuals aindividuals, Space space, 
                              World world, Variety variety, Individual individual,
-                             RWorld rworld, RVariety rvariety,
-                             RIndividualIn rindividualin, RIndividualOut rindividualout,
-                             Thread thread);
+                             RWorld rworld, RVariety rvariety, 
+                             RIndividualIn rindividualin, RIndividualOut rindividualout, Thread thread);
 
 //
 RWorld RWorld_raw(UInt32 ids);

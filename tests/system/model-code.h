@@ -166,6 +166,14 @@ AIndividuals Individual_next(AIndividuals const aindividuals, Space const space,
 }
 
 
+//
+AIndividuals Individual_new(AIndividuals const aindividuals, Space const space,
+                            World const world, Variety const variety,
+                            RWorld const rworld, RVariety const rvariety, Thread const thread) {
+  return aindividuals;
+}
+
+
 //---------------------------------------------------------------------------------------------------------------//
 //
 RWorld RWorld_raw(UInt32 const ids) {

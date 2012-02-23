@@ -2441,40 +2441,40 @@ RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
 //              RWorld, SRVarieties, SSRIndividualsIn, SSRIndividualsOut)
 //               -> (World, SVarieties, SSIndividuals)
 //
-// Generate the next World, SVarieties, SSIndividuals from the current and reductions
+// Update World and SVarieties and generate new SSIndividual from the current World, SVariety, and SSIndividuals
 //
-//   World - (World, RWorld)
-//   SVariety - (World, Variety, RWorld, RVariety)
-//   SSIndividuals - (World, Variety, Individual, RWorld, RVariety, RIndividualIn, RIndividualOut)
+//   World    - map (world,rworld) at ()
+//   SVariety - map (world,variety,rworld,rvariety) at (variety)
+//   SSIndividual - map (world,variety,rworld,rvariety) at (variety)
+//                - join (map (world,variety,individual,rworld,rvariety,rindividual)) at (variety,individual)
 //
-// The new World and SVarieties are given by the *_next functions mapped across the tuples indicated above.  The
-// new SSIndividuals is given by the Individual_next function folded across the tuple given above.
+// The new World and Variety are given by mapping the World_next and Variety_next functions across the tuples
+// indicated above.  The new Individual come from combining the mapping of Individual_new and Individual_next
+// (after flattening/joining) across the tuples indicated above.
 //
-// The functional pseudo-code follows.
+// The World and Variety mappings are one-to-one in order to preserve the structure the Individual are rooted in.
+// Support could be added for mapping larger and larger chunks of the structure from the outside in.  That is,
+// first Individual, then (Variety,SIndividual), and finally (World,SVarieties,SSIndividuals) pairs.
 //
 // State_next(world, svarieties, ssindividuals, rworld, srvarieties, ssrindividualsin, ssrindividualsout)
 //   let // Next world
 //       world_new = World_next(space, world, rworld);
 //
 //       // Individual (value individual, rindividual) construction code
-//       State_next_individuals((aindividuals, variety, rvariety), (individual,rindividualin, rindividualout))
-//         let // Next individual
-//             aindividuals =
-//               Individual_next(aindividuals, space, world, variety, individual,
-//                               rspace, rvariety, rindividualin, rindividualout)
-//         (aindividuals, variety, rvariety)
+//       State_next_individuals((variety, rvariety), (individual,rindividualin, rindividualout))
+//         Individual_next(space, world, variety, individual,
+//                         rworld, rvariety, rindividualin, rindividualout)
 //
 //       // Variety (value variety, rvariety) construction code
 //       State_next_variety((), (variety, sindividuals, rvariety, srindividualsin, srindividualsout))
 //         let // Next variety
-//             variety_new = Variety_next(space, world, variety, rworld, rvariety)
+//             variety = Variety_next(space, world, variety, rworld, rvariety)
 //             // Individual (value individual, rindividual) construction fold
-//             aindividuals = AIndividuals_begin()
-//             aindividuals = fold(State_next_individuals,
-//                                 (aindividuals, variety, rvariety),
-//                                 zip(sindividuals, srindividualsin, srindividualsout))
-//             sindividuals_new = AIndividuals_end(aindividuals)
-//         (variety_new, sindividuals_new)
+//             sindividuals = append(Individual_new(space, world, variety, rworld, rvariety),
+//                                   concat(map(State_next_individuals,
+//                                              (variety, rvariety),
+//                                              zip3(sindividuals, srindividualsin, srindividualsout)))
+//         (variety, sindividuals)
 //
 //       // Variety (value variety, rvariety) construction map
 //       (svarieties, ssindividuals) =
@@ -2483,7 +2483,7 @@ RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
 //
 //   (world_new, svarieties_new, SSIndividuals_new)
 //
-// Expressing the folds as loops this becomes the following code.
+// Expressing the map as loops this becomes the following code.
 //
 World_SVarieties_SSIndividuals State_next
 (Space const space, World const world, SVarieties const svarieties, SSIndividuals const ssindividuals,
@@ -2514,10 +2514,12 @@ World_SVarieties_SSIndividuals State_next
     Variety const variety_new = Variety_next(space, world, variety, rworld, rvariety, thread);
     avarieties = AVarieties_append(avarieties, variety_new);
 
+    // New individuals
+    AIndividuals aindividuals = AIndividuals_begin();
+    aindividuals = Individual_new(aindividuals, space, world, variety, rworld, rvariety, thread);
+
     // Construction loop over individuals
     UInt individuals_number;
-    AIndividuals aindividuals = AIndividuals_begin();
-
     individuals_number =
       sindividuals.number <= srindividualsin->number ? sindividuals.number : srindividualsin->number;
     individuals_number =
@@ -2531,7 +2533,7 @@ World_SVarieties_SSIndividuals State_next
       RIndividualIn const rindividualin = srindividualsin->rindividualin[iindividuals.index];
       RIndividualOut const rindividualout = srindividualsout->rindividualout[iindividuals.index];
 
-      // Next individual
+      // Next individuals
       aindividuals = Individual_next(aindividuals, space, world, variety, individual,
                                      rworld, rvariety, rindividualin, rindividualout,
                                      thread);
