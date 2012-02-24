@@ -2146,12 +2146,12 @@ State_loadFP(char const* const name, FILE* file, UInt64 line) {
 //
 // Compute the reduction spaces
 //
-//   RWorld    - fold (variety,individual) by ()
-//   SRVariety - fold (variety,individual) by (variety)
-//   SSRIndividualsIn  - fold (variety0,individual0,variety1,individual1) by (variety0,individual0) for each
-//                       (variety1,individual1) not equal to and in in range of (variety0,individual0)
-//   SSRIndividualsOut - fold (variety0,individual0,variety1,individual1) by (variety1,individual1)
-//                       (variety1,individual1) not equal to and in out range of (variety0,individual0)
+//   RWorld            - fold (World, Variety, Individual)
+//   SRVariety         - fold (World, Variety, Individual) grouped by (World, Variety)
+//   SSRIndividualsIn  - fold (World, Variety[0|1], Individual[0|1]) grouped by (World, Variety0, Individual0)
+//                       for each (Variety1, Individual1) not equal to and in in range of (Variety0, Individual0)
+//   SSRIndividualsOut - fold (World, Variety[0|1], Individual[0|1]) grouped by (World, Variety1, Individual1)
+//                       for each (Variety1, Individual1) not equal to and in out range of (Variety0, Individual0)
 //
 // The initial value of the reduction spaces are given by the R*_first functions mapped across the tuples
 // indicates above.  These are then folded with the values given by R*_rest functions mapped across the the fold
