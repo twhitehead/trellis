@@ -62,8 +62,12 @@ World_FILE_UInt64 World_loadFP(Space const space,
 
 
 //
-World World_next(Space const space, World const world, RWorld const rworld, Thread const thread) {
-  return world;
+World_SVarieties_SSIndividuals World_next(Space const space,
+                                          World const world, AVarieties avarieties, ASIndividuals asindividuals, 
+                                          RWorld const rworld, Thread const thread) {
+  SVarieties const svarieties = AVarieties_end(avarieties);
+  SSIndividuals const ssindividuals = ASIndividuals_end(asindividuals);
+  return pack_World_SVarieties_SSIndividuals(world, svarieties, ssindividuals);
 }
 
 
@@ -104,10 +108,12 @@ Variety_FILE_UInt64 Variety_loadFP(Space const space, World const world,
 
 
 //
-Variety Variety_next(Space const space, World const world, Variety const variety,
-                     RWorld const rworld, RVariety const rvariety,
-                     Thread const thread) {
-  return variety;
+AVarieties_ASIndividuals Variety_next(AVarieties avarieties, ASIndividuals asindividuals, Space const space,
+                                      World const world, Variety const variety, AIndividuals const aindividuals,
+                                      RWorld const rworld, RVariety const rvariety, Thread const thread) {
+  avarieties = AVarieties_append(avarieties, variety);
+  asindividuals = ASIndividuals_append(asindividuals, AIndividuals_end(aindividuals));
+  return pack_AVarieties_ASIndividuals(avarieties, asindividuals);
 }
 
 
@@ -163,14 +169,6 @@ AIndividuals Individual_next(AIndividuals const aindividuals, Space const space,
                              RIndividualIn const rindividualin, RIndividualOut const rindividualout,
                              Thread const thread) {
   return AIndividuals_append(aindividuals, individual, Z_xy(individual.x, individual.y, space.scale));
-}
-
-
-//
-AIndividuals Individual_new(AIndividuals const aindividuals, Space const space,
-                            World const world, Variety const variety,
-                            RWorld const rworld, RVariety const rvariety, Thread const thread) {
-  return aindividuals;
 }
 
 

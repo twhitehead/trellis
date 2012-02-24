@@ -157,6 +157,11 @@ struct _AIndividuals {
 
 //---------------------------------------------------------------------------------------------------------------//
 // Tuples
+struct _AVarieties_ASIndividuals {
+  AVarieties first;
+  ASIndividuals second;
+};
+
 struct _World_SVarieties_SSIndividuals {
   World first;
   SVarieties second;

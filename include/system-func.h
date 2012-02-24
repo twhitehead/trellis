@@ -94,6 +94,7 @@ World_SVarieties_SSIndividuals State_next
  SSRIndividualsIn ssrindividualsin, SSRIndividualsOut ssrindividualsout, Thread thread);
 
 //
+AVarieties_ASIndividuals pack_AVarieties_ASIndividuals(AVarieties first, ASIndividuals second);
 World_SVarieties_SSIndividuals pack_World_SVarieties_SSIndividuals
 (World first, SVarieties second, SSIndividuals third);
 Space_World_SVarieties_SSIndividuals pack_Space_World_SVarieties_SSIndividuals
@@ -104,6 +105,8 @@ RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
 pack_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
 (RWorld first, SRVarieties second, SSRIndividualsIn third, SSRIndividualsOut fourth);
 
+void unpack_AVarieties_ASIndividuals(AVarieties* first, ASIndividuals* second,
+                                     AVarieties_ASIndividuals tuple);
 void unpack_World_SVarieties_SSIndividuals(World* first, SVarieties* second, SSIndividuals* third,
                                            World_SVarieties_SSIndividuals tuple);
 void unpack_Space_World_SVarieties_SSIndividuals

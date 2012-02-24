@@ -61,6 +61,7 @@ typedef struct _SVarieties* AVarieties;
 typedef struct _SSIndividuals* ASIndividuals;
 typedef struct _AIndividuals AIndividuals;
 
+typedef struct _AVarieties_ASIndividuals AVarieties_ASIndividuals;
 typedef struct _World_SVarieties_SSIndividuals World_SVarieties_SSIndividuals;
 typedef struct _Space_World_SVarieties_SSIndividuals Space_World_SVarieties_SSIndividuals;
 typedef struct _Space_World_SVarieties_SSIndividuals_FILE_UInt64 

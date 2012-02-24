@@ -1843,6 +1843,11 @@ void SSRIndividualsOut_end(SSRIndividualsOut const ssrindividualsout) {
 
 //---------------------------------------------------------------------------------------------------------------//
 // Tuples
+AVarieties_ASIndividuals pack_AVarieties_ASIndividuals(AVarieties const first, ASIndividuals const second) {
+  AVarieties_ASIndividuals const value = { .first = first, .second = second };
+  return value;
+}
+
 World_SVarieties_SSIndividuals pack_World_SVarieties_SSIndividuals
 (World const first, SVarieties const second, SSIndividuals const third) {
   World_SVarieties_SSIndividuals const value = { .first = first, .second = second, .third = third };
@@ -1874,6 +1879,11 @@ pack_RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut
 
 
 //
+void unpack_AVarieties_ASIndividuals(AVarieties* const first, ASIndividuals* const second,
+                                     AVarieties_ASIndividuals const tuple) {
+  *first = tuple.first;
+  *second = tuple.second;
+}
 void unpack_World_SVarieties_SSIndividuals
 (World* const first, SVarieties* const second, SSIndividuals* const third,
  World_SVarieties_SSIndividuals const tuple) {
@@ -2441,47 +2451,64 @@ RWorld_SRVarieties_SSRIndividualsIn_SSRIndividualsOut State_reduce
 //              RWorld, SRVarieties, SSRIndividualsIn, SSRIndividualsOut)
 //               -> (World, SVarieties, SSIndividuals)
 //
-// Update World and SVarieties and generate new SSIndividual from the current World, SVariety, and SSIndividuals
+// Compute the next state by successively replacing/updating the data structure from the outside in.
 //
-//   World    - map (world,rworld) at ()
-//   SVariety - map (world,variety,rworld,rvariety) at (variety)
-//   SSIndividual - map (world,variety,rworld,rvariety) at (variety)
-//                - join (map (world,variety,individual,rworld,rvariety,rindividual)) at (variety,individual)
+//   (Individual)                     - map (one-to-many) ([R]World, [R]Variety, [R]Individual[In|Out])
+//   (Variety,SIndividuals)           - map (one-to-many) ([R]World, [R]Variety) at the (Variety) level
+//   (World,SVarieties,SSIndividuals) - map (one-to-one) ([R]World)
 //
-// The new World and Variety are given by mapping the World_next and Variety_next functions across the tuples
-// indicated above.  The new Individual come from combining the mapping of Individual_new and Individual_next
-// (after flattening/joining) across the tuples indicated above.
+// The *_next functions are mapped across the tuples given above.  For the one-to-many cases, the results are
+// joined/concatenated together.  This allows each of these components to be replaced by an arbitrary number (or
+// none) of new ones.  The mapping and joining/concatenating is done from the outside in (Individual, Variety,
+// and finally World) and the prior results are used in each new state.  The outside in ordering is required to
+// maintain the applicability of the reduction data.  If the inside was mapped first, the outside reduction data
+// may no longer map to the new structure.  The updating is required for the outside updates to have any effect.
 //
-// The World and Variety mappings are one-to-one in order to preserve the structure the Individual are rooted in.
-// Support could be added for mapping larger and larger chunks of the structure from the outside in.  That is,
-// first Individual, then (Variety,SIndividual), and finally (World,SVarieties,SSIndividuals) pairs.
+// The problem this update approach addresses is how to abstract the replacement of as much or as little of the
+// entire underlying data structure in as easy a way as possible.  The fundamental issue is that only the edges
+// of a data structure can be replaced in an arbitrary fashion because any update to internal components are
+// contrained to having to maintain the structure decending data is rooted in.  The solution taken here is to
+// only update edges by extending the replacement at all stages to reach the edges.
+//
+// For example, a Variety cannot be replaced with an arbitrary number of other Variety without first addressing
+// what will happens to the SIndividuals rooted in the replaced Variety and what SIndividuals will be rooted in
+// the new Variety.  How can this be done in a generic fashion?  Include the SIndividuals in the replacement.
+// (Variety,SIndividuals) tuples can be replaced by an arbitrary number of other (Variety, SIndividuals) tuples
+// because the SIndividuals rooted in the Variety have now been packaged together as a whole.  This effectively
+// punts the SIndividuals questions into the replacement routine.  Exactly where it has to be to be generic.
+//
+// The functional pseudo-code follows.
 //
 // State_next(world, svarieties, ssindividuals, rworld, srvarieties, ssrindividualsin, ssrindividualsout)
-//   let // Next world
-//       world_new = World_next(space, world, rworld);
+//   let // Individual next construction code (one-to-many)
+//       State_next_individuals((world, variety, rvariety, rworld), (individual,rindividualin, rindividualout))
+//         let // Next sindividuals (one-to-many)
+//             sindividuals = Individual_next(space, world, variety, individual,
+//                                            rworld, rvariety, rindividualin, rindividualout)
+//         sindividuals
 //
-//       // Individual (value individual, rindividual) construction code
-//       State_next_individuals((variety, rvariety), (individual,rindividualin, rindividualout))
-//         Individual_next(space, world, variety, individual,
-//                         rworld, rvariety, rindividualin, rindividualout)
+//       // Variety next construction code (one-to-many)
+//       State_next_variety((world, rworld), (variety, sindividuals, rvariety, srindividualsin, srindividualsout))
+//         let // Next sindividuals (many-to-many)
+//             sindividuals = join(map(State_next_individuals, (world, variety, rworld, rvariety),
+//                                     zip3(sindividuals, srindividualsin, srindividualsout)))
+//             // Next svarieties (one-to-many)
+//             (svarieties, ssindividuals) = Variety_next(space, world, variety, sindividuals, rworld, rvariety)
+//         (svarieties, ssindividuals)
 //
-//       // Variety (value variety, rvariety) construction code
-//       State_next_variety((), (variety, sindividuals, rvariety, srindividualsin, srindividualsout))
-//         let // Next variety
-//             variety = Variety_next(space, world, variety, rworld, rvariety)
-//             // Individual (value individual, rindividual) construction fold
-//             sindividuals = append(Individual_new(space, world, variety, rworld, rvariety),
-//                                   concat(map(State_next_individuals,
-//                                              (variety, rvariety),
-//                                              zip3(sindividuals, srindividualsin, srindividualsout)))
-//         (variety, sindividuals)
+//       // World next construction code (one-to-one)
+//       State_next_world((), (world, svariety, ssindividuals,
+//                             rworld, srvariety, ssrindividualsin, ssrindividualsout))
+//         let // Next svarieties (many-to-many)
+//             (svarieties,ssindividuals) unzip(join(map(State_next_variety, (world, rworld),
+//                                                   zip5(svarieties, ssindividuals,
+//                                                        srvarieties, ssrindividualsin, ssrindividualsout))))
+//             // Next world (one-to-one)
+//             (world,svarieties,ssindividuals) = World_next(space, world, svarieties, ssindividuals, rworld)
+//         (world,svarieties,ssindividuals)
 //
-//       // Variety (value variety, rvariety) construction map
-//       (svarieties, ssindividuals) =
-//         unzip(map(State_next_variety, (), zip5(svarieties, ssindividuals,
-//                                                srvarieties, ssrindividualsin, ssrindividualsout)))
-//
-//   (world_new, svarieties_new, SSIndividuals_new)
+//   State_next_world((), (world, svariety, ssindividuals,
+//                         rworld, srvariety, ssrindividualsin, ssrindividualsout))
 //
 // Expressing the map as loops this becomes the following code.
 //
@@ -2489,9 +2516,6 @@ World_SVarieties_SSIndividuals State_next
 (Space const space, World const world, SVarieties const svarieties, SSIndividuals const ssindividuals,
  RWorld const rworld, SRVarieties const srvarieties,
  SSRIndividualsIn const ssrindividualsin, SSRIndividualsOut const ssrindividualsout, Thread const thread) {
-  // Next world
-  World const world_new = World_next(space, world, rworld, thread);
-
   // Construction loop over varieties
   UInt varieties_number;
   AVarieties avarieties = AVarieties_begin();
@@ -2510,15 +2534,9 @@ World_SVarieties_SSIndividuals State_next
     SRIndividualsIn const srindividualsin = ssrindividualsin->srindividualsin[varieties_index];
     SRIndividualsOut const srindividualsout = ssrindividualsout->srindividualsout[varieties_index];
     
-    // Next variety
-    Variety const variety_new = Variety_next(space, world, variety, rworld, rvariety, thread);
-    avarieties = AVarieties_append(avarieties, variety_new);
-
-    // New individuals
-    AIndividuals aindividuals = AIndividuals_begin();
-    aindividuals = Individual_new(aindividuals, space, world, variety, rworld, rvariety, thread);
-
     // Construction loop over individuals
+    AIndividuals aindividuals = AIndividuals_begin();
+
     UInt individuals_number;
     individuals_number =
       sindividuals.number <= srindividualsin->number ? sindividuals.number : srindividualsin->number;
@@ -2539,14 +2557,14 @@ World_SVarieties_SSIndividuals State_next
                                      thread);
     }
 
-    SIndividuals const sindividuals_new = AIndividuals_end(aindividuals);
-    asindividuals = ASIndividuals_append(asindividuals, sindividuals_new);
+    // Next varieties
+    unpack_AVarieties_ASIndividuals(&avarieties, &asindividuals,
+                                    Variety_next(avarieties, asindividuals, space, world, variety, aindividuals,
+                                                 rworld, rvariety, thread));
   }
 
-  SVarieties const svarieties_new = AVarieties_end(avarieties);
-  SSIndividuals const ssindividuals_new = ASIndividuals_end(asindividuals);
-
-  return pack_World_SVarieties_SSIndividuals(world_new, svarieties_new, ssindividuals_new);
+  // Next world
+  return World_next(space, world, avarieties, asindividuals, rworld, thread);
 }
 
 

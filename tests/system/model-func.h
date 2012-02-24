@@ -27,14 +27,18 @@
 World World_raw(UInt32 id);
 FILE* World_saveFP(Space space, World world, char const* name, FILE* file);
 World_FILE_UInt64 World_loadFP(Space space, char const* name, FILE* file, UInt64 line);
-World World_next(Space space, World world, RWorld rworld, Thread thread);
+World_SVarieties_SSIndividuals World_next(Space space, World world,
+                                          AVarieties avarieties, ASIndividuals asindividuals,
+                                          RWorld rworld, Thread thread);
 
 //
 Variety Variety_raw(UInt32 id);
 FILE* Variety_saveFP(Space space, World world, Variety variety, char const* name, FILE* file);
 Variety_FILE_UInt64 Variety_loadFP(Space space, World world,
                                    char const* name, FILE* file, UInt64 line);
-Variety Variety_next(Space space, World world, Variety variety, RWorld rworld, RVariety rvariety, Thread thread);
+AVarieties_ASIndividuals Variety_next(AVarieties avarieties, ASIndividuals asindividuals, Space space,
+                                      World world, Variety variety, AIndividuals aindividuals,
+                                      RWorld rworld, RVariety rvariety, Thread thread);
 
 //
 Individual Individual_raw(UInt32 id, Float32 x, Float32 y, Float32 in, Float32 out);
@@ -44,10 +48,11 @@ Individual_FILE_UInt64 Individual_loadFP(Space space, World const world, Variety
                                          char const* name, FILE* file, UInt64 line);
 AIndividuals Individual_new(AIndividuals aindividuals, Space space,
                             World world, Variety variety, RWorld rworld, RVariety rvariety, Thread thread);
-AIndividuals Individual_next(AIndividuals aindividuals, Space space, 
+AIndividuals Individual_next(AIndividuals aindividuals,  Space space,
                              World world, Variety variety, Individual individual,
-                             RWorld rworld, RVariety rvariety, 
-                             RIndividualIn rindividualin, RIndividualOut rindividualout, Thread thread);
+                             RWorld rworld, RVariety rvariety,
+                             RIndividualIn rindividualin, RIndividualOut rindividualout,
+                             Thread thread);
 
 //
 RWorld RWorld_raw(UInt32 ids);
