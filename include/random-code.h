@@ -60,7 +60,7 @@ void MersenneTwister_end(MersenneTwister const mersennetwister) {
 //
 // Seed the mersennetwister state using /dev/urandom.
 //
-MersenneTwister MersenneTwister_urandom(MersenneTwister const mersennetwister) {
+MersenneTwister MersenneTwister_urandom(MersenneTwister mersennetwister) {
   FILE *file;
   UInt index;
 
@@ -83,8 +83,8 @@ MersenneTwister MersenneTwister_urandom(MersenneTwister const mersennetwister) {
   if (fclose(file))
     Error_dieErrNo(1, "unable to close /dev/urandom");
 
-  // Reset the index
-  mersennetwister->index = 0;
+  // Advance the state
+  mersennetwister = MersenneTwister_next(mersennetwister);
 
   return mersennetwister;
 }
@@ -107,7 +107,7 @@ MersenneTwister MersenneTwister_urandom(MersenneTwister const mersennetwister) {
 // As there are only 2^32-1 unique seed (compared to the 32^624-1 unique seeds for the Meresenne Twister),
 // this routine should only be used for cases where it is necessary to regenerate a stream, such as debugging.
 //
-MersenneTwister MersenneTwister_seed(MersenneTwister const mersennetwister, UInt32 const seed) {
+MersenneTwister MersenneTwister_seed(MersenneTwister mersennetwister, UInt32 const seed) {
   // Generate state from the seed (can't give an entire state of zero)
   mersennetwister->state[0] = seed;
 
@@ -115,8 +115,8 @@ MersenneTwister MersenneTwister_seed(MersenneTwister const mersennetwister, UInt
     mersennetwister->state[index] =
       1812433253*(mersennetwister->state[index-1] ^ mersennetwister->state[index-1]>>30) + index;
 
-  // Reset the index
-  mersennetwister->index = 0;
+  // Advance the state
+  mersennetwister = MersenneTwister_next(mersennetwister);
 
   return mersennetwister;
 }
