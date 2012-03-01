@@ -143,7 +143,8 @@ MersenneTwister MersenneTwister_next(MersenneTwister const mersennetwister) {
   for (; index<MERSENNETWISTER_N-1; index+=1) {
     value = (mersennetwister->state[index]&0x80000000) | (mersennetwister->state[index+1]&0x7fffffff);
     mersennetwister->state[index] =
-      mersennetwister->state[index-(MERSENNETWISTER_N-MERSENNETWISTER_M)] ^ (value&1 ? MERSENNETWISTER_A : 0);
+      mersennetwister->state[index-(MERSENNETWISTER_N-MERSENNETWISTER_M)] ^
+      value>>1 ^ (value&1 ? MERSENNETWISTER_A : 0);
   }
   value = (mersennetwister->state[MERSENNETWISTER_N-1]&0x80000000) | (mersennetwister->state[0]&0x7fffffff);
   mersennetwister->state[MERSENNETWISTER_N-1] =
