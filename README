@@ -1,0 +1,253 @@
+% Program Overview
+% Tyson Whitehead
+
+
+Notation
+========
+
+* The suffix *s* is added multiple times to indiciate nestings of
+  plurals (e.g., individualss would be a collection of a collection of
+  individuals).
+* the prefix *r* is used to indicate the reduced versions of data
+  (e.g., rindividualss would be a collection of a collection of
+  individual reduction data)
+
+
+System
+======
+
+The system consists of space, world, variety, and individual data:
+
+space
+  ~ the size of the world and what boundaries are periodic,
+world
+  ~ global user defined parameters (e.g., current simulation year, etc.),
+variety
+  ~ per variety user defined paramaters (e.g., growth rate, etc.), and
+individual
+  ~ per individual user defined parameters (e.g., height, etc.).
+
+The world, variety, and individual data is conceptually organized into
+a three level tree (i.e., one world, an arbitrary number of varieites
+for this world, and an arbitrary number of individuals for each of
+these varieties).  The parts are maintained seperately to minimize
+mutation operations.  The world doesn't contain the varities, nor do
+the varieites contain the individuals.  Instead, there is a world,
+there is a collection of varieties, and there is a collection of a
+collection of individuals:
+
+world
+  ~ the one world
+varieties
+  ~ the collection (for the world) of variety
+individualss
+  ~ the collection (for the world) of collections (for the varieties)
+    of individuals
+
+Simulation
+==========
+
+To start things, the space and world are initialized, an aribitrary
+number of varieties are created, and, for each variety, an arbitrary
+number of individuals are created.  This gives a space and a (world,
+varieties, individualss) tuple.  These two represent the simulation at
+any one moment in time.  The simulation progresses by alternating
+between performing reduction and generation across the current (world,
+varieties, and individualss) tuple.
+
+1. The reduction genererates the (rworld, rvarieties, rindividuals_in,
+   rindividuals_out) tuple (e.g., highest individual in a variety,
+   number of individuals in a variety, average height of individuals
+   around each individual, etc.) from the current (world, varieties,
+   individualss) tuple.
+2. The generation creates a new (world, varieites, individualss) tuple
+   (e.g., growing an individual by replacing it with an identical but
+   higher individual in the same spot, spawning new individuals of the
+   same variety but smaller, etc.) from the current (world, varieties,
+   individualss) and (rworld, rvarieties, rindividuals_in,
+   rindividuals_out) tuples.
+
+
+Reduction
+=========
+
+Reduction is performed across across the (world, varieties,
+individualss) to extract the (rworld, rvarieties, rindividualss)
+parameters of interest.
+
+rworld
+  ~ reduction across all (world, variety, individual) tuples
+rvarieties
+  ~ collection of per variety reductions across all (world, variety,
+    individual) tuples
+rindividualss_in
+  ~ collection of collections of per individual reductions across all
+    (world, variety, individual) tuples where the later individual is
+    in the the former individual's in range
+rindividualss_out
+  ~ collection of collections of per individual reductions across all
+    (world, variety, individual) tuples where the former individual is
+    in the the later individual's out range
+
+The reductions are initialized by calling a user provided function
+with the data available at that level.  Another user provided function
+is then called to update this data for each relevant (world, variety,
+individual) tuple below that level.
+
+rworld
+------
+
+* reduced across all (world, variety, individual) tuples at the world
+  level (i.e., a single instance),
+* rworld is initialized by calling a user provided function with
+  (world),
+* rworld is updated by repeatedly calling a user provided function
+  with each (world, variety, individual) tuple, and
+* can be used to calculate desired world level statistics (e.g.,
+  highest individual in the simulation).
+
+rvarieties
+----------
+
+* reduced across all (world, variety, individual) tuple at the variety
+  level (i.e., a single instance for each variety),
+* each rvariety is initialized by calling a user provided function
+  with the (world, variety) tuple for the variety,
+* each rvariety is updated by repeatedly calling a user provided
+  function with each (world, variety, individual) tuple such that
+  (world, variety) is the tuple for the variety, and
+* can be used to calculate desired variety level statistics across all
+  individuals of that variety (e.g., highest individual for each
+  variety).
+
+rindividualss_in
+----------------
+
+* reduced across all (world, variety, individual0, individual1) tuples
+  at the individual level (i.e., a single instance for each
+  individual),
+* each rindividual_in is initialized by calling a user provided
+  function with the (world, variety, individual) tuple for the
+  individual,
+* the in region for each individual is given by a user provided function
+  passed the (world, variety, individual) tuple for the individual,
+* each rindividual_in is updated by repeatedly calling a user provided
+  function with each (world, variety0, variety1, individual0,
+  individual1) tuple such that (world, variety0, individual0) is the
+  tuple for the individual and (world, variety1, individual1) is the
+  tuple for the other individual in that individual's in range, and
+* can be used to calculate desired individual level statistics across
+  all individuals encompassed by each individual's in range (e.g.,
+  tallest individual encompassed by the in range of each individual).
+
+rindividualss_out
+-----------------
+
+* reduced across all (world, variety, individual0, individual1) tuples
+  at the individual level (i.e., a single instance for each individual)
+* each rindividual_out is initialized by calling a user provided
+  function with the (world, variety, individual) tuple for the
+  individual,
+* the out region for each individual is given by a user provided function
+  passed the (world, variety, individual) tuple for the individual,
+* each rindividual_out is updated by repeatedly calling a user
+  provided function with each (world, variety0, variety1, individual0,
+  individual1) tuple such that (world, variety0, individual0) is the
+  tuple for the other individual whose out range the individual is in
+  and (world, variety1, individual1) is the tuple for the individual,
+  and
+* can be used to calculated desired individual level statistics across
+  all individuals whose out range encompasses each individual (e.g.,
+  tallest individual whose out reach encompasses each individual).
+
+
+Generation
+==========
+
+The next step is generated from outside in.  Each (individual) is
+mapped to a list of new individuals; each (variety, individuals) tuple
+is mapped to a list of new (variety, individuals); and the (world,
+varieties, individualss) tuple is mapped to a new (world, varieties,
+individualss) tuple.
+
+For the individual and variety levels the corresponding component
+in the final (world, varieties, individualss) can be
+
+1. deleted by returning an empty list,
+2. left alone by returning a list with the a copy of the input,
+3. updated by returning a list with an updated copy of the input,
+4. replaced with an arbitrary number of new ones by returning
+   a list of the replacement elements.
+
+As there is only a single world returned, the world level only
+supports the second and third of these.
+
+individual
+----------
+
+* each individual is mapped to a list of new individuals by calling a
+  user defined function with the (world, variety, individual,
+  rworld, rvariety, rindividual_in, rindividual_out) tuple for the
+  individual,
+* for each variety, the combined collection of new individuals and
+  from this mapping of current individuals becomes the set of
+  individuals mapped with that variety at the variety level
+
+variety
+-------
+
+* each vairiety and its associated individuals (produced by the above
+  individual mappings) are mapped to a list of new varieties and
+  associated individualss by calling a user defined function with
+  the (world, variety, individuals, rworld, rvariety) tuple for the
+  variety
+* the combined collection of new varieties and associated individualss
+  from this mapping of current varieties and associated individualss
+  become the set of varieties and associated individualss mapped with
+  the world at the world level
+
+world
+-----
+
+* the world and its associated varieties and individualss (produced
+  above by the variety mappings) are mapped to a new world and
+  associated varieities and individualss by calling a user defined
+  function with the (world, varieties, individualss, rword) tuple
+* the new world and associated varieties and individualss from this
+  mapping becomes the new (world, varieties, individualss) tuple
+
+
+Future
+======
+
+The current system can't handle overlapping in and out regions where
+the individuals themselves fall outside of both regions (i.e.,
+individuals are located at a point within their regions so it is
+possible for the overlap of the regions to not include the
+individuals).
+
+The out version is also less desirable because it is a scatter
+operation.  This forces simultaneous reducers to synronization or
+maintaing seperate reduction space for later merger.
+
+I've been thinking about replacing the individual_in and
+individual_out aggregation/reductions with just a single individual
+reduction to address these issues.
+
+individual
+----------
+
+* reduced across all (world, variety, individual0, individual1) tuples
+  at the individual level (i.e., a single instance for each individual)
+* each rindividual is initialized by calling a user provided function
+  with the (world, variety, individual) tuple for the individual,
+* the region for each individual is given by a user provided function
+  passed the (world, variety, individual) tuple the individual,
+* each rindividual is updated by repeatedly calling a user
+  provided function with each (world, variety0, variety1, individual0,
+  individual1) tuple such that (world, variety0, individual0) is the tuple
+  for the individual and (world, variety1, individual1) is the tuple
+  for the other individual whose range overlaps, and
+* can be used to calculated desired individual level statistics across
+  all individuals whose ranges overlap with each individual (e.g.,
+  tallest individual whose reach overlaps).
