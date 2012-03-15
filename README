@@ -5,7 +5,7 @@
 Notation
 ========
 
-* The suffix *s* is added multiple times to indiciate nestings of
+* The suffix *s* is added multiple times to indicate nestings of
   plurals (e.g., individualss would be a collection of a collection of
   individuals).
 * the prefix *r* is used to indicate the reduced versions of data
@@ -23,16 +23,16 @@ space
 world
   ~ global user defined parameters (e.g., current simulation year, etc.),
 variety
-  ~ per variety user defined paramaters (e.g., growth rate, etc.), and
+  ~ per variety user defined parameters (e.g., growth rate, etc.), and
 individual
   ~ per individual user defined parameters (e.g., height, etc.).
 
 The world, variety, and individual data is conceptually organized into
-a three level tree (i.e., one world, an arbitrary number of varieites
+a three level tree (i.e., one world, an arbitrary number of varieties
 for this world, and an arbitrary number of individuals for each of
-these varieties).  The parts are maintained seperately to minimize
-mutation operations.  The world doesn't contain the varities, nor do
-the varieites contain the individuals.  Instead, there is a world,
+these varieties).  The parts are maintained separately to minimize
+mutation operations.  The world doesn't contain the varieties, nor do
+the varieties contain the individuals.  Instead, there is a world,
 there is a collection of varieties, and there is a collection of a
 collection of individuals:
 
@@ -47,7 +47,7 @@ individualss
 Simulation
 ==========
 
-To start things, the space and world are initialized, an aribitrary
+To start things, the space and world are initialized, an arbitrary
 number of varieties are created, and, for each variety, an arbitrary
 number of individuals are created.  This gives a space and a (world,
 varieties, individualss) tuple.  These two represent the simulation at
@@ -55,12 +55,12 @@ any one moment in time.  The simulation progresses by alternating
 between performing reduction and generation across the current (world,
 varieties, and individualss) tuple.
 
-1. The reduction genererates the (rworld, rvarieties, rindividuals_in,
+1. The reduction generates the (rworld, rvarieties, rindividuals_in,
    rindividuals_out) tuple (e.g., highest individual in a variety,
    number of individuals in a variety, average height of individuals
    around each individual, etc.) from the current (world, varieties,
    individualss) tuple.
-2. The generation creates a new (world, varieites, individualss) tuple
+2. The generation creates a new (world, varieties, individualss) tuple
    (e.g., growing an individual by replacing it with an identical but
    higher individual in the same spot, spawning new individuals of the
    same variety but smaller, etc.) from the current (world, varieties,
@@ -196,7 +196,7 @@ individual
 variety
 -------
 
-* each vairiety and its associated individuals (produced by the above
+* each variety and its associated individuals (produced by the above
   individual mappings) are mapped to a list of new varieties and
   associated individualss by calling a user defined function with
   the (world, variety, individuals, rworld, rvariety) tuple for the
@@ -211,7 +211,7 @@ world
 
 * the world and its associated varieties and individualss (produced
   above by the variety mappings) are mapped to a new world and
-  associated varieities and individualss by calling a user defined
+  associated varieties and individualss by calling a user defined
   function with the (world, varieties, individualss, rword) tuple
 * the new world and associated varieties and individualss from this
   mapping becomes the new (world, varieties, individualss) tuple
@@ -224,15 +224,12 @@ The current system can't handle overlapping in and out regions where
 the individuals themselves fall outside of both regions (i.e.,
 individuals are located at a point within their regions so it is
 possible for the overlap of the regions to not include the
-individuals).
+individuals).  The out version is also less desirable because it is a
+scatter operation.  This forces simultaneous reducers to synchronize
+or maintain separate reduction space for later merger.
 
-The out version is also less desirable because it is a scatter
-operation.  This forces simultaneous reducers to synronization or
-maintaing seperate reduction space for later merger.
-
-I've been thinking about replacing the individual_in and
-individual_out aggregation/reductions with just a single individual
-reduction to address these issues.
+Replacing the individual_in and individual_out aggregation/reductions
+with just a single individual reduction to address these issues.
 
 individual
 ----------
