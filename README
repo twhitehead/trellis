@@ -217,6 +217,68 @@ world
   mapping becomes the new (world, varieties, individualss) tuple
 
 
+Complexity
+==========
+
+The most complex part of the program is performing the individual to
+individual reductions efficiently.  A double loop across all
+individuals (i.e., for each individual check every other individual to
+see it it falls in the desired region) would be $\mathcal O(N^2)$,
+were $N$ is the total number of individuals.^[Saying $f(x)$ is
+$\mathcal O(g(x))$ means $\limsup_x f(x)/g(x) < \infty$ (i.e., $f(x)$
+is eventually bound by constant multiple of $g(x)$).]
+
+To avoid this, the system maps the individuals to their location along
+a space filling 1D Z-curve and stores them in this sorted order.  The
+mapping to a Z-curve is given by interleaving the binary digits of the
+coordinates.  A key property of this mapping is that the Z-value of
+the upper-left and lower-right coordinates of a rectangular region
+bound the Z-values of all points within that region.
+
+Combined with storing individuals in sorted order by their Z-value,
+this allows all the individuals in a rectangular region to be located
+in better than $\mathcal O(N)$.  The algorithm works by alternating
+between Z-values and individuals because not all Z-values between the
+lower and upper and bounds (the Z-values of the upper-left and
+lower-right corners of the region) fall within the region.
+
+- The first Z-value is the upper-left corner of the region (the
+  Z-value of the upper-left corner of rectangular region is the the
+  smallest Z-value within that region).
+- The first individual with a greater or equal Z-value is then located
+  (this is $\mathcal O(\mathrm{ln}(N))$ due to the individuals
+  being sorted by Z-value).
+- This located individual and all subsequent ones are processed until
+  the first individual whose Z-value does not fall in the region is
+  located.
+- If this individual's Z-value falls outside of the upper-bound (the
+  Z-value of the lower-right corner) then all individuals have been
+  located.
+- Otherwise the next point at which the Z-curve intersects the
+  region is calculated and the process resumes with locating the
+  first individual with a greater or equal Z-value.
+
+The number of iterations in the above algorithm is a combination of
+the number of individuals in the region plus the number of times the
+algorithm switches between being inside and outside the the region.
+The later is bound by the number of times the Z-curve enters and
+exists the region.  This, in turn, is bound by a multiple (a function
+of the precision of the Z-curve) of the region's boundary.
+
+Assuming the number of individuals in a region is proportional to the
+area of the region, the former (the number of individuals in the
+region) will dominate the later (the number of times the Z-curve
+enters and exits the region).  Assuming some upper bound on the size
+of all regions, it follows that finding all individuals in a given
+region is $\mathcal O(\mathrm{ln}(N))$.
+
+The complexity of finding all individuals in the (globally bounded)
+regions about all individuals is then $\mathcal O(N \mathrm{ln}(N))$.
+The sorting of all individuals by their Z-values (required for the
+algorithm) is also $\mathcal O(N \mathrm{ln}(N))$.  It follows that
+the overall complexity is $\mathcal O(N \mathrm{ln}(N))$.
+
+
 Future
 ======
 
@@ -248,3 +310,13 @@ individual
 * can be used to calculated desired individual level statistics across
   all individuals whose ranges overlap with each individual (e.g.,
   tallest individual whose reach overlaps).
+
+The precision of the Z-curve plays a critical role in determining the
+constant factor in the overall $\mathcal O(N \mathrm{ln}(N))$
+complexity.  Less precise Z-values mean less stepping in and out of
+regions (and thus a smaller constant factor), but they also mean the
+Z-value filtering is more crude so more individuals are processed as
+being potentially in a region.  Early profile results indicate that
+there could be significant performance gains to be made by reducing
+the current precision of the Z-values to obtain some optimal balance
+between these two effects.
