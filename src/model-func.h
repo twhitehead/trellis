@@ -28,7 +28,7 @@ Thread Thread_begin();
 void Thread_end(Thread thread);
 
 //
-World World_raw(UInt year, Float32 cell_diameter);
+World World_raw(Float32 cell_diameter, UInt year, UInt64 number_seedling, UInt64 number_adult);
 
 FILE* World_saveFP(Space space, World world, char const* name, FILE* file);
 World_FILE_UInt64 World_loadFP(Space space, char const* name, FILE* file, UInt64 line);

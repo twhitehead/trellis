@@ -36,11 +36,13 @@ struct _Thread {
 //---------------------------------------------------------------------------------------------------------------//
 // Reduction
 struct _RWorld {
+  UInt64 number_adult;
+  UInt64 number_seedling;
 };
 
 struct _RVariety {
-  UInt64 number_adult;
   UInt64 number_seedling;
+  UInt64 number_adult;
 };
 
 
@@ -57,8 +59,11 @@ struct _RIndividualOut {
 //---------------------------------------------------------------------------------------------------------------//
 // Model
 struct _World {
-  UInt year;
   Float32 cell_diameter;
+
+  UInt year;
+  UInt64 number_seedling;
+  UInt64 number_adult;
 };
 
 

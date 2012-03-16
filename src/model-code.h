@@ -58,8 +58,10 @@ void Thread_end(Thread const thread) {
 
 //---------------------------------------------------------------------------------------------------------------//
 //
-World World_raw(UInt const year, Float32 const cell_diameter) {
-  World const world = { .year = year, .cell_diameter = cell_diameter };
+World World_raw(Float32 const cell_diameter, UInt const year,
+                UInt64 const number_seedling, UInt64 const number_adult) {
+  World const world = { .cell_diameter = cell_diameter, .year = year,
+                        .number_seedling = number_seedling, .number_adult = number_adult };
   return world;
 }
 
@@ -67,8 +69,8 @@ World World_raw(UInt const year, Float32 const cell_diameter) {
 //
 FILE* World_saveFP(Space const space, World const world,
                    char const* const name, FILE* file) {
-  if ( fprintf(file, "%u %g\n",
-               world.year, world.cell_diameter) < 0 )
+  if ( fprintf(file, "%g %u %"PRIu64" %"PRIu64"\n",
+               world.cell_diameter, world.year, world.number_seedling, world.number_adult) < 0 )
     Error_dieErrNo(1, "an error occured while writing to \"%s\"", name);
 
   return file;
@@ -80,14 +82,15 @@ World_FILE_UInt64 World_loadFP(Space const space,
   World world;
   Int records;
 
-  records = fscanf(file,"%u %g\n",
-                   &world.year, &world.cell_diameter);
+  records = fscanf(file,"%g %u %"SCNu64" %"SCNu64"\n",
+                   &world.cell_diameter, &world.year, &world.number_seedling, &world.number_adult);
   if ( ferror(file) )
     Error_dieErrNo(1, "an error occured while reading from \"%s\"", name);
-  if ( records == EOF || records < 2 )
+  if ( records == EOF || records < 4 )
     Error_die(1, "problem parsing \"%s\":%"PRIu64": expecting "
+              "CELL_DIAMETER "
               "YEAR "
-              "CELL_DIAMETER", name, line);
+              "NUMBER_SEEDLING NUMBER_ADULT", name, line);
 
   return pack_World_FILE_UInt64(world, file, line+1);
 }
@@ -154,6 +157,8 @@ World_SVarieties_SSIndividuals World_next(Space const space,
 
   // Next world
   world.year += 1;
+  world.number_seedling += rworld.number_seedling;
+  world.number_adult += rworld.number_adult;
 
   // Package and return
   SVarieties const svarieties = AVarieties_end(avarieties);
@@ -371,28 +376,29 @@ AIndividuals Individual_next(AIndividuals aindividuals, Space const space,
 
 //---------------------------------------------------------------------------------------------------------------//
 //
-RWorld RWorld_raw() {
-  RWorld const rworld = { };
+RWorld RWorld_raw(UInt64 number_seedling, UInt64 number_adult) {
+  RWorld const rworld = { .number_seedling = number_seedling, .number_adult = number_adult };
   return rworld;
 }
 
 
 //
 RWorld RWorld_first(Space const space, World const world) {
-  return RWorld_raw();
+  return RWorld_raw(0,0);
 }
 RWorld RWorld_rest(Space const space, World const world, Variety const variety, Individual const individual) {
-  return RWorld_raw();
+  return individual.height >= variety.height_mature ? RWorld_raw(0,1) : RWorld_raw(1,0);
 }
 RWorld RWorld_merge(RWorld const rworld0, RWorld const rworld1) {
-  return RWorld_raw();
+  return RWorld_raw(rworld0.number_seedling + rworld1.number_seedling,
+                    rworld0.number_adult + rworld1.number_adult);
 }
 
 
 //---------------------------------------------------------------------------------------------------------------//
 //
-RVariety RVariety_raw(UInt64 number_adult, UInt64 number_seedling) {
-  RVariety const rvariety = { .number_adult = number_adult, .number_seedling = number_seedling };
+RVariety RVariety_raw(UInt64 number_seedling, UInt64 number_adult) {
+  RVariety const rvariety = { .number_seedling = number_seedling, .number_adult = number_adult };
   return rvariety;
 }
 
@@ -402,11 +408,11 @@ RVariety RVariety_first(Space const space, World const world, Variety const vari
   return RVariety_raw(0,0);
 }
 RVariety RVariety_rest(Space const space, World const world, Variety const variety, Individual const individual) {
-  return individual.height >= variety.height_mature ? RVariety_raw(1,0) : RVariety_raw(0,1);
+  return individual.height >= variety.height_mature ? RVariety_raw(0,1) : RVariety_raw(1,0);
 }
 RVariety RVariety_merge(RVariety const rvariety0, RVariety const rvariety1) {
-  return RVariety_raw(rvariety0.number_adult + rvariety1.number_adult,
-                      rvariety0.number_seedling + rvariety1.number_seedling);
+  return RVariety_raw(rvariety0.number_seedling + rvariety1.number_seedling,
+                      rvariety0.number_adult + rvariety1.number_adult);
 }
 
 
