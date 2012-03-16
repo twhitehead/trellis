@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <time.h>
 
 #include "system.h"
 #include "random.h"
@@ -34,13 +35,15 @@ int main() {
                                                  State_load("checkpoint.txt") );
   else {
     space = Space_raw(true,true, 20.0*20.0, 20.0*20.0);
-    world = World_raw(0, 20.0);
+    world = World_raw(20.0, 0, 0,0);
     svarieties = AVarieties_end(AVarieties_begin());
     ssindividuals = ASIndividuals_end(ASIndividuals_begin());
   }
 
 
   // Simulate
+  time_t const time_start = time(0);
+
   while (world.year <= 2000) {
     printf("Simulating year %u...\n", world.year);
 
@@ -60,12 +63,8 @@ int main() {
       Variety const variety = svarieties->variety[variety_index];
       RVariety const rvariety = srvarieties->rvariety[variety_index];
 
-      if (variety.type == Variety_TypeOriginal)
-        printf("  Original number (adult, seedling) = (%"PRIu64",%"PRIu64")\n",
-               rvariety.number_adult, rvariety.number_seedling);
-      else if (variety.type == Variety_TypeInvader)
-        printf("  Invader number (adult, seedling) = (%"PRIu64",%"PRIu64")\n",
-               rvariety.number_adult, rvariety.number_seedling);
+      printf("  Variety %u number (seedling, adult) = (%"PRIu64", %"PRIu64")\n",
+             variety_index, rvariety.number_seedling, rvariety.number_adult);
     }
 
     // Advance
@@ -91,13 +90,19 @@ int main() {
     ssindividuals = ssindividuals_next;
 
     // Checkpoint
-    if (world.year == 1000)
+    if (world.year%100 == 0)
       State_save(space, world, svarieties, ssindividuals, "checkpoint.txt");
   }
+
+  time_t const time_end = time(0);
 
   // Cleanup
   printf("Saving final world...\n");
   State_save(space, world, svarieties, ssindividuals, "final.txt");
+
+  printf("Processed (seedling, adult) = (%"PRIu64", %"PRIu64")\n",
+         world.number_seedling, world.number_adult);
+  printf("Wall time elapsed time = %us\n", (UInt)(time_end-time_start));
 
   SSIndividuals_end(ssindividuals);
   SVarieties_end(svarieties);
