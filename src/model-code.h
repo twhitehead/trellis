@@ -471,9 +471,9 @@ RIndividualOut RIndividualOut_raw(UInt64 const number_lower, UInt64 const number
 Float32_Float32_Float32_Float32 RIndividualOut_bound(Space const space, World const world,
                                                      Variety const variety0, Individual const individual0,
                                                      Variety const variety1) {
+  Float32 const radius = individual0.height*world.cell_diameter/(2.0*variety0.height_maximum);
   return pack_Float32_Float32_Float32_Float32
-    (individual0.x-world.cell_diameter/2.0, individual0.y-world.cell_diameter/2.0,
-     individual0.x+world.cell_diameter/2.0, individual0.y+world.cell_diameter/2.0);
+    (individual0.x-radius, individual0.y-radius, individual0.x+radius, individual0.y+radius);
 }
 
 
@@ -482,7 +482,8 @@ Bool RIndividualOut_filter(Int const mirror_x, Int const mirror_y, Space const s
                            Variety const variety1, Individual const individual1) {
   Float32 const delta_x = individual1.x+mirror_x*space.size_x-individual0.x;
   Float32 const delta_y = individual1.y+mirror_y*space.size_y-individual0.y;
-  return delta_x*delta_x + delta_y*delta_y <= world.cell_diameter*world.cell_diameter/4.0;
+  Float32 const radius = individual0.height*world.cell_diameter/(2.0*variety0.height_maximum);
+  return delta_x*delta_x + delta_y*delta_y <= radius*radius;
 }
 
 
