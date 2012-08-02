@@ -355,7 +355,7 @@ AIndividuals Individual_next(AIndividuals aindividuals, Space const space,
   // Grow/die
   Float32 const growth = ( variety.growth_rate * individual.height * 
                            logf( variety.height_maximum/individual.height ) *
-                           expf( -variety.growth_decay*rindividualout.number_higher ) );
+                           expf( -variety.growth_decay*rindividualout.number_higher/5.0 ) );
   Float32 const mortality = ( variety.mortality_intrinsic + 
                               ( (1.0-variety.mortality_intrinsic) *
                                 variety.mortality_initial*expf(-variety.mortality_decay*growth) ) );
