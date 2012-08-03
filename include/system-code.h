@@ -32,6 +32,11 @@
 
 //---------------------------------------------------------------------------------------------------------------//
 //
+UInt64 Bits_oneIffLEMSB(UInt64 const bits);
+UInt64 Bits_oneIffLEMSBZ(UInt64 const bits);
+UInt64 Bits_zeroIffGTLSB(UInt64 const bits);
+
+//
 UInt64 Indices_reverse(UInt64 indices);
 
 //
@@ -65,6 +70,48 @@ SIndividuals_ AIndividuals_sortBoth(SIndividuals_ sindividuals_,
                                     SIndividuals1 right_sindividuals1_start,
                                     UInt64 left_index_start, UInt64 right_index_start,
                                     UInt64 pivot_z);
+
+
+//---------------------------------------------------------------------------------------------------------------//
+// Bits_oneIffLEMSB: (UInt64) -> (UInt64)
+//
+// Returned bits are one if and only if their position is less than or equal to that of the most-significant bit
+// set (clear all bits if not bits set, otherwise set all bits up to and including last set bit).
+//
+UInt64 Bits_oneIffLEMSB(UInt64 const bits) {
+  UInt64 reduction = bits;
+
+  for (UInt shift = 1; shift < 64; shift *= 2)
+    reduction = reduction | reduction >> shift;
+
+  return reduction;
+}
+
+
+// Bits_oneIffLEMSBZ: (UInt64) -> (UInt64)
+//
+// Returned bits along each dimension are zero if and only if their position is less than or equal to that of the
+// most-significant bit sets along that dimension (clear all bits if no bits set, otherwise set all bits up to
+// and including last set bit along each dimension).
+//
+UInt64 Bits_oneIffLEMSBZ(UInt64 const bits) {
+  UInt64 reduction = bits;
+
+  for (UInt shift = 2; shift < 64; shift *= 2)
+    reduction = reduction | reduction >> shift;
+
+  return reduction;
+}
+
+
+// Bits_zeroIffGTLSB: (UInt64) -> (UInt64)
+//
+// Returned bits are zero if and only if their position is greater than that of the least-significant bit set
+// (set all bits if no bits set, otherwise clear all bits above last set bit and set all bits below it).
+//
+UInt64 Bits_zeroIffGTLSB(UInt64 const bits) {
+  return bits-1 ^ bits;
+}
 
 
 //---------------------------------------------------------------------------------------------------------------//
@@ -385,25 +432,32 @@ SIndividuals1 SIndividuals__sindividuals1(SIndividuals_ const sindividuals_, UIn
 
 
 //---------------------------------------------------------------------------------------------------------------//
-// IZ_valid: (UInt64) -> (IZ)
+// IZ_iz: (IZ, Bool) -> (IZ)
 //
-// Valid IZ with given values
-// 
-IZ IZ_valid(UInt64 const z) {
-  IZ const iz = { .valid = true, .z = z };
+// IZ with given values
+//
+IZ IZ_iz(bool valid, UInt64 z) {
+  IZ const iz = { .valid = valid, .z = z };
 
   return iz;
 }
 
 
-// IZ_invalid: (IZ, Bool) -> (IZ)
+// IZ_valid: (UInt64) -> (IZ)
+//
+// Valid IZ with given values
+//
+IZ IZ_valid(UInt64 const z) {
+  return IZ_iz(true, z);
+}
+
+
+// IZ_invalid: () -> (IZ)
 //
 // Invalid IZ.
 //
 IZ IZ_invalid() {
-  IZ const iz = { .valid = false };
-
-  return iz;
+  return IZ_iz(false, 0);
 }
 
 
@@ -412,138 +466,123 @@ IZ IZ_invalid() {
 // Duplicate of original IZ with Z set to z.
 //
 IZ IZ_zSet(IZ const iz, UInt64 const z) {
-  // Invalid iz, done
-  if (!iz.valid)
-    return iz;
-
-  // Make a duplicate with field set
-  IZ iz_new = iz;
-
-  iz_new.z = z;
-  return iz_new;
+  return IZ_iz(iz.valid, z);
 }
 
 
 // IZ_nextBox: (IZ, UInt64,UInt64) -> (IZ)
 //
-// Smallest Z value greater than given z value inside given box.
+// Smallest Z value greater than given Z value inside given box
 //
-// This routine works by first checking there are more Z values in the box.  If so, the given z value is a lower
-// bound that is increased until the desired Z value (the smallest one greater than the give z value that is
-// inside the box) is found.
+// This routine works by computing a non-overlapping coverage of all subsequent Z values with completely-
+// traversed hyperbox.  The next value is then the negative corner of the box clipped to the first of the
+// hyperboxes that intersects the box.
 //
-// The given z value is increased by checking the largest 2x2-aligned box immediately following it for overlap
-// with given box.  If no overlap is found, the box is skipped by increasing the given z value to the end of the
-// box and repeating the procedure.
+// The clipped corner must be on the curve as it is in a completely-traversed hyperbox.  It must be the first
+// Z value in the box to be traversed as all other values in the box either do not intersect or are greater.
 //
-// Once overlap is found, the overlapping box is broken down into 2x2 boxes.  Each 2x2 box without overlap is
-// skipped by increasing the given z value to the end of it.  Once overlap is found, the procedure is repeated.
-// The Z value is found when the box becomes a singleton.
+// There is one completely-traversed hyperbox for each zero in the given Z value.  The Z values coverered by
+// each of these hyperboxes is given by changing the zero into a one and iterating through all possible lower
+// bit combinations.
 //
-// The functional pseudo-code follows.
+// This works because it is precisely what adding ones to the given Z value does.  Eventually a carry sets the
+// given zero bit.  Subsequent additions then iterate through all possible lower bit combinations.
 //
-// IZ_nextBox: (UInt64, UInt64,UInt64) -> (UInt64)
+// The actual computations are as follows.  Consider the given point and box corners (all in Z values) as a
+// series of bits in the standard order.  Let these series be known as z and c0 and c1.  For each dimension i
+// in the Z values, consider the additional series s0_i and s1_i (same) and o0_i and o1_i (outside).
 //
-// IZ_nextBox(z, box_ul_z,box_lr_z)
-//   // Interval [z+1,box_lr_z+1) contains Z value, find it
-//   z < box_lr_z:
-//     IZ_nextBox_outSize(z, 1, box_ul_z,box_lr_z)
-//   // Interval [z+1,box_lr_z+1) does not contain Z value, done
-//   otherwise:
-//     fail("no more valid z points")
+// Let each bit in s0_i and s1_i indicate that c0 and c1, respectively, are the same as z from that bit upwards
+// along the appropriate dimension.  Let each bit in o0_i and o1_i indicate that c0 and c1, respectively, are,
+// greater and lesser, respectively, than z from that bit upwards (z falls outside the box).
 //
-// IZ_nextBox_outSize(z, step, box_ul_z,box_lr_z)
-//   // On step size boundary, increase step size
-//   (z+1) % (step*4) == 0:
-//     IZ_nextBox_outSize(z, step*4, box_ul_z,box_lr_z)
-//   // Not on step size boundary, check box to next next boundary
-//   otherwise:
-//     IZ_nextBox_outStep(z, step, box_ul_z,box_lr_z)
+// Using + to index the bit on the left and e_i as a mask for dimension i (kronecker delta), these can be written
+// recursively as
 //
-// IZ_nextBox_outStep(z, step, box_ul_z,box_lr_z)
-//   let ul_z = z+1
-//   let lr_z = z+step
-//   // Next box overlap with target box, locate Z point in it
-//   Z_overlap(ul_z,lr_z, box_ul_z,box_lr_z):
-//     IZ_nextBox_inSize(z, step, box_ul_z,box_lr_z)
-//   // Next box doesn't overlap with target box, skip over it
-//   otherwise:
-//     IZ_nextBox_outSize(lr_z, step, box_ul_z,box_lr_z)
+//   ~s0_i = ~+s0_i | (~c0 & z | c0 & ~z) & e_i
+//   ~s1_i = ~+s1_i | (~c1 & z | c1 & ~z) & e_i
 //
-// IZ_nextBox_inSize(z, step, box_ul_z,box_lr_z)
-//   // Single point, done
-//   step == 1:
-//     z+1
-//   // Not single point, divide into sub boxes
-//   otherwise:
-//     IZ_nextBox_inStep(z, step/4, box_ul_z,box_lr_z)
+//   o0_i = +o0_i | ~+s0_i &  c0 & ~z & e_i
+//   o1_i = +o1_i | ~+s1_i & ~c1 &  z & e_i
 //
-// IZ_nextBox_inStep(z, step, box_ul_z,box_lr_z)
-//   let ul_z = z+1
-//       lr_z = z+step
-//   // Next sub box overlaps with target box, locate Z point in it
-//   Z_overlap(ul_z,lr_z, box_ul_z,box_lr_z):
-//     IZ_nextBox_inSize(z, step, box_ul_z,box_lr_z)
-//   // Next sub box doesn't overlap with target box, skip over it
-//   otherwise:
-//     IZ_nextBox_inStep(lr_z, step, box_ul_z,box_lr_z)
+// Consider an additional series p (possible).  Let each bit in p indicate that setting this bit in z and
+// clearing all lower bits would give the negative corner of one of the completely traversed hyperboxes that
+// intersects the box.  This can be expressed in terms of s0_i, s1_i, o0_i, and o1_i as
 //
-// Z_overlap(ul_z0,lr_z0, ul_z1,lr_z1)
-//   ( (ul_z0&X_MASK) <= (lr_z1&X_MASK) && (lr_z0&X_MASK) >= (ul_z1&X_MASK) &&
-//     (ul_z0&Y_MASK) <= (lr_z1&Y_MASK) && (lr_z0YX_MASK) >= (ul_z1YX_MASK) )
+//   p = ~z & (\and_i ~+o0_i) & (\and_i ~+o1_i & (~+s1_i | c1 | ~e_i))
+//     = ~z & ~(\or_i +o0_i | \or_i +o1_i | \or_i +s1_i & ~c1 & e_i)
+//     = ~z & ~(\or_i +o_i | (\or_i +s1_i & e_i) & ~c1)
+//     = ~z & ~(+o | ++s1 & ~c1)
+//     = ~z & ~+o & (~++s1 | c1)
 //
-// Flattening the recursive calls with loops this becomes the following code.
+// where ++ indicates indexing the next bit in the same dimension on the left and
 //
-IZ IZ_nextBox(IZ const iz, UInt64 const box_ul_z, UInt64 const box_lr_z) {
-  // Interval [z+1,box_lr_z+1) does not contain Z value, done
-  if (!iz.valid || iz.z >= box_lr_z)
-    return IZ_invalid();
+//   s0 = \or_i s0_i & e_i  (~s0 = ~++s0 | ~c0 & z | c0 & ~z)
+//   s1 = \or_i s1_i & e_i  (~s1 = ~++s1 | ~c1 & z | c1 & ~z)
+//
+//   o_i = o0_i | o1_i
+//
+//   o0 = \or_i o0_i
+//   o1 = \or_i o1_i
+//
+//   o = \or_i o_i = o0 | o1
+//
+// The combined recursive equations (those with the ++) come from expanding the non-combined ones once for each
+// dimension.  The first hyperbox is indicated by the lowest set bit in p.  No set bits indicate there is no
+// further Z values inside the box.
+//
+// Assume further Z values.  The next one has the same upper bits as z until the lowest set bit in p.  This bit
+// is one and the remaning bits are either zero or c0 along each dimension.  The former happens when the negative
+// corner of the box is clipped by the hyperbox in that dimension and the latter otherwise.
+//
+// Consider the series i0_i.  For each hyperbox identified by a set bit in p, let i0_i indicate if c0 is less
+// than the negative corner of the hyperbox (c0 has to be clipped).  This can be expressed as
+//
+//   i0_i = ~s0_i & ~o0_i |_{z=1}
+//        = (~+s0_i | (~c0 & z | c0 & ~z) & e_i) & ~(+o0_i | ~+s0_i & c0 & ~z & e_i) |_{z=1}
+//        = (~+s0_i | ~c0 & e_i) & ~+o0_i
+//        = ~+s0_i | ~c0 & e_i
+//
+// where the current bit of z is taken as set and p as true (p implying ~+o implying ~+o0_i).
+//
+// The actual hyperbox of interest is the first of those identified by p.  Let the series r indicate if a bit in
+// this hyperbox is fixed at z (occurs at or before the first one in p)
+//
+//   r = -r & ~-p
+//
+// Let m0 be a series indicating if the corresponding bit should be zero or c0.  This is created by latching i0_i
+// at the hyperbox (p & r)
+//
+//   m0_i = +m0_i | p & r & i0_i
+//
+//   m0 = \or_i m0_i & e_i
+//      = ++m0 | (... | +p & +r | p & r) & ~++s0 | p & r & ~c0
+//
+// As before, the combined equation (the one with the ++) comes from expanding the non-combined one once for each
+// dimension.
+//
+// The final solution is then z above r, one where r starts, and a clipped c0 below
+//
+//   z & ~r | p & r | ~m0 & c0 & +r
+//
+IZ IZ_nextBox(IZ const iz, UInt64 const corner0, UInt64 const corner1) {
+  // Calculate overlap possibility at each level along each dimension
+  UInt64 const not_same0 = Bits_oneIffLEMSBZ(corner0 ^ iz.z);
+  UInt64 const not_same1 = Bits_oneIffLEMSBZ(corner1 ^ iz.z);
 
-  // Scan forward with progressively larger boxes for overlap with target box (bits below bit are 1)
-  UInt64 z = iz.z;
-  UInt bit = 0;
+  // Calculate level at which overlap is no longer possible
+  UInt64 const outside01 = Bits_oneIffLEMSB(~(not_same1>>2) & ~corner1 & iz.z | ~(not_same0>>2) & corner0 & ~iz.z);
 
-  while (1) {
-    // While on step size boundary, increase step size
-    while ((z+1 & ((UInt64)3<<2*bit)) == 0)
-      bit += 1;
+  // Calculate bottom mask for overlap
+  UInt64 const possible = ~iz.z & (corner1 | not_same1>>2) & ~(outside01>>1);
+  UInt64 const region = Bits_zeroIffGTLSB(possible);
 
-    // If previous box overlaps with target box, locate Z point in it
-    UInt64 const ul_z = z+1;
-    UInt64 const lr_z = z+((UInt64)1<<2*bit);
+  // Calculate bottom inside masks along each dimension
+  UInt64 const mask0 = Bits_oneIffLEMSBZ((region ^ region>>2) & not_same0>>2 | (region ^ region>>1) & ~corner0);
 
-    if ( (ul_z&X_MASK) <= (box_lr_z&X_MASK) && (lr_z&X_MASK) >= (box_ul_z&X_MASK) &&
-         (ul_z&Y_MASK) <= (box_lr_z&Y_MASK) && (lr_z&Y_MASK) >= (box_ul_z&Y_MASK) )
-      break;
-
-    // Previous box doesn't overlap with target box, skip over it
-    z = lr_z;
-  }
-
-  // Scan progressively smaller boxes in overlapping box for first point in target box (bits below bit are 1)
-  while (1) {
-    // At single point, done
-    if (bit == 0)
-      break;
-
-    // Decrease step size to divide into sub boxes
-    bit -= 1;
-
-    // While previous sub box doesn't overlap with target box, skip over it (could be unrolled to 3 checks)
-    while (1) {
-      UInt64 const ul_z = z+1;
-      UInt64 const lr_z = z+((UInt64)1<<2*bit);
-
-      if ( (ul_z&X_MASK) <= (box_lr_z&X_MASK) && (lr_z&X_MASK) >= (box_ul_z&X_MASK) &&
-           (ul_z&Y_MASK) <= (box_lr_z&Y_MASK) && (lr_z&Y_MASK) >= (box_ul_z&Y_MASK) )
-        break;
-
-      z = lr_z;
-    }
-  }
-
-  // Return IZ for located Z
-  return IZ_zSet(iz, z+1);
+  // Combine top and bottom bits and return IZ
+  return IZ_iz(possible && iz.valid,
+               ~region & iz.z | region ^ (region>>1) | (region>>1) & ~mask0 & corner0);
 }
 
 
