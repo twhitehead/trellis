@@ -59,28 +59,10 @@ struct _SVarieties {
 };
 
 
-union _SIndividuals_ {
-  SIndividuals0 sindividuals0;
-  SIndividuals1 sindividuals1;
-};
-
-
-struct _SIndividuals0 {
-  UInt64 left_z[CLUSTER];
-  UInt64 right_z[CLUSTER];
-  SIndividuals_ sindividuals_[CLUSTER];
-};
-
-
-struct _SIndividuals1 {
-  UInt64 z[CLUSTER];
-  Individual individual[CLUSTER];
-};
-
-
 struct _SIndividuals {
   UInt64 number;
-  SIndividuals_ sindividuals_;
+  UInt64* z;
+  Individual* individual;
 };
 
 
@@ -133,26 +115,13 @@ struct _IZ {
 
 struct _IIndividuals {
   Bool valid;
-
-  UInt64 number;
+  SIndividuals sindividuals;
   UInt64 index;
-
-  SIndividuals_ sindividuals_;
-  SIndividuals1 sindividuals1;
 };
 
 
 //---------------------------------------------------------------------------------------------------------------//
-// Building (_AVarieties and _ASIndividuals are same as _SVarieties and _SSIndividuals)
-struct _AIndividuals {
-  UInt64 number;
-
-  UInt64 z_min;
-  UInt64 z_max;
-
-  SIndividuals_ sindividuals_;
-  SIndividuals1 sindividuals1;
-};
+// Building (_AVarieties, _ASIndividuals, and _AIndividuals are same as their constant variants)
 
 
 //---------------------------------------------------------------------------------------------------------------//

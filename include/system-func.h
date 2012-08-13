@@ -34,6 +34,7 @@ void SVarieties_end(SVarieties svarieites);
 
 //
 void SSIndividuals_end(SSIndividuals ssindividuals);
+void SIndividuals_end(SIndividuals sindividuals);
 
 //
 IIndividuals IIndividuals_first(SIndividuals sindividuals);

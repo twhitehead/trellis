@@ -42,11 +42,8 @@ typedef double Float64;
 typedef struct _Space Space;
 
 typedef struct _SVarieties* SVarieties;
-typedef union _SIndividuals_ SIndividuals_;
-typedef struct _SIndividuals0* SIndividuals0;
-typedef struct _SIndividuals1* SIndividuals1;
-typedef struct _SIndividuals SIndividuals;
 typedef struct _SSIndividuals* SSIndividuals;
+typedef struct _SIndividuals SIndividuals;
 
 typedef struct _SRVarieties* SRVarieties;
 typedef struct _SSRIndividualsIn* SSRIndividualsIn;
@@ -59,7 +56,7 @@ typedef struct _IIndividuals IIndividuals;
 
 typedef struct _SVarieties* AVarieties;
 typedef struct _SSIndividuals* ASIndividuals;
-typedef struct _AIndividuals AIndividuals;
+typedef struct _SIndividuals AIndividuals;
 
 typedef struct _AVarieties_ASIndividuals AVarieties_ASIndividuals;
 typedef struct _World_SVarieties_SSIndividuals World_SVarieties_SSIndividuals;

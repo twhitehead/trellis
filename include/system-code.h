@@ -37,39 +37,21 @@ UInt64 Bits_oneIffLEMSBZ(UInt64 const bits);
 UInt64 Bits_zeroIffGTLSB(UInt64 const bits);
 
 //
-UInt64 Indices_reverse(UInt64 indices);
-
-//
-SIndividuals SIndividuals_raw(UInt64 number, SIndividuals_ sindividuals_);
-SIndividuals SIndividuals_none();
-void SIndividuals_end(SIndividuals sindividuals);
-
-//
-SIndividuals_ SIndividuals__sindividuals_(SIndividuals_ sindividuals_, UInt64 index, UInt depth);
-SIndividuals1 SIndividuals__sindividuals1(SIndividuals_ sindividuals_, UInt64 index);
-
-//
 IZ IZ_valid(UInt64 z);
 IZ IZ_invalid();
 IZ IZ_zSet(IZ iz, UInt64 z);
 IZ IZ_nextBox(IZ iz, UInt64 box_ul_z,UInt64 box_lr_z);
 
 //
-IIndividuals IIndividuals_valid(UInt64 number, UInt64 index,
-                                SIndividuals_ sindividuals_, SIndividuals1 sindividuals1);
+IIndividuals IIndividuals_valid(SIndividuals sindividuals, UInt64 index);
 IIndividuals IIndividuals_invalid();
-IIndividuals IIndividuals_indexSet(IIndividuals iindividuals, UInt64 index, SIndividuals1 sindividuals1);
 UInt64 IIndividuals_z(IIndividuals iindividuals);
 
 //
-SIndividuals_ AIndividuals_attach(SIndividuals_ sindividuals_, SIndividuals1 sindividuals1, UInt64 index);
-SIndividuals_ AIndividuals_cache(SIndividuals_ sindividuals_, UInt64 number);
-SIndividuals_ AIndividuals_sort(SIndividuals_ sindividuals_, UInt64 number, UInt64 pivot_z);
-SIndividuals_ AIndividuals_sortBoth(SIndividuals_ sindividuals_,
-                                    SIndividuals1 left_sindividuals1_start,
-                                    SIndividuals1 right_sindividuals1_start,
-                                    UInt64 left_index_start, UInt64 right_index_start,
-                                    UInt64 pivot_z);
+AIndividuals AIndividuals_sort(AIndividuals aindividuals);
+AIndividuals AIndividuals_sortBoth(AIndividuals aindividuals,
+                                   UInt64 left_index_start, UInt64 right_index_start,
+                                   UInt64 pivot_z);
 
 
 //---------------------------------------------------------------------------------------------------------------//
@@ -208,47 +190,6 @@ UInt64 Z_xy(Float32 const x, Float32 const y, Float32 const scale) {
 
 
 //---------------------------------------------------------------------------------------------------------------//
-// Indices_reverse: (UInt64) -> (UInt64)
-//
-// For given index, reverse the entries.
-//
-// This routine works by treating the index as a collection of CLUSTER sized indices.  Shifting the indices off
-// of one integer and onto another reverses their order (same as reversing a list).
-//
-// The functional pseudo-code follows.
-//
-// Indices_reverse: (UInt64) -> (UInt64)
-// Indices_reverse_shift: (UInt64, UInt64, UInt) -> (UInt64)
-//
-// Indices_reverse(indices)
-//   // Start with everything in the forward indices and nothing in the reverse
-//   Indices_reverse_shift(indices, 0, DEPTH)
-//
-// Indices_reverse_shift(forward, reverse, number)
-//   // More chunks, shift next one from forward indices to reverse and recurse to handle rest
-//   number > 0:
-//     Indices_reverse_shift(forward/CLUSTER, reverse*CLUSTER+forward%CLUSTER, number-1)
-//   // No more chunks, done
-//   otherwise:
-//     Indices_reverse
-//
-// Flattening the recursive calls with loops this becomes the following code.
-//
-UInt64 Indices_reverse(UInt64 const indices) {
-  // For each level, shift the indices off the end of the one integer and onto the other
-  UInt64 forward = indices;
-  UInt64 reverse = 0;
-
-  for (UInt iterator=0; iterator<DEPTH; iterator+=1) {
-    reverse = reverse*CLUSTER + forward%CLUSTER;
-    forward /= CLUSTER;
-  }
-
-  return reverse;
-}
-
-
-//---------------------------------------------------------------------------------------------------------------//
 // Space_raw: (Bool, Bool, Float32, Float32) -> (Space)
 //
 // Space with given parameters.
@@ -285,156 +226,13 @@ void SSIndividuals_end(SSIndividuals const ssindividuals) {
 
 
 //---------------------------------------------------------------------------------------------------------------//
-// sindividuals: (UInt64, SIndividuals_) -> (SIndividuals)
-//
-// SIndividuals with for number Individual rooted at sindividuals_.
-//
-SIndividuals SIndividuals_raw(UInt64 const number, SIndividuals_ const sindividuals_) {
-  SIndividuals const sindividuals = { .number = number, .sindividuals_ = sindividuals_ };
-
-  return sindividuals;
-}
-
-
-// SIndividuals_none: () -> (SIndividuals)
-//
-// SIndividuals with no Individuals.
-//
-SIndividuals SIndividuals_none() {
-  SIndividuals const sindividuals = { .number = 0 };
-
-  return sindividuals;
-}
-
-
-// SIndividuals_end: (*SIndividuals) -> ()
+// SIndividuals_end: (SIndividuals*) -> ()
 //
 // Release resources associated with sindividuals.
 //
-// The functional pseudo-code follows (just iteration code as pseudo-code system is garbage collected).
-//
-// SIndividuals_end: (SIndividuals_, UInt64) -> ()
-//
-// AIndividuals_end_level:  (SIndividuals_, UInt64, UInt64, UInt64) -> ()
-// AIndividuals_end_level0: (SIndividuals0, UInt64, UInt64, UInt64) -> ()
-// AIndividuals_end_level1: (SIndividuals0, UInt64, UInt64)         -> ()
-//
-// SIndividuals_end(sindividuals_, number)
-//   SIndividuals_end_level(sindividuals_, number, 0, CLUSTER^(DEPTH-1))
-//
-// SIndividuals_end_level(sindividuals_, number, index, step)
-//   // Not at bottom level, handle with level0 routine
-//   step > 1:
-//     SIndividuals_end_level0(sindividuals_.sindividuals0, number, index, step)
-//   // At bottom level, handle with level1 routine
-//   otherwise:
-//     SIndividuals_end_level1(sindividuals_.sindividuals1, number, index)
-//
-// SIndividuals_end_level0(sindividuals0, number, index, step):
-//   let () =
-//         SIndividuals_end_level(sindividuals0.sindividuals_[index/step%CLUSTER], number, index, step/CLUSTER)
-//   // Further entires at this level, free them first
-//   index+step < number && (index+step)/step%CLUSTER > 0:
-//     SIndividuals_end_level0(sindividuals0, number, index+step, step)
-//   // No further entries at this level, free it
-//     ()
-//
-// SIndividuals_end_level1(sindividuals1, number, index):
-//   // Free it
-//   ()
-//
-// Flattening the recursive calls with loops and a sindividuals_ stack array this becomes the following code.
-//
 void SIndividuals_end(SIndividuals const sindividuals) {
-  SIndividuals_ sindividuals__stack[DEPTH] = { [DEPTH-1] = sindividuals.sindividuals_ };
-  UInt64 index = 0;
-  UInt bit = 64-64/DEPTH;
-
-  // Iterate through SIndividuals1 levels, removing them and upper SIndividuals0 levels
-  while (index < sindividuals.number) {
-    // Go down to SIndividuals1 level and free it
-    while (bit > 0) {
-      sindividuals__stack[bit/(64/DEPTH)-1] =
-        sindividuals__stack[bit/(64/DEPTH)].sindividuals0->sindividuals_[(index >> bit) % CLUSTER];
-      bit -= 64/DEPTH;
-    }
-
-    free(sindividuals__stack[0].sindividuals1);
-
-    // Free all SIndividuals0 levels above that we fall on boundary
-    while (bit < 64-64/DEPTH) {
-      // Move to level above
-      bit += 64/DEPTH;
-
-      // Further entries on this level, free them first to clean up all lower levels
-      if (index+CLUSTER < sindividuals.number && (index+CLUSTER >> bit) % CLUSTER > 0)
-        break;
-
-      // Free level
-      free(sindividuals__stack[bit/(64/DEPTH)].sindividuals0);
-    }
-
-    // Advance to next SIndividuals1 level
-    index += CLUSTER;
-  }
-}
-
-
-//---------------------------------------------------------------------------------------------------------------//
-// SIndividuals__sindividuals_: (SIndividuals_, UInt64, UInt) -> (SIndividuals_)
-//
-// For given index up to given depth, return the SIndividuals_.
-//
-// The functional pseudo-code follows.
-//
-// SIndividuals__sindividuals_: (SIndividuals_, UInt64, UInt) -> (SIndividuals_)
-// SIndividuals__sindividuals_walk: (SIndividuals_, UInt64, UInt) -> (SIndividuals_)
-//
-// SIndividuals__sindividuals_(individuals_, index, depth)
-//   // Start at top level with reversed index as a list of individual level indices in required order
-//   SIndividuals__sindividuals_walk(individuals_, Indices_reverse(index), depth)
-//
-// SIndividuals__sindividuals_walk(individuals_, indices, depth)
-//   // Not at desired depth, use next portion of reversed indices to index next level and recurse
-//   depth > 0:
-//     SIndividuals__sindividuals_walk(individuals_.individuals0.individuals_[indices%CLUSTER],
-//                                     indices/CLUSTER, depth-1)
-//   // At desire depth, done
-//   otherwise:
-//     level
-//
-// Flattening the recursive calls with loops this becomes the following code.
-//
-SIndividuals_ SIndividuals__sindividuals_(SIndividuals_ const sindividuals_,
-                                          UInt64 const index, UInt const depth) {
-  // Traverse each level up to the requested depth
-  UInt64 indices = Indices_reverse(index);
-  SIndividuals_ sindividuals__next = sindividuals_;
-
-  for (UInt iterator=0; iterator<depth; iterator+=1) {
-    sindividuals__next = sindividuals__next.sindividuals0->sindividuals_[indices%CLUSTER];
-    indices /= CLUSTER;
-  }
-
-  return sindividuals__next;
-}
-
-
-// SIndividuals__sindividuals1: (SIndividuals_, UInt64) -> (SIndividuals1)
-//
-// For given index, return the SIndividuals1.
-//
-// The functional pseudo-code follows.
-//
-// SIndividuals__sindividuals1: (SIndividuals_, UInt64) -> (SIndividuals1)
-//
-// SIndividuals__sindividuals1(sindividuals_, index)
-//   SIndividuals__sindividuals_(sindividuals_, index, DEPTH-1).sindividuals1
-//
-// This becomes the following code.
-//
-SIndividuals1 SIndividuals__sindividuals1(SIndividuals_ const sindividuals_, UInt64 const index) {
-  return SIndividuals__sindividuals_(sindividuals_, index, DEPTH-1).sindividuals1;
+  free(sindividuals.z);
+  free(sindividuals.individual);
 }
 
 
@@ -594,16 +392,23 @@ IZ IZ_nextBox(IZ const iz, UInt64 const corner0, UInt64 const corner1) {
 
 
 //---------------------------------------------------------------------------------------------------------------//
-// IIndividuals_valid: (UInt64, UInt64, SIndividuals_, SIndividuals1) -> (IIndividuals)
+// IIndividuals_raw: (Bool, SIndividuals, UInt64) -> (IIndividuals)
+//
+// IIndividuals with given values.
+//
+IIndividuals IIndividuals_raw(Bool const valid, SIndividuals const sindividuals, UInt64 const index) {
+  IIndividuals const iindividuals = { .valid = valid, .sindividuals = sindividuals, .index = index };
+
+  return iindividuals;
+}
+
+
+// IIndividuals_valid: (SIndividuals, UInt64) -> (IIndividuals)
 //
 // Valid IIndividuals with given values.
 //
-IIndividuals IIndividuals_valid(UInt64 const number, UInt64 const index,
-                                SIndividuals_ const sindividuals_, SIndividuals1 const sindividuals1) {
-  IIndividuals const iindividuals = { .valid = true, .number = number, .index = index,
-                                      .sindividuals_ = sindividuals_, .sindividuals1 = sindividuals1 };
-
-  return iindividuals;
+IIndividuals IIndividuals_valid(SIndividuals const sindividuals, UInt64 const index) {
+  return IIndividuals_raw(true, sindividuals, index);
 }
 
 
@@ -618,31 +423,12 @@ IIndividuals IIndividuals_invalid() {
 }
 
 
-// IIndividuals_indexSet: (IIndividuals, UInt64, SIndividuals1) -> (IIndividuals)
-//
-// Duplicate of original IIndividuals with index and SIndividuals1 set index and sindividuals1.
-//
-IIndividuals IIndividuals_indexSet(IIndividuals const iindividuals,
-                                   UInt64 const index, SIndividuals1 const sindividuals1) {
-  // Invalid iindividuals, done
-  if (!iindividuals.valid)
-    return iindividuals;
-
-  // Make a duplicate with field set
-  IIndividuals iindividuals_new = iindividuals;
-
-  iindividuals_new.index = index;
-  iindividuals_new.sindividuals1 = sindividuals1;
-  return iindividuals_new;
-}
-
-
 // IIndividuals_z: (IIndividuals) -> (UInt64)
 //
 // Z value (of Individual) indexed by iindividuals (must be valid).
 //
 UInt64 IIndividuals_z(IIndividuals const iindividuals) {
-  return iindividuals.sindividuals1->z[iindividuals.index%CLUSTER];
+  return iindividuals.sindividuals.z[iindividuals.index];
 }
 
 
@@ -651,7 +437,7 @@ UInt64 IIndividuals_z(IIndividuals const iindividuals) {
 // Individual indexed by iindividuals (must be valid).
 //
 Individual IIndividuals_individual(IIndividuals const iindividuals) {
-  return iindividuals.sindividuals1->individual[iindividuals.index%CLUSTER];
+  return iindividuals.sindividuals.individual[iindividuals.index];
 }
 
 
@@ -665,27 +451,17 @@ IIndividuals IIndividuals_first(SIndividuals const sindividuals) {
     return IIndividuals_invalid();
 
   // Return IIndividuals for first individual
-  return IIndividuals_valid(sindividuals.number, 0, sindividuals.sindividuals_,
-                            SIndividuals__sindividuals1(sindividuals.sindividuals_,0));
-
+  return IIndividuals_valid(sindividuals, 0);
 }
+
 
 // IIndividuals_next: (IIndividuals) -> (IIndividuals)
 //
 // Next IIndividuals after given iindividuals.
 //
 IIndividuals IIndividuals_next(IIndividuals const iindividuals) {
-  // No more individuals, done
-  if (!iindividuals.valid || iindividuals.index+1 == iindividuals.number)
-    return IIndividuals_invalid();
-
-  // On different SIndividuals1, advance index and sindividuals1
-  if ((iindividuals.index+1)%CLUSTER == 0)
-    return IIndividuals_indexSet(iindividuals, iindividuals.index+1,
-                                  SIndividuals__sindividuals1(iindividuals.sindividuals_, iindividuals.index+1));
-  // On same SIndividuals1, just advance index
-  else
-    return IIndividuals_indexSet(iindividuals, iindividuals.index+1, iindividuals.sindividuals1);
+  return IIndividuals_raw(iindividuals.valid && iindividuals.index+1 < iindividuals.sindividuals.number,
+                          iindividuals.sindividuals, iindividuals.index+1);
 }
 
 
@@ -699,9 +475,7 @@ IIndividuals IIndividuals_next(IIndividuals const iindividuals) {
 //
 // The individual is found when the interval becomes a singelton.
 //
-// The functional pseudo-code follows.  The complexity of SIndividuals indexing is hidden in the [] operator. The
-// initial range is fixed at 2^64 to generate fixed length loops (for compile time optimization) and to ensure
-// ensure midpoints are 2^N (N=63,...,0) so SIndividuals indexing can progress through the depths in order.
+// The functional pseudo-code follows.
 //
 // IIndividuals_firstZ: (SIndividuals, UInt64) -> (UInt64)
 // IIndividuals_firstZ_size: (SIndividuals, UInt64, UInt64, UInt64) -> (UInt64)
@@ -735,20 +509,16 @@ IIndividuals IIndividuals_next(IIndividuals const iindividuals) {
 //
 IIndividuals IIndividuals_firstZ(SIndividuals const sindividuals, IZ const iz) {
   // There are no valid individuals with Z >= z, done
-  if (sindividuals.number == 0 ||
-      sindividuals.sindividuals_.sindividuals0->right_z[sindividuals.number-1 >> 64-64/DEPTH] < iz.z)
+  if (sindividuals.number == 0 || sindividuals.z[sindividuals.number-1] < iz.z)
     return IIndividuals_invalid();
 
   // Scan forward in half sized steps 
-  SIndividuals_ sindividuals_ = sindividuals.sindividuals_;
-  UInt64 const* right_z = sindividuals_.sindividuals0->right_z;
   UInt64 index = 0;
   UInt bit = 63;
 
   while (1) {
     // Not in range [index,index+step), look in [index+step,number)
-    if (((UInt64)1<<bit) < sindividuals.number-index &&
-        right_z[(index+((UInt64)1<<bit)-1 >> bit/(64/DEPTH)*(64/DEPTH)) % CLUSTER] < iz.z)
+    if (((UInt64)1<<bit) < sindividuals.number-index && sindividuals.z[index+(((UInt64)1<<bit)-1)] < iz.z)
       index += ((UInt64)1<<bit);
 
     // If at single individual, done
@@ -756,21 +526,11 @@ IIndividuals IIndividuals_firstZ(SIndividuals const sindividuals, IZ const iz) {
       break;
 
     // Decrease step size to divide into sub intervals
-    if (bit%(64/DEPTH) == 0) {
-      sindividuals_ = sindividuals_.sindividuals0->
-        sindividuals_[(index >> bit/(64/DEPTH)*(64/DEPTH)) % CLUSTER];
-
-      if ((bit-1)/(64/DEPTH) > 0)
-        right_z = sindividuals_.sindividuals0->right_z;
-      else
-        right_z = sindividuals_.sindividuals1->z;
-    }
-
     bit -= 1;
   }
 
   // Return IIndividuals for located individual
-  return IIndividuals_valid(sindividuals.number, index, sindividuals.sindividuals_,sindividuals_.sindividuals1);
+  return IIndividuals_valid(sindividuals, index);
 }
 
 
@@ -790,8 +550,7 @@ IIndividuals IIndividuals_firstZ(SIndividuals const sindividuals, IZ const iz) {
 // interval contains a valid individual, the procedure is repeated on it.  Otherwise, it is it repeats on the
 // right interval.  The individual is found when the interval becomes a singleton.
 //
-// The functional pseudo-code follows.  The complexity of SIndividuals indexing is hidden in the [] operator. The
-// bit aligning ensures midpoints are 2^N (N=0,...,63) so SIndividuals can progress through depths in order.
+// The functional pseudo-code follows.
 //
 // IIndividuals_nextZ: (SIndividuals, UInt64, UInt64) -> (UInt64)
 //
@@ -803,7 +562,7 @@ IIndividuals IIndividuals_firstZ(SIndividuals const sindividuals, IZ const iz) {
 //
 // IIndividuals_nextZ(sindividuals, index, z)
 //   // Interval [index+1,number) contains individual, find it
-//   sindividuals.number > 0 && sindividuals.z[sindividuals.number-1] >= z:
+//   sindividuals.number > index+1 && sindividuals.z[sindividuals.number-1] >= z:
 //     IIndividuals_nextZ_outSize(sindividuals, index, 1, z)
 //   // Interval [index+1,number) does not contain individual, done
 //   otherwise:
@@ -845,30 +604,22 @@ IIndividuals IIndividuals_firstZ(SIndividuals const sindividuals, IZ const iz) {
 IIndividuals IIndividuals_nextZ(IIndividuals const iindividuals, IZ const iz) {
   // There are no valid individuals with Z >= z, done
   if (!iindividuals.valid || !iz.valid ||
-      iindividuals.index+1 == iindividuals.number ||
-      iindividuals.sindividuals_.sindividuals0->right_z[iindividuals.number-1 >> 64-64/DEPTH] < iz.z)
+      iindividuals.index >= iindividuals.sindividuals.number-1 ||
+      iindividuals.sindividuals.z[iindividuals.sindividuals.number-1] < iz.z)
     return IIndividuals_invalid();
 
   // Find interval containing suitable individuals (bits below bit are 1)
-  SIndividuals_ sindividuals_ = { .sindividuals1 = iindividuals.sindividuals1 };
-  UInt64 const* right_z = iindividuals.sindividuals1->z;
   UInt64 index = iindividuals.index;
   UInt bit = 0;
 
   while (1) {
     // While on step size boundary, increase step size
-    while ((index+1 & ((UInt64)1<<bit)) == 0) {
+    while ((index+1 & ((UInt64)1<<bit)) == 0)
       bit += 1;
 
-      if (bit%(64/DEPTH) == 0) {
-        sindividuals_ = SIndividuals__sindividuals_(iindividuals.sindividuals_, index+1, DEPTH-1-bit/(64/DEPTH));
-        right_z = sindividuals_.sindividuals0->right_z;
-      }
-    }
-
     // Interval [index+1,index+(1<<bit)+1) contains individual, locate individual in it
-    if (((UInt64)1<<bit) >= iindividuals.number-index-1 ||
-        right_z[(index+((UInt64)1<<bit) >> bit/(64/DEPTH)*(64/DEPTH)) % CLUSTER] >= iz.z)
+    if (((UInt64)1<<bit) >= iindividuals.sindividuals.number-index-1 ||
+        iindividuals.sindividuals.z[index+((UInt64)1<<bit)] >= iz.z)
       break;
 
     // Interval [index+1,index+(1<<bit)+1) doesn't contain individual, skip over it
@@ -882,26 +633,16 @@ IIndividuals IIndividuals_nextZ(IIndividuals const iindividuals, IZ const iz) {
       break;
 
     // Decrease step size to divide into sub intervals
-    if (bit%(64/DEPTH) == 0) {
-      sindividuals_ = sindividuals_.sindividuals0->
-        sindividuals_[(index+1 >> bit/(64/DEPTH)*(64/DEPTH)) % CLUSTER];
-
-      if ((bit-1)/(64/DEPTH) > 0)
-        right_z = sindividuals_.sindividuals0->right_z;
-      else
-        right_z = sindividuals_.sindividuals1->z;
-    }
-
     bit -= 1;
 
     // If interval [index+1,index+(1<<bit)+1) doesn't contain individual, skip over it
-    if (((UInt64)1<<bit) < iindividuals.number-index-1 &&
-        right_z[(index+((UInt64)1<<bit) >> bit/(64/DEPTH)*(64/DEPTH)) % CLUSTER] < iz.z)
+    if (((UInt64)1<<bit) < iindividuals.sindividuals.number-index-1 &&
+        iindividuals.sindividuals.z[index+((UInt64)1<<bit)] < iz.z)
       index += ((UInt64)1<<bit);
   }
 
   // Next index wasn't skipped over
-  return IIndividuals_indexSet(iindividuals, index+1, sindividuals_.sindividuals1);
+  return IIndividuals_valid(iindividuals.sindividuals, index+1);
 }
 
 
@@ -1157,7 +898,18 @@ SSIndividuals ASIndividuals_end(ASIndividuals const asindividuals) {
 // AIndividuals with no Individuals.
 //
 AIndividuals AIndividuals_begin() {
-  AIndividuals const aindividuals = { .number = 0 };
+  AIndividuals aindividuals;
+
+  // Start with enough space for one
+  if ( !(aindividuals.z = malloc(sizeof(UInt64))) )
+    Error_dieErrNo(1, "unable to allocate %tu bytes for AIndividuals.z", 
+                   sizeof(UInt64));
+  if ( !(aindividuals.individual = malloc(sizeof(Individual))) )
+    Error_dieErrNo(1, "unable to allocate %tu bytes for AIndividuals.individual", 
+                   sizeof(Individual));
+
+  // No entries
+  aindividuals.number = 0;
 
   return aindividuals;
 }
@@ -1171,406 +923,197 @@ AIndividuals AIndividuals_begin() {
 // rounding when forming Z values is required to for these functions to correctly iterate over all the desired
 // individuals.
 //
-// The functional pseudo-code follows.
-//
-// AIndividuals_append: (AIndividuals, Individual, UInt64) -> (AIndividuals)
-//
-// AIndividuals_append(aindividuals, individual, z)
-//   // New bottom level required, create one to add individual to
-//   aindividuals.number%CLUSTER == 0:
-//     // Existing bottom level, attach it and then create new one to add individual to
-//     aindividuals.number > 0:
-//       aindividuals{ .number = aindividuals.number+1,
-//                     .z_min = min(aindividuals.z_min, z), .z_max = max(aindividuals.z_max, z),
-//                     .sindividuals_ = AIndividuals_attach(aindividuals.sindividuals_,
-//                                                          aindividuals.sindividuals1,
-//                                                          aindividuals.number-CLUSTER),
-//                     .sindividuals1 = SIndividuals1{ .z[0] = z,
-//                                                     .individual[0] = individual } }
-//     // No existing bottom level, create new one to add individual to
-//     otherwise:
-//       aindividuals{ .number = aindividuals.number+1,
-//                     .z_min = z, .z_max = z,
-//                     .sindividuals1 = SIndividuals1{ .z[0] = z,
-//                                                     .individual[0] = individual } }
-//   // New bottom level not required, add individual to last one
-//   otherwise:
-//     aindividuals{ .number = aindividuals.number+1,
-//                   .z_min = min(aindividuals.z_min, z), .z_max = max(aindividuals.z_max, z),
-//                   .sindividuals1{ .z[number%CLUSTER] = z,
-//                                   .individual[number%CLUSTER] = individual } }
-//
-// This becomes the following code.
-//
 AIndividuals AIndividuals_append(AIndividuals const aindividuals,
                                  Individual const individual, UInt64 const z) {
-  AIndividuals aindividuals_new = aindividuals;
+  AIndividuals aindividuals_new;
 
-  // New bottom level required, create one to add individual to
-  if (aindividuals.number%CLUSTER == 0) {
-    // Previous bottom level, attach it
-    if (aindividuals.number > 0)
-      aindividuals_new.sindividuals_ = AIndividuals_attach(aindividuals.sindividuals_, 
-                                                           aindividuals.sindividuals1,
-                                                           aindividuals.number-CLUSTER);
+  // All space is used up (number == 2^N), expand space by *2
+  if (aindividuals.number > 0 && (aindividuals.number & (aindividuals.number-1)) == 0) {
+    if ( !(aindividuals_new.z = realloc(aindividuals.z,
+                                        sizeof(UInt64)*(aindividuals.number*2))) )
+      Error_dieErrNo(1, "unable to grow AIndividuals.z allocation to %tu bytes",
+                     sizeof(UInt64)*(aindividuals.number*2));
+    if ( !(aindividuals_new.individual = realloc(aindividuals.individual,
+                                                 sizeof(Individual)*(aindividuals.number*2))) )
+      Error_dieErrNo(1, "unable to grow AIndividuals.individual allocation to %tu bytes",
+                     sizeof(Individual)*(aindividuals.number*2));
 
-    // Create new bottom level
-    if ( !(aindividuals_new.sindividuals1 = malloc(sizeof(struct _SIndividuals1))) )
-      Error_dieErrNo(1, "unable to allocate %tu bytes for new SIndividuals1", sizeof(struct _SIndividuals1));
+    aindividuals_new.number = aindividuals.number;
   }
+  else
+    aindividuals_new = aindividuals;
 
-  // Not first individual, update min and max Z
-  if (aindividuals.number > 0) {
-    aindividuals_new.z_min = aindividuals_new.z_min <= z ? aindividuals_new.z_min : z;
-    aindividuals_new.z_max = aindividuals_new.z_max >= z ? aindividuals_new.z_max : z;
-  }
-  // First individual, initialize min and max Z
-  else {
-    aindividuals_new.z_min = z;
-    aindividuals_new.z_max = z;
-  }
+  aindividuals_new.number = aindividuals.number;
 
-  // Add individual to bottom level
-  aindividuals_new.sindividuals1->z[aindividuals.number%CLUSTER] = z;
-  aindividuals_new.sindividuals1->individual[aindividuals.number%CLUSTER] = individual;
+  // Add onto end
+  aindividuals_new.z[aindividuals_new.number] = z;
+  aindividuals_new.individual[aindividuals_new.number] = individual;
   aindividuals_new.number += 1;
 
   return aindividuals_new;
 }
 
 
-// AIndividuals_attach: (*SIndividuals_, SIndividuals1, UInt64) -> (SIndividuals_)
-//
-// Adds sindividuals1 onto end of sindividuals marked by index (requires index%CLUSTER == 0).
-//
-// The functional pseudo-code follows.
-//
-// AIndividuals_attach: (SIndividuals_, SIndividuals1, UInt64) -> (SIndividuals_)
-// AIndividuals_attach_old: (SIndividuals_, SIndividuals1, UInt64, UInt) -> (SIndividuals_)
-// AIndividuals_attach_new: (SIndividuals1, UInt) -> (SIndividuals_)
-//
-// AIndividuals_attach(sindividuals_, sindividuals1, index)
-//   let indices = Indices_reverse(index)
-//   AIndividuals_attach_old(sindividuals_, sindividuals1, indices, DEPTH-1)
-//
-// AIndividuals_attach_old(sindividuals_, sindividuals1, indices, depth)
-//   // Entries below this one, descend into them
-//   indices > 0:
-//     let sindividuals__next = sindividuals_.sindividuals0.sindividuals_[indices%CLUSTER]
-//         sindividuals__next = AIndividuals_attach_old(sindividuals__next, sindividuals1, indices/CLUSTER, depth-1)
-//     sindividuals_.sindividuals0.sindividuals_[indices%CLUSTER] = sindividuals__next
-//   // No entries below this one, add them
-//   otherwise:
-//     AIndividuals_attach_new(sindividuals1, depth)
-//
-// AIndividuals_attach_new(sindividuals1, depth)
-//   // SIndividuals0 depth, add SIndividuals0 and continue down
-//   depth > 0:
-//     let sindividuals_ = AIndividuals_attach_new(sindividuals1, depth-1)
-//         sindividuals0 = SIndividuals0.sindividuals_[0] = sindividuals_
-//     SIndividuals_.sindividuals0 = sindividuals0
-//   // SIndividuals1 depth, add SIndividuals1 and done
-//   otherwise:
-//     SIndividuals_.sindividuals1 = sindividuals1
-//
-// Flattening the recursive calls with loops this becomes the following code.
-//
-SIndividuals_ AIndividuals_attach(SIndividuals_ const sindividuals_,
-                                  SIndividuals1 const sindividuals1, UInt64 const index) {
-  UInt64 indices = Indices_reverse(index);
-  SIndividuals_ sindividuals__new = sindividuals_;
-  SIndividuals_* sindividuals__link = &sindividuals__new;
-  UInt depth = DEPTH-1;
-
-  // While existing intermediate AIndividuals0 entries, descend into them
-  while (indices > 0) {
-    sindividuals__link = &sindividuals__link->sindividuals0->sindividuals_[indices%CLUSTER];
-    indices /= CLUSTER;
-    depth -= 1;
-  }
-
-  // While needing intermediate AIndividuals0 entries, add them
-  while (depth > 0) {
-    if ( !(sindividuals__link->sindividuals0 = malloc(sizeof(struct _SIndividuals0))) )
-      Error_dieErrNo(1, "unable to allocate %tu bytes for new SIndividuals0", sizeof(struct _SIndividuals0));
-    sindividuals__link = &sindividuals__link->sindividuals0->sindividuals_[indices%CLUSTER];
-    indices /= CLUSTER;
-    depth -= 1;
-  }
-
-  // Add sindividuals1
-  sindividuals__link->sindividuals1 = sindividuals1;
-
-  return sindividuals__new;
-}
-
-
 // AIndividuals_end: (*AIndividuals) -> (SIndividuals)
 //
-// Convert into an SIndividuals.
-//
-// The functional pseudo-code follows.
-//
-// AIndividuals_end: (AIndividuals) -> (SIndividuals)
-//
-// AIndividuals_end(aindividuals):
-//   // Individuals, attach SIndividuals1, sort them, build the left/right Z cache values, and return SIndividuals
-//   aindividuals.number > 0:
-//     let sindividuals_ = AIndividuals_attach(aindividuals.sindividuals_, aindividuals.sindividuals1
-//                                             (aindividuals.number-1)/CLUSTER*CLUSTER)
-//         sindividuals_ = AIndividuals_sort(sindividuals_, aindividuals.number,
-//                                           (aindividuals.z_min+aindividuals.z_max)/2)
-//         sindividuals_ = AIndividuals_cache(sindividuals_, aindividuals.number)
-//     SIndividuals{ .sindividuals_ = sindividuals, .number = aindividuals.number }
-//   // No Individuals, return empty SIndividuals
-//   otherwise:
-//     SIndividuals{ .number = 0 }
-//
-// This becomes the following code.
+// Convert into an SIndividuals (assumes AIndividuals_ struct is same as SIndividuals_).
 //
 SIndividuals AIndividuals_end(AIndividuals const aindividuals) {
-  // Individuals, attach SIndividuals1, sort them, build the left/right Z cache values, and return SIndividuals
-  if (aindividuals.number > 0) {
-    SIndividuals_ sindividuals_;
+  AIndividuals aindividuals_new;
 
-    sindividuals_ = AIndividuals_attach(aindividuals.sindividuals_, aindividuals.sindividuals1,
-                                        (aindividuals.number-1)/CLUSTER*CLUSTER);
-    sindividuals_ = AIndividuals_sort(sindividuals_, aindividuals.number,
-                                      (aindividuals.z_min/2+aindividuals.z_max/2 +
-                                       (aindividuals.z_min%2+aindividuals.z_max %2)/2));
-    sindividuals_ = AIndividuals_cache(sindividuals_, aindividuals.number);
+  // Release extra unused space
+  if ( !(aindividuals_new.z = realloc(aindividuals.z,
+                                      sizeof(UInt64)*aindividuals.number)) &&
+       aindividuals.number )
+    Error_dieErrNo(1, "unable to shrink AIndividuals.z allocation to %tu bytes",
+                   sizeof(UInt64)*aindividuals.number);
+  if ( !(aindividuals_new.individual = realloc(aindividuals.individual,
+                                               sizeof(Individual)*aindividuals.number)) &&
+       aindividuals.number )
+    Error_dieErrNo(1, "unable to shrink AIndividuals.individual allocation to %tu bytes",
+                   sizeof(Individual)*aindividuals.number);
 
-    return SIndividuals_raw(aindividuals.number, sindividuals_);
-  }
-  // No Individuals, return empty SIndividuals
-  else
-    return SIndividuals_none();
+  aindividuals_new.number = aindividuals.number;
+
+  // Sort individuals by Z order
+  aindividuals_new = AIndividuals_sort(aindividuals_new);
+
+  return aindividuals_new;
 }
 
 
-// AIndividuals_cache: (*SIndividuals_, UInt64) -> (SIndividuals_)
+// AIndividuals_sort: (*AIndividuals) -> (AIndividuals)
 //
-// Cache left and right (min and max if sorted) Z values in upper levels.
-//
-// The functional pseudo-code follows.
-//
-// AIndividuals_cache: (SIndividuals_, UInt64) -> (SIndividuals_)
-//
-// AIndividuals_cache_level:  (SIndividuals_, UInt64, UInt64, UInt64) -> (SIndividuals_, UInt64, UInt64)
-// AIndividuals_cache_level0: (SIndividuals0, UInt64, UInt64, UInt64) -> (SIndividuals0, UInt64, UInt64)
-// AIndividuals_cache_level1: (SIndividuals1, UInt64, UInt64)         -> (SIndividuals1, UInt64, UInt64)
-//
-// AIndividuals_cache(sindividuals_, number):
-//   AIndividuals_cache_level(sindividuals_, number, 0, CLUSTER^(DEPTH-1))
-//
-// AIndividuals_cache_level(sindividuals_, number, index, step):
-//   // Not at bottom level, handle with level0 routine
-//   step > 1:
-//     let (sindividuals0, left_z, right_z) =
-//           AIndividuals_cache_level0(sindividuals_.sindividuals0, number, index, step)
-//     (SIndividuals_.sindividuals0 = sindividuals0, left_z, right_z)
-//   // At bottom level,  handle with level1 routine
-//   otherwise:
-//     let (sindividuals1, left_z, right_z) = 
-//           AIndividuals_cache_level1(sindividuals_.sindividuals1, number, index)
-//     (SIndividuals_.sindividuals1 = sindividuals1, left_z, right_z)
-//
-// AIndividuals_cache_level0(sindividuals0, number, index, step):
-//   let (sindividuals_, left_z, right_z) =
-//         AIndividuals_cache_level(sindividuals0.sindividuals_[index/step%CLUSTER], number, index, step/CLUSTER)
-//       sindividuals0{ sindividuals_[index/step%CLUSTER] = sindividuals_,
-//                      left_z[index/step%CLUSTER] = left_z, right_z[index/step%CLUSTER] = right_z }
-//   // Further entries at this level, do them
-//   index+step < number && (index+step)/step%CLUSTER > 0:
-//     AIndividuals_cache_level0(sindividuals0, number, index+step, step)
-//   // No further entries at this level, return left and right values for this level
-//   otherwise:
-//     (sindividuals0, sindividuals0.left_z[0], sindividuals0.right_z[index/step%CLUSTER])
-//
-// AIndividuals_cache_level1(sindividuals1, number, index)
-//   // Return left and right values for this level
-//   (sindividuals1, sindividuals1.z[0], sindividuals1.z[min(index+CLUSTER-1,number-1)%CLUSTER])
-//
-// Flattening the recursive calls with loops and a sindividuals_ stack array this becomes the following code.
-//
-SIndividuals_ AIndividuals_cache(SIndividuals_ const sindividuals_, UInt64 const number) {
-  SIndividuals_ sindividuals__stack[DEPTH] = { [DEPTH-1] = sindividuals_ };
-  UInt64 index = 0;
-  UInt bit = 64-64/DEPTH;
-
-  // Iterate through SIndividuals1 levels filling in left and right Z boundaries on upper SIndividuals1 entries
-  while (index < number) {
-    // Go down to SIndividuals1 level
-    while (bit > 0) {
-      sindividuals__stack[bit/(64/DEPTH)-1] =
-        sindividuals__stack[bit/(64/DEPTH)].sindividuals0->sindividuals_[(index >> bit) % CLUSTER];
-      bit -= 64/DEPTH;
-    }
-
-    // Left and right most values for SIndividuals1 level are actual Z values
-    UInt64 left_z = sindividuals__stack[0].sindividuals1->z[0];
-    UInt64 right_z = sindividuals__stack[0].sindividuals1->
-      z[(index+CLUSTER-1 < number-1 ? index+CLUSTER-1 : number-1) % CLUSTER];
-
-    // Fill in cached left and right Z values on all SIndividuals0 levels above that we fall on boundary
-    while (bit < 64-64/DEPTH) {
-      // Move to level above and fill in cached left and right Z values
-      bit += 64/DEPTH;
-      sindividuals__stack[bit/(64/DEPTH)].sindividuals0->left_z[(index>>bit) % CLUSTER] = left_z;
-      sindividuals__stack[bit/(64/DEPTH)].sindividuals0->right_z[(index>>bit) % CLUSTER] = right_z;
-      
-      // Further entries on this level, process them first to fill in rest of cache
-      if (index+CLUSTER < number && (index+CLUSTER >> bit) % CLUSTER > 0)
-        break;
-
-      // Load left and right most values for this SIndividauls0 level to update cache above
-      left_z = sindividuals__stack[bit/(64/DEPTH)].sindividuals0->left_z[0];
-      right_z = sindividuals__stack[bit/(64/DEPTH)].sindividuals0->right_z[(index >> bit) % CLUSTER];
-    }
-
-    // Advance to next SIndividuals1 level
-    index += CLUSTER;
-  }
-
-  return sindividuals__stack[DEPTH-1];
-}
-
-
-// AIndividuals_sort: (*SIndividuals_, UInt64, UInt64) -> (SIndividuals_)
-//
-// AIndividuals_sortBoth:  (*SIndividuals_, Int64,Int64, Int64) -> (SIndividuals_)
+// AIndividuals_sortBoth:  (*AIndividuals, Int64,Int64, Int64) -> (AIndividuals)
 //
 // In-place pivot sort.
 //
 // This routine works by recursively choosing a pivot and breaking elements into a left subset <= pivot and a
 // right subset > pivot.  The base case is a subset in which no elements are not equal (maximum and minimum are
 // equal).  This implies the subset it fully sorted and will occur for sure once singelton subsets are reached.
-// The first pivot is the middle element and later pivots are the average of the minimum and maximum.
+// The first pivot is the average of the first and last element and later pivots are the average of the minimum
+// and maximum.
 //
-// The functional pseudo-code follows.  The complexity of SIndividuals indexing is hidden in the [] operator.
+// The functional pseudo-code follows.
 //
-// AIndividuals_sort: (SIndividuals) -> (SIndividuals)
+// AIndividuals_sort: (AIndividuals) -> (AIndividuals)
 //
-// AIndividuals_sort_both: (SIndividuals, UInt64,UInt64, UInt64) -> (SIndividuals)
-// AIndividuals_sort_left:  (SIndividuals, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64, UInt64)
-//                            -> (SIndividuals)
-// AIndividuals_sort_right: (SIndividuals, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64, UInt64)
-//                            -> (SIndividuals)
+// AIndividuals_sort_both: (AIndividuals, UInt64,UInt64, UInt64) -> (AIndividuals)
+// AIndividuals_sort_left:  (AIndividuals, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64, UInt64)
+//                            -> (AIndividuals)
+// AIndividuals_sort_right: (AIndividuals, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64, UInt64,UInt64, UInt64)
+//                            -> (AIndividuals)
 //
-// swap: (SIndividuals, UInt64, UInt64) -> (SIndividuals)
+// swap: (AIndividuals, UInt64, UInt64) -> (AIndividuals)
 //
-// AIndividuals_sort(sindividuals, pivot_z)
+// AIndividuals_sort(aindividuals)
 //   // If there are individuals, use the centre element as initial pivot
-//   sindividuals.number > 0:
-//     AIndividuals_sort_both(individuals, 0,sindividuals.number-1, pivot_z)
+//   aindividuals.number > 0:
+//     AIndividuals_sort_both(aindividuals, 0,aindividuals.number-1,
+//                            (aindividuals.z[0]+aindividuals.z[aindividuals.number-1])/2)
 //   // If there are no individuals, done
 //   otherwise:
-//     sindividuals
+//     aindividuals
 //
-// AIndividuals_sort_both(sindividuals, left_start,right_start, pivot_z)
+// AIndividuals_sort_both(aindividuals, left_start,right_start, pivot_z)
 //   // Split into left-hand side <= pivot and right-hand side > pivot
-//   let (sindividuals,
+//   let (aindividuals,
 //        left_end,  left_min, left_max,
-//        right_end, right_min,right_max) = AIndividuals_sort_left(sindividuals, pivot_z,
+//        right_end, right_min,right_max) = AIndividuals_sort_left(aindividuals, pivot_z,
 //                                                                 left_start, left_start,  UINT64_MAX,0,
 //                                                                 right_start,right_start, UINT64_MAX,0)
 //   // Repeat on each of left-hand and right-hand if they have at least two different elements in them
-//       sindividuals = left_min  < left_max:
-//           AIndividuals_sort_both(sindividuals, left_start,left_end,    (left_z_min +left_z_max) /2)
+//       aindividuals = left_min  < left_max:
+//           AIndividuals_sort_both(aindividuals, left_start,left_end,    (left_z_min +left_z_max) /2)
 //         otherwise:
-//           sindividuals
-//       sindividuals = right_min < right_max:
-//           AIndividuals_sort_both(sindividuals, right_end, right_start, (right_z_min+right_z_max)/2)
+//           aindividuals
+//       aindividuals = right_min < right_max:
+//           AIndividuals_sort_both(aindividuals, right_end, right_start, (right_z_min+right_z_max)/2)
 //         otherwise:
-//           sindividuals
+//           aindividuals
 //   // Done
-//   sindividuals
+//   aindividuals
 //
-// AIndividuals_sort_left(sindividuals,
+// AIndividuals_sort_left(aindividuals,
 //                        left_start, left_current,  left_z_min, left_z_max,
 //                        right_start,right_current, right_z_min,right_z_max,
 //                        pivot_z)
 //   // Left side hasn't reached right side, process element
 //   left_current <= right_current:
 //     // Element <= pivot, move it into left-hand side and continue left scan with next element
-//     sindividuals.z[left_current] <= pivot_z:
-//       AIndividuals_sort_left( sindividuals,
+//     aindividuals.z[left_current] <= pivot_z:
+//       AIndividuals_sort_left( aindividuals,
 //                               left_start, left_current+1,
-//                               min(sindividuals.z[left],left_z_min), max(sindividuals.z[left],left_z_max),
+//                               min(aindividuals.z[left],left_z_min), max(aindividuals.z[left],left_z_max),
 //                               right_start,right_current,   right_z_min,right_z_max,
 //                               pivot_z)
 //     // Element > pivot, switch to right scan to find element to swap it with
-//     sindividuals.z[left_current] >  pivot_z:
-//       AIndividuals_sort_right(sindividuals, pivot_z,
+//     aindividuals.z[left_current] >  pivot_z:
+//       AIndividuals_sort_right(aindividuals, pivot_z,
 //                               left_start, left_current,    left_z_min, left_z_max,
 //                               right_start,right_current,   right_z_min,right_z_max,
 //                               pivot_z)
 //   // Left side reached right side, return sides
 //   otherwise:
-//     (sindividuals,
+//     (aindividuals,
 //      right_current, left_min, left_max,
 //      left_current,  right_min,right_max)
 //
-// AIndividuals_sort_right(sindividuals, pivot_z,
+// AIndividuals_sort_right(aindividuals, pivot_z,
 //            left_start, left_current,  left_z_min, left_z_max,
 //            right_start,right_current, right_z_min,right_z_max)
 //   // Right side hasn't reached left side, process element
 //   left_current <= right_current:
 //     // Element > pivot, move it into right-hand side and continue right scan with next element
-//     sindividuals[right_current] > pivot_z:
-//       AIndividuals_sort_right(sindividuals, pivot_z,
+//     aindividuals[right_current] > pivot_z:
+//       AIndividuals_sort_right(aindividuals, pivot_z,
 //                               left_start, left_current,    left_z_min,left_z_max,
 //                               right_start,right_current-1,
-//                               min(sindividuals[right],right_z_min), max(sindividuals[right],right_z_max),
+//                               min(aindividuals[right],right_z_min), max(aindividuals[right],right_z_max),
 //                               pivot_z)
 //     // Element <= pivot, swap it with > element found in left scan and switch back to left scan
-//     sindividuals.z[left_current] <= pivot_z:
-//       let sindividuals = AIndividuals_swap(sindividuals, left_current, right_current)
-//       AIndividuals_sort_left( sindividuals, pivot_z,
+//     aindividuals.z[left_current] <= pivot_z:
+//       let aindividuals = AIndividuals_swap(aindividuals, left_current, right_current)
+//       AIndividuals_sort_left( aindividuals, pivot_z,
 //                               left_start, left_current,    left_z_min, left_z_max,
 //                               right_start,right_current,   right_z_min,right_z_max,
 //                               pivot_z)
-//   // Reach side reached left side, return sides
+//   // Right side reached left side, return sides
 //   otherwise:
-//     (sindividuals,
+//     (aindividuals,
 //      right_current, left_min, left_max,
 //      left_current,  right_min,right_max)
 //
-// AIndividuals_swap(sindividuals, index0, index1)
-//   let individual0 = sindividuals.individual[index0]
-//       individual1 = sindividuals.individual[index1]
-//       z0 = sindividuals.z[index0]
-//       z1 = sindividuals.z[index1]
-//   sindividuals{ .individuals{ [index0] = individuals1, [index1] = individuals0 }
+// AIndividuals_swap(aindividuals, index0, index1)
+//   let individual0 = aindividuals.individual[index0]
+//       individual1 = aindividuals.individual[index1]
+//       z0 = aindividuals.z[index0]
+//       z1 = aindividuals.z[index1]
+//   aindividuals{ .individuals{ [index0] = individuals1, [index1] = individuals0 }
 //                 .z{ [index0] = z1, [index1] = z0 } }
 //
 // Flattening the recursive calls with loops this becomes the following code.
 //
-SIndividuals_ AIndividuals_sort(SIndividuals_ const sindividuals_, UInt64 const number, UInt64 const pivot_z) {
+AIndividuals AIndividuals_sort(AIndividuals const aindividuals) {
   // Individuals, pivot sort
-  if (number > 0)
-    return AIndividuals_sortBoth(sindividuals_,
-                                 SIndividuals__sindividuals1(sindividuals_, 0),
-                                 SIndividuals__sindividuals1(sindividuals_, number-1),
-                                 0, number-1,
-                                 pivot_z);
+  if (aindividuals.number > 0)
+    return AIndividuals_sortBoth(aindividuals, 0, aindividuals.number-1,
+                                 aindividuals.z[0]/2+aindividuals.z[aindividuals.number-1]/2 + 
+                                 (aindividuals.z[0]%2+aindividuals.z[aindividuals.number-1]%2)/2);
+
   // No individuals, done
   else
-    return sindividuals_;
+    return aindividuals;
 }
 
 
-SIndividuals_ AIndividuals_sortBoth(SIndividuals_ const sindividuals_,
-                                    SIndividuals1 const left_sindividuals1_start,
-                                    SIndividuals1 const right_sindividuals1_start,
-                                    UInt64 const left_index_start, UInt64 const right_index_start,
-                                    UInt64 const pivot_z) {
-  SIndividuals1 left_sindividuals1_current = left_sindividuals1_start;
+AIndividuals AIndividuals_sortBoth(AIndividuals const aindividuals,
+                                   UInt64 const left_index_start, UInt64 const right_index_start,
+                                   UInt64 const pivot_z) {
   UInt64 left_index_current = left_index_start;
   UInt64 left_z_min = UINT64_MAX;
   UInt64 left_z_max = 0;
 
-  SIndividuals1 right_sindividuals1_current = right_sindividuals1_start;
   UInt64 right_index_current = right_index_start;
   UInt64 right_z_min = UINT64_MAX;
   UInt64 right_z_max = 0;
@@ -1582,7 +1125,7 @@ SIndividuals_ AIndividuals_sortBoth(SIndividuals_ const sindividuals_,
 
     // Find element from left > pivot
     while (left_index_current <= right_index_current) {
-      left_z = left_sindividuals1_current->z[left_index_current%CLUSTER];
+      left_z = aindividuals.z[left_index_current];
 
       // No element found, move to next and repeat
       if (left_z <= pivot_z) {
@@ -1592,8 +1135,6 @@ SIndividuals_ AIndividuals_sortBoth(SIndividuals_ const sindividuals_,
 
         // Advance to next possible left element
         left_index_current += 1;
-        if (left_index_current%CLUSTER == 0)
-          left_sindividuals1_current = SIndividuals__sindividuals1(sindividuals_, left_index_current);
       }
       // Element found, break
       else
@@ -1602,7 +1143,7 @@ SIndividuals_ AIndividuals_sortBoth(SIndividuals_ const sindividuals_,
 
     // Find element from right <= pivot
     while (left_index_current <= right_index_current) {
-      right_z = right_sindividuals1_current->z[right_index_current%CLUSTER];
+      right_z = aindividuals.z[right_index_current];
 
       // No element found, move to next and repeat
       if (right_z > pivot_z) {
@@ -1612,8 +1153,6 @@ SIndividuals_ AIndividuals_sortBoth(SIndividuals_ const sindividuals_,
 
         // Advance to next possible right element
         right_index_current -= 1;
-        if (right_index_current%CLUSTER == CLUSTER-1)
-          right_sindividuals1_current = SIndividuals__sindividuals1(sindividuals_, right_index_current);
       }
       // Element found, break
       else
@@ -1622,14 +1161,14 @@ SIndividuals_ AIndividuals_sortBoth(SIndividuals_ const sindividuals_,
 
     // Not at centre, left > pivot and right <= pivot elements found, swap them
     if (left_index_current <= right_index_current) {
-      left_sindividuals1_current->z[left_index_current%CLUSTER] = right_z;
-      right_sindividuals1_current->z[right_index_current%CLUSTER] = left_z;
+      aindividuals.z[left_index_current] = right_z;
+      aindividuals.z[right_index_current] = left_z;
 
-      Individual const left_individual = left_sindividuals1_current->individual[left_index_current%CLUSTER];
-      Individual const right_individual = right_sindividuals1_current->individual[right_index_current%CLUSTER];
+      Individual const left_individual = aindividuals.individual[left_index_current];
+      Individual const right_individual = aindividuals.individual[right_index_current];
 
-      left_sindividuals1_current->individual[left_index_current%CLUSTER] = right_individual;
-      right_sindividuals1_current->individual[right_index_current%CLUSTER] = left_individual;
+      aindividuals.individual[left_index_current] = right_individual;
+      aindividuals.individual[right_index_current] = left_individual;
     }
     // At centre, seperated into left <= pivot and right > pivot subsets, break
     else
@@ -1638,17 +1177,13 @@ SIndividuals_ AIndividuals_sortBoth(SIndividuals_ const sindividuals_,
 
   // Sort new left <= pivot and right > pivot subsets
   if (left_z_min  < left_z_max)
-    AIndividuals_sortBoth(sindividuals_,
-                          left_sindividuals1_start,  right_sindividuals1_current,
-                          left_index_start,          right_index_current,
+    AIndividuals_sortBoth(aindividuals, left_index_start,   right_index_current,
                           left_z_min /2+left_z_max /2 + (left_z_min %2+left_z_max %2)/2);
   if (right_z_min < right_z_max)
-    AIndividuals_sortBoth(sindividuals_,
-                          left_sindividuals1_current,right_sindividuals1_start,
-                          left_index_current,        right_index_start,
+    AIndividuals_sortBoth(aindividuals, left_index_current, right_index_start,
                           right_z_min/2+right_z_max/2 + (right_z_min%2+right_z_max%2)/2);
 
-  return sindividuals_;
+  return aindividuals;
 }
 
 
